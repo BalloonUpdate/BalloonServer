@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.7.10'
+}
+
+group 'github.kasuminova'
+version '1.0-BETA'
+
+
+repositories {
+    maven {
+        url 'https://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    maven {
+        url 'https://maven.aliyun.com/repository/central'
+    }
+    mavenCentral()
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archivesBaseName = 'BalloonServer-GUI'//基本的文件名
+    archiveVersion = version //版本
+    manifest { //配置 Jar 文件的 Manifest
+        attributes (
+                "Manifest-Version": 1.0,
+                'Main-Class': 'github.kasuminova.balloonserver.BalloonServer' //指定 Main 方法所在的文件
+        )
+    }
+
+    //打包依赖包
+    from {
+        (configurations.runtimeClasspath).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    testImplementation 'org.projectlombok:lombok:1.18.24'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    implementation 'com.alibaba.fastjson2:fastjson2:2.0.12'
+    implementation 'io.netty:netty-all:4.1.79.Final'
+    implementation 'com.formdev:flatlaf:2.4'
+    implementation 'com.formdev:flatlaf-intellij-themes:2.4'
+    implementation 'org.yaml:snakeyaml:1.30'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+test {
+    useJUnitPlatform()
+}
