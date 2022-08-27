@@ -16,7 +16,7 @@ public class BalloonServer {
     static {
         SetupSwing.init();
     }
-    public static final String version = "1.0-BETA";
+    public static final String version = "1.0.2-BETA";
     public static JFrame frame = new JFrame("BalloonServer " + version);
     public static JProgressBar statusProgressBar = new JProgressBar();
     public static ChangeListener changeListener;

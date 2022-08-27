@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.zip.CRC32;
 
+import static github.kasuminova.balloonserver.BalloonServer.logger;
+
 public class FileListUtils {
     static final int maxThreads = Runtime.getRuntime().availableProcessors() * 4;
     static AtomicInteger runningThreads = new AtomicInteger(0);
@@ -46,6 +48,7 @@ public class FileListUtils {
      * (即 thread.join 之后)
      * 将 SimpleDirectoryObject 存储进 ArrayList<AbstractSimpleFileObject> 内
      * <p>
+     * 如果传入的 File 是文件，则直接启动新的文件计算线程，而不是继续执行下方指令
      * 程序遍历文件夹内文件, 如果为文件则创建一个 计算单个文件的 MD5 的 类/线程, 如果为文件夹则额外一个新的 计算一个文件夹的 MD5 类/线程
      * 并传入 SimpleDirectoryObject 的 children 变量 ArrayList<AbstractSimpleFileObject>
      * <p/>
@@ -66,7 +69,28 @@ public class FileListUtils {
         public void run() {
             ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
             File[] fileList = dir.listFiles();
-            if (fileList != null) {
+            if (dir.isFile()) {
+                while (true) {
+                    if (runningThreads.get() <= maxThreads) {
+                        Thread fileCounterThread = new Thread(new FileCounterThread(fileObjList, dir));
+                        threadList.add(fileCounterThread);
+                        fileCounterThread.start();
+                        try {
+                            fileCounterThread.join();
+                            addFileObjToFileObjList(fileObjList.get(0), this.fileObjList);
+                        } catch (Exception e) {
+                            logger.error(e);
+                        }
+                        break;
+                    }
+                    try {
+                        Thread.sleep(25);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                runningThreads.getAndDecrement();
+            } else if (fileList != null) {
                 for (File file : fileList) {
                     if (file.isFile()) {
                         while (true) {
@@ -79,7 +103,7 @@ public class FileListUtils {
                             try {
                                 Thread.sleep(25);
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                logger.error(e);
                             }
                         }
                     } else if (file.isDirectory()) {
@@ -98,20 +122,19 @@ public class FileListUtils {
                         }
                     }
                 }
+                runningThreads.getAndDecrement();
+                for (Thread thread : threadList) {
+                    try {
+                        thread.join();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                addFileObjToFileObjList(new SimpleDirectoryObject(dir.getName(), fileObjList), this.fileObjList);
             } else {
                 addFileObjToFileObjList(new SimpleDirectoryObject(dir.getName(), new ArrayList<>()), this.fileObjList);
                 runningThreads.getAndDecrement();
-                return;
             }
-            runningThreads.getAndDecrement();
-            for (Thread thread : threadList) {
-                try {
-                    thread.join();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            addFileObjToFileObjList(new SimpleDirectoryObject(dir.getName(), fileObjList), this.fileObjList);
         }
     }
 

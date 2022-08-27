@@ -26,7 +26,6 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         this.resPath = resPath;
         if (JKS != null) {
             if (JKSPasswd != null && JKSPasswd.length != 0) {
-                System.out.println(JKSPasswd);
                 this.JKS = JKS;
                 this.JKSPasswd = JKSPasswd;
                 useSSL = true;

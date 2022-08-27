@@ -312,8 +312,6 @@ public class LittleServer {
                 logger.warn("默认资源目录不存在：" + dir.getPath() + " 正在创建文件夹.");
                 dir.mkdir();
             }
-        } else if (dir.listFiles().length == 1) {
-            dir = dir.listFiles()[0];
         }
 
         //计算资源目录大小, 用于进度条计算
@@ -328,8 +326,10 @@ public class LittleServer {
             //新线程, 计算资源目录缓存
             logger.info("正在生成资源目录缓存...");
             statusProgressBar.setMaximum((int) dirSize[1]);
-            Thread thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, dir));
-            thread.start();
+            for (File childDir : dir.listFiles()) {
+                Thread thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, childDir));
+                thread.start();
+            }
             //轮询线程, 读取进度
             Timer timer = new Timer(100, e -> {
                 long completedBytes = FileListUtils.completedBytes.get();
@@ -410,8 +410,10 @@ public class LittleServer {
             //新线程, 计算资源目录缓存
             logger.info("正在生成资源目录缓存...");
             statusProgressBar.setMaximum((int) dirSize[1]);
-            Thread thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, dir));
-            thread.start();
+            for (File childDir : dir.listFiles()) {
+                Thread thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, childDir));
+                thread.start();
+            }
             //轮询线程, 读取进度
             Timer timer = new Timer(100, e -> {
                 long completedBytes = FileListUtils.completedBytes.get();
