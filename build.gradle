@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'github.kasuminova'
-version '1.0-BETA'
+version '1.0.1-BETA'
 
 
 repositories {

@@ -22,7 +22,7 @@ public class ConfigurationManager {
         private int configVersion = 0;
         private String IP = "0.0.0.0";
         private int port = 8080;
-        private String mainDirPath = "/res/.minecraft";
+        private String mainDirPath = "/res";
         private boolean highPerformanceMode = true;
         private String JKSFilePath = "";
         private String JKSSSLPassword = "";
