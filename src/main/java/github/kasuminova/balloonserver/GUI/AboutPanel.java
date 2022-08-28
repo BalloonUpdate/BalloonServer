@@ -1,0 +1,92 @@
+package github.kasuminova.balloonserver.GUI;
+
+import github.kasuminova.balloonserver.BalloonServer;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.net.URI;
+
+public class AboutPanel {
+    static final int globalButtonWidth = 165;
+    public static JPanel createPanel() {
+        //主面板
+        JPanel aboutPanel = new JPanel(new BorderLayout());
+        Box descBox = Box.createVerticalBox();
+        //标题容器
+        Box titleBox = Box.createHorizontalBox();
+        titleBox.setBorder(new EmptyBorder(10,0,0,0));
+        //LOGO, 并缩放图标
+        titleBox.add(new JLabel(new ImageIcon(BalloonServer.image.getImage().getScaledInstance(64,64, Image.SCALE_DEFAULT))));
+        //标题
+        JLabel title = new JLabel("BalloonServer " + BalloonServer.version);
+        title.setBorder(new EmptyBorder(0,30,0,0));
+        //设置字体
+        try {
+            title.setFont(Font.createFont(Font.TRUETYPE_FONT, AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf")).deriveFont(35f));
+        } catch (Exception e) {
+            title.setFont(title.getFont().deriveFont(35f));
+        }
+        titleBox.add(title);
+        //描述
+        JPanel descPanel = new JPanel(new VFlowLayout(0, VFlowLayout.MIDDLE, 5, 5, 5, 5, false, false));
+        descPanel.setBorder(new EmptyBorder(10,0,0,0));
+        descPanel.add(new JLabel("BalloonServer 是 LittleServer 的完全图形化版本, 基于 Netty-IO 的增强实现.", JLabel.CENTER));
+        descPanel.add(new JLabel("提示：关闭程序窗口并不会关闭程序, 而是会最小化到托盘.", JLabel.CENTER));
+        //链接
+        JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10,5));
+        //仓库链接
+        JButton openProjectLink = new JButton("点击打开仓库链接");
+        openProjectLink.addActionListener(e -> {
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                try {
+                    desktop.browse(URI.create("https://github.com/BalloonUpdate/BalloonServer"));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        openProjectLink.setPreferredSize(new Dimension(globalButtonWidth,30));
+        linkPanel.add(openProjectLink);
+        //项目链接
+        JButton openOrganizationLink = new JButton("点击打开项目链接");
+        openOrganizationLink.addActionListener(e -> {
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                try {
+                    desktop.browse(URI.create("https://github.com/BalloonUpdate"));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        openOrganizationLink.setPreferredSize(new Dimension(globalButtonWidth,30));
+        linkPanel.add(openOrganizationLink);
+        //Issues 链接
+        JButton openIssuesLink = new JButton("戳我提交 Issue!");
+        openIssuesLink.addActionListener(e -> {
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                try {
+                    desktop.browse(URI.create("https://github.com/BalloonUpdate/BalloonServer/issues/new"));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        openIssuesLink.setPreferredSize(new Dimension(globalButtonWidth,30));
+        linkPanel.add(openIssuesLink);
+        descPanel.add(linkPanel);
+        //协议
+        JLabel licenseLabel = new JLabel("本软件使用 AGPLv3 协议.", JLabel.RIGHT);
+        licenseLabel.setFont(licenseLabel.getFont().deriveFont(18f));
+        licenseLabel.setBorder(new EmptyBorder(0,0,10,10));
+
+        descBox.add(titleBox);
+        descBox.add(descPanel);
+        aboutPanel.add(descBox);
+        aboutPanel.add(licenseLabel, BorderLayout.SOUTH);
+        return aboutPanel;
+    }
+}

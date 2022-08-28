@@ -1,12 +1,18 @@
 package github.kasuminova.balloonserver.GUI;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * VerticalFlowLayout is similar to FlowLayout except it lays out components
+ * MyVFlowLayout is similar to FlowLayout except it lays out components
  * vertically. Extends FlowLayout because it mimics much of the behavior of the
  * FlowLayout class, except vertically. An additional feature is that you can
- * specify a fill to edge flag, which causes the VerticalFlowLayout manager to
+ * specify a fill to edge flag, which causes the MyVFlowLayout manager to
  * resize all components to expand to the column width Warning: This causes
  * problems when the main panel has less space that it needs and it seems to
  * prohibit multi-column output. Additionally there is a vertical fill flag,
@@ -34,163 +40,146 @@ public class VFlowLayout extends FlowLayout
      */
     public static final int BOTTOM = 2;
 
-    int hgap;
-    int vgap;
-    boolean hfill;
-    boolean vfill;
+    /**
+     * Specify the alignment to be left.
+     */
+    public static final int LEFT = 0;
 
     /**
-     * Construct a new VerticalFlowLayout with a middle alignment, and the fill
-     * to edge flag set.
+     * Specify the alignment to be right.
      */
+    public static final int RIGHT = 2;
+
+    private int horizontalAlignment;
+    private int topVerticalGap;
+    private int bottomVerticalGap;
+    private boolean isHorizontalFill;
+    private boolean isVerticalFill;
+
     public VFlowLayout()
     {
-        this(TOP, 5, 5, true, false);
+        this(TOP, MIDDLE, 5, 5, 5, 5, true, false);
     }
 
-    /**
-     * Construct a new VerticalFlowLayout with a middle alignment.
-     *
-     * @param hfill
-     *            the fill to edge flag
-     * @param vfill
-     *            the vertical fill in pixels.
-     */
-    public VFlowLayout(boolean hfill, boolean vfill)
+    public VFlowLayout(boolean isHorizontalFill, boolean isVerticalFill)
     {
-        this(TOP, 5, 5, hfill, vfill);
+        this(TOP, MIDDLE, 5, 5, 5, 5, isHorizontalFill, isVerticalFill);
     }
 
-    /**
-     * Construct a new VerticalFlowLayout with a middle alignment.
-     *
-     * @param align
-     *            the alignment value
-     */
     public VFlowLayout(int align)
     {
-        this(align, 5, 5, true, false);
+        this(align, MIDDLE, 5, 5, 5, 5, true, false);
     }
 
-    /**
-     * Construct a new VerticalFlowLayout.
-     *
-     * @param align
-     *            the alignment value
-     * @param hfill
-     *            the horizontalfill in pixels.
-     * @param vfill
-     *            the vertical fill in pixels.
-     */
-    public VFlowLayout(int align, boolean hfill, boolean vfill)
+    public VFlowLayout(int align, boolean isHorizontalFill, boolean isVerticalFill)
     {
-        this(align, 5, 5, hfill, vfill);
+        this(align, MIDDLE, 5, 5, 5, 5, isHorizontalFill, isVerticalFill);
+    }
+
+    public VFlowLayout(int align, int horizontalGap, int verticalGap, boolean isHorizontalFill, boolean isVerticalFill)
+    {
+        this(align, MIDDLE, horizontalGap, verticalGap, verticalGap, verticalGap, isHorizontalFill, isVerticalFill);
+    }
+
+    public VFlowLayout(int align, int horizontalGap, int verticalGap, int topVerticalGap, int bottomVerticalGap, boolean isHorizontalFill, boolean isVerticalFill)
+    {
+        this(align, MIDDLE, horizontalGap, verticalGap, topVerticalGap, bottomVerticalGap, isHorizontalFill, isVerticalFill);
     }
 
     /**
-     * Construct a new VerticalFlowLayout.
+     * Construct a new MyVFlowLayout.
      *
-     * @param align
+     * @param verticalAlignment
      *            the alignment value
-     * @param hgap
+     * @param horizontalAlignment
+     *            the horizontal alignment value
+     * @param horizontalGap
      *            the horizontal gap variable
-     * @param vgap
+     * @param verticalGap
      *            the vertical gap variable
-     * @param hfill
+     * @param topVerticalGap
+     *            the top vertical gap variable
+     * @param bottomVerticalGap
+     *            the bottom vertical gap variable
+     * @param isHorizontalFill
      *            the fill to edge flag
-     * @param vfill
+     * @param isVerticalFill
      *            true if the panel should vertically fill.
      */
-    public VFlowLayout(int align, int hgap, int vgap, boolean hfill, boolean vfill)
+    public VFlowLayout(int verticalAlignment, int horizontalAlignment, int horizontalGap, int verticalGap, int topVerticalGap, int bottomVerticalGap, boolean isHorizontalFill, boolean isVerticalFill)
     {
-        setAlignment(align);
-        this.hgap = hgap;
-        this.vgap = vgap;
-        this.hfill = hfill;
-        this.vfill = vfill;
+        this.setAlignment(verticalAlignment);
+        this.setHorizontalAlignment(horizontalAlignment);
+        this.setHgap(horizontalGap);
+        this.setVgap(verticalGap);
+        this.setTopVerticalGap(topVerticalGap);
+        this.setBottomVerticalGap(bottomVerticalGap);
+        this.setHorizontalFill(isHorizontalFill);
+        this.setVerticalFill(isVerticalFill);
     }
 
-    /**
-     * Returns the preferred dimensions given the components in the target
-     * container.
-     *
-     * @param target
-     *            the component to lay out
-     */
-    public Dimension preferredLayoutSize(Container target)
+    public void setHorizontalAlignment(int horizontalAlignment)
     {
-        Dimension tarsiz = new Dimension(0, 0);
-
-        for (int i = 0; i < target.getComponentCount(); i++)
+        if(LEFT == horizontalAlignment)
         {
-            Component m = target.getComponent(i);
-
-            if (m.isVisible())
-            {
-                Dimension d = m.getPreferredSize();
-                tarsiz.width = Math.max(tarsiz.width, d.width);
-
-                if (i > 0)
-                {
-                    tarsiz.height += hgap;
-                }
-
-                tarsiz.height += d.height;
-            }
+            this.horizontalAlignment = LEFT;
         }
-
-        Insets insets = target.getInsets();
-        tarsiz.width += insets.left + insets.right + hgap * 2;
-        tarsiz.height += insets.top + insets.bottom + vgap * 2;
-
-        return tarsiz;
+        else if(RIGHT == horizontalAlignment)
+        {
+            this.horizontalAlignment = RIGHT;
+        }
+        else
+        {
+            this.horizontalAlignment = MIDDLE;
+        }
     }
 
-    /**
-     * Returns the minimum size needed to layout the target container.
-     *
-     * @param target
-     *            the component to lay out.
-     * @return the minimum layout dimension.
-     */
-    public Dimension minimumLayoutSize(Container target)
+    public int getHorizontalAlignment()
     {
-        Dimension tarsiz = new Dimension(0, 0);
+        return this.horizontalAlignment;
+    }
 
-        for (int i = 0; i < target.getComponentCount(); i++)
-        {
-            Component m = target.getComponent(i);
+    @Override
+    public void setHgap(int horizontalGap)
+    {
+        super.setHgap(horizontalGap);
+    }
 
-            if (m.isVisible())
-            {
-                Dimension d = m.getMinimumSize();
-                tarsiz.width = Math.max(tarsiz.width, d.width);
+    @Override
+    public void setVgap(int verticalGap)
+    {
+        super.setVgap(verticalGap);
+    }
 
-                if (i > 0)
-                {
-                    tarsiz.height += vgap;
-                }
+    public void setTopVerticalGap(int topVerticalGap)
+    {
+        this.topVerticalGap = topVerticalGap;
+    }
 
-                tarsiz.height += d.height;
-            }
-        }
+    public int getTopVerticalGap()
+    {
+        return this.topVerticalGap;
+    }
 
-        Insets insets = target.getInsets();
-        tarsiz.width += insets.left + insets.right + hgap * 2;
-        tarsiz.height += insets.top + insets.bottom + vgap * 2;
+    public void setBottomVerticalGap(int bottomVerticalGap)
+    {
+        this.bottomVerticalGap = bottomVerticalGap;
+    }
 
-        return tarsiz;
+    public int getBottomVerticalGap()
+    {
+        return this.bottomVerticalGap;
     }
 
     /**
      * Set true to fill vertically.
      *
-     * @param vfill
+     * @param isVerticalFill
      *            true to fill vertically.
      */
-    public void setVerticalFill(boolean vfill)
+    public void setVerticalFill(boolean isVerticalFill)
     {
-        this.vfill = vfill;
+        this.isVerticalFill = isVerticalFill;
     }
 
     /**
@@ -200,18 +189,18 @@ public class VFlowLayout extends FlowLayout
      */
     public boolean getVerticalFill()
     {
-        return vfill;
+        return isVerticalFill;
     }
 
     /**
      * Set to true to enable horizontally fill.
      *
-     * @param hfill
+     * @param isHorizontalFill
      *            true to fill horizontally.
      */
-    public void setHorizontalFill(boolean hfill)
+    public void setHorizontalFill(boolean isHorizontalFill)
     {
-        this.hfill = hfill;
+        this.isHorizontalFill = isHorizontalFill;
     }
 
     /**
@@ -221,117 +210,180 @@ public class VFlowLayout extends FlowLayout
      */
     public boolean getHorizontalFill()
     {
-        return hfill;
+        return isHorizontalFill;
     }
 
     /**
-     * places the components defined by first to last within the target
-     * container using the bounds box defined.
+     * Returns the preferred dimensions given the components in the target
+     * container.
      *
-     * @param target
-     *            the container.
-     * @param x
-     *            the x coordinate of the area.
-     * @param y
-     *            the y coordinate of the area.
-     * @param width
-     *            the width of the area.
-     * @param height
-     *            the height of the area.
-     * @param first
-     *            the first component of the container to place.
-     * @param last
-     *            the last component of the container to place.
+     * @param container
+     *            the component to lay out
      */
-    private void placethem(Container target, int x, int y, int width, int height, int first, int last)
+    @Override
+    public Dimension preferredLayoutSize(Container container)
     {
-        int align = getAlignment();
+        Dimension rs = new Dimension(0, 0);
+        List<Component> components = this.getVisibleComponents(container);
+        Dimension dimension = this.preferredComponentsSize(components);
+        rs.width += dimension.width;
+        rs.height += dimension.height;
+        Insets insets = container.getInsets();
+        rs.width += insets.left + insets.right;
+        rs.height += insets.top + insets.bottom;
 
-        if (align == MIDDLE)
+        if(0 < components.size())
         {
-            y += height / 2;
+            rs.width += this.getHgap() * 2;
+            rs.height += this.topVerticalGap;
+            rs.height += this.bottomVerticalGap;
         }
 
-        if (align == BOTTOM)
-        {
-            y += height;
-        }
-
-        for (int i = first; i < last; i++)
-        {
-            Component m = target.getComponent(i);
-            Dimension md = m.getSize();
-
-            if (m.isVisible())
-            {
-                int px = x + (width - md.width) / 2;
-                m.setLocation(px, y);
-                y += vgap + md.height;
-            }
-        }
+        return rs;
     }
 
     /**
-     * Lays out the container.
+     * Returns the minimum size needed to layout the target container.
      *
-     * @param target
-     *            the container to lay out.
+     * @param container
+     *            the component to lay out.
+     * @return the minimum layout dimension.
      */
-    public void layoutContainer(Container target)
+    @Override
+    public Dimension minimumLayoutSize(Container container)
     {
-        Insets insets = target.getInsets();
-        int maxheight = target.getSize().height - (insets.top + insets.bottom + vgap * 2);
-        int maxwidth = target.getSize().width - (insets.left + insets.right + hgap * 2);
-        int numcomp = target.getComponentCount();
-        int x = insets.left + hgap, y = 0;
-        int colw = 0, start = 0;
+        Dimension rs = new Dimension(0, 0);
+        List<Component> components = this.getVisibleComponents(container);
+        Dimension dimension = this.minimumComponentsSize(components);
+        rs.width += dimension.width;
+        rs.height += dimension.height;
+        Insets insets = container.getInsets();
+        rs.width += insets.left + insets.right;
+        rs.height += insets.top + insets.bottom;
 
-        for (int i = 0; i < numcomp; i++)
+        if(0 < components.size())
         {
-            Component m = target.getComponent(i);
+            rs.width += this.getHgap() * 2;
+            rs.height += this.topVerticalGap;
+            rs.height += this.bottomVerticalGap;
+        }
 
-            if (m.isVisible())
+        return rs;
+    }
+
+    @Override
+    public void layoutContainer(Container container)
+    {
+        int horizontalGap = this.getHgap();
+        int verticalGap = this.getVgap();
+        Insets insets = container.getInsets();
+        int maxWidth = container.getSize().width - (insets.left + insets.right + horizontalGap * 2);
+        int maxHeight = container.getSize().height - (insets.top + insets.bottom + this.topVerticalGap + this.bottomVerticalGap);
+        List<Component> components = this.getVisibleComponents(container);
+        Dimension preferredComponentsSize = this.preferredComponentsSize(components);
+        int alignment = this.getAlignment();
+        int y = insets.top + this.topVerticalGap;;
+
+        if(!this.isVerticalFill && preferredComponentsSize.height < maxHeight)
+        {
+            if(MIDDLE == alignment)
             {
-                Dimension d = m.getPreferredSize();
-
-                // fit last component to remaining height
-                if ((this.vfill) && (i == (numcomp - 1)))
-                {
-                    d.height = Math.max((maxheight - y), m.getPreferredSize().height);
-                }
-
-                // fit component size to container width
-                if (this.hfill)
-                {
-                    m.setSize(maxwidth, d.height);
-                    d.width = maxwidth;
-                }
-                else
-                {
-                    m.setSize(d.width, d.height);
-                }
-
-                if (y + d.height > maxheight)
-                {
-                    placethem(target, x, insets.top + vgap, colw, maxheight - y, start, i);
-                    y = d.height;
-                    x += hgap + colw;
-                    colw = d.width;
-                    start = i;
-                }
-                else
-                {
-                    if (y > 0)
-                    {
-                        y += vgap;
-                    }
-
-                    y += d.height;
-                    colw = Math.max(colw, d.width);
-                }
+                y += (maxHeight - preferredComponentsSize.height) / 2;
+            }
+            else if(BOTTOM == alignment)
+            {
+                y += maxHeight - preferredComponentsSize.height;
             }
         }
 
-        placethem(target, x, insets.top + vgap, colw, maxheight - y, start, numcomp);
+        int index = 0;
+
+        for(Component component : components)
+        {
+            int x = insets.left + horizontalGap;
+            Dimension dimension = component.getPreferredSize();
+
+            if(this.isHorizontalFill)
+            {
+                dimension.width = maxWidth;
+            }
+            else
+            {
+                dimension.width = Math.min(maxWidth, dimension.width);
+
+                if(MIDDLE == this.horizontalAlignment)
+                {
+                    x += (maxWidth - dimension.width) / 2;
+                }
+                else if(RIGHT == this.horizontalAlignment)
+                {
+                    x += maxWidth - dimension.width;
+                }
+            }
+
+            if(this.isVerticalFill && index == components.size() - 1)
+            {
+                int height = maxHeight + this.topVerticalGap + insets.top - y;
+                dimension.height = Math.max(height, dimension.height);
+            }
+
+            component.setSize(dimension);
+            component.setLocation(x, y);
+            y += dimension.height + verticalGap;
+            index++;
+        }
+    }
+
+    private Dimension preferredComponentsSize(List<Component> components)
+    {
+        Dimension rs = new Dimension(0, 0);
+
+        for(Component component : components)
+        {
+            Dimension dimension = component.getPreferredSize();
+            rs.width = Math.max(rs.width, dimension.width);
+            rs.height += dimension.height;
+        }
+
+        if(0 < components.size())
+        {
+            rs.height += this.getVgap() * (components.size() - 1);
+        }
+
+        return rs;
+    }
+
+    private Dimension minimumComponentsSize(List<Component> components)
+    {
+        Dimension rs = new Dimension(0, 0);
+
+        for(Component component : components)
+        {
+            Dimension dimension = component.getMinimumSize();
+            rs.width = Math.max(rs.width, dimension.width);
+            rs.height += dimension.height;
+        }
+
+        if(0 < components.size())
+        {
+            rs.height += this.getVgap() * (components.size() - 1);
+        }
+
+        return rs;
+    }
+
+    private List<Component> getVisibleComponents(Container container)
+    {
+        List<Component> rs = new ArrayList<Component>();
+
+        for(Component component : container.getComponents())
+        {
+            if(component.isVisible())
+            {
+                rs.add(component);
+            }
+        }
+
+        return rs;
     }
 }

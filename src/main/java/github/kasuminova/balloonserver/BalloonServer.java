@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver;
 
+import github.kasuminova.balloonserver.GUI.AboutPanel;
 import github.kasuminova.balloonserver.Servers.LittleServer;
 import github.kasuminova.balloonserver.Utils.LogManager;
 
@@ -16,7 +17,9 @@ public class BalloonServer {
     static {
         SetupSwing.init();
     }
-    public static final String version = "1.0.2-BETA";
+    //软件图标
+    public static ImageIcon image = new ImageIcon(AboutPanel.class.getResource("/image/icon_128x128.jpg"));
+    public static final String version = "1.0.3-BETA";
     public static JFrame frame = new JFrame("BalloonServer " + version);
     public static JProgressBar statusProgressBar = new JProgressBar();
     public static ChangeListener changeListener;
@@ -25,7 +28,13 @@ public class BalloonServer {
     public static void loadGUI(){
         //主窗口
         JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+        frame.setIconImage(image.getImage());
         frame.setSize(1300,700);
+        if (SystemTray.isSupported()) {
+            SwingSystemTray.initSystemTray(frame);
+        } else {
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        }
 
         //状态栏
         JPanel statusPanel = new JPanel(new BorderLayout());
@@ -64,6 +73,7 @@ public class BalloonServer {
 
         //标签页组装
         tabbedPane.add(LittleServer.createPanel(), "LittleServer");
+        tabbedPane.add(AboutPanel.createPanel(), "关于本程序");
         //主面板
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
@@ -71,7 +81,6 @@ public class BalloonServer {
         //窗口
         frame.setMinimumSize(new Dimension((int) (frame.getWidth() * 0.8), frame.getHeight()));
         frame.add(mainPanel);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
