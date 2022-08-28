@@ -10,12 +10,14 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.Attribute;
 import io.netty.util.CharsetUtil;
-import org.jetbrains.annotations.Nullable;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 
@@ -178,7 +180,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * @param clientIP 客户端 IP
      * @param decodedURI 转义后的 URI
      */
-    private static void printLog(@Nullable String msg, long StartTime, String clientIP, String decodedURI) {
+    private static void printLog(String msg, long StartTime, String clientIP, String decodedURI) {
         try {
             logger.info(clientIP + " " + msg + " URI: " + decodedURI + " (" + (System.currentTimeMillis() - StartTime) + "ms)");
         } catch (Exception e) {

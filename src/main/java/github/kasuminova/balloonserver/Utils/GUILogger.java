@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 /**
  * 一个简易的 Logger，与 GUI 同步
  */
-public class LogManager {
+public class GUILogger {
     String name;
     JTextPane logPane;
     Logger logger;
@@ -23,7 +23,7 @@ public class LogManager {
      * @param name 前缀
      * @param logPane 要同步的 JTextPane
      */
-    public LogManager(String name, JTextPane logPane) {
+    public GUILogger(String name, JTextPane logPane) {
         logger = Logger.getLogger(name);
         this.name = name;
         this.logPane = logPane;
@@ -34,7 +34,7 @@ public class LogManager {
         }
     }
 
-    public LogManager(String name) {
+    public GUILogger(String name) {
         logger = Logger.getLogger(name);
         this.name = name;
     }

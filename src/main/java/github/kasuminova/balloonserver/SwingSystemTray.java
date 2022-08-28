@@ -4,8 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.net.URL;
 
 /**
@@ -34,9 +32,7 @@ public class SwingSystemTray {
 
         //添加菜单选项
         JMenuItem exit = new JMenuItem("退出程序");
-        exit.addActionListener(e -> {
-            System.exit(0);
-        });
+        exit.addActionListener(e -> System.exit(0));
         JMenuItem showMainFrame = new JMenuItem("显示窗口");
         showMainFrame.addActionListener(e -> {
             //显示窗口

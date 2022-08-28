@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import github.kasuminova.balloonserver.Utils.LogManager;
+import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class DecodeProxy extends ByteToMessageDecoder {
 
-    private LogManager logger = new LogManager("Server");
+    private GUILogger logger = new GUILogger("Server");
 
     /**
      * 保存客户端IP
@@ -32,7 +32,7 @@ public class DecodeProxy extends ByteToMessageDecoder {
      * @throws Exception
      */
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) throws Exception {
+    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) {
 
         /*消息打印--------------------------*/
         byte[] bytes = printSz(byteBuf);

@@ -109,7 +109,7 @@ public class IPAddressUtil {
             case 2:
                 res[2] = (byte) ((tmpValue >>  8) & 0xff);
             case 3:
-                res[3] = (byte) ((tmpValue >>  0) & 0xff);
+                res[3] = (byte) ((tmpValue) & 0xff);
         }
         return res;
     }
@@ -303,16 +303,13 @@ public class IPAddressUtil {
         if (addr.length < INADDR16SZ) {
             return false;
         }
-        if ((addr[0] == 0x00) && (addr[1] == 0x00) &&
+        return (addr[0] == 0x00) && (addr[1] == 0x00) &&
                 (addr[2] == 0x00) && (addr[3] == 0x00) &&
                 (addr[4] == 0x00) && (addr[5] == 0x00) &&
                 (addr[6] == 0x00) && (addr[7] == 0x00) &&
                 (addr[8] == 0x00) && (addr[9] == 0x00) &&
-                (addr[10] == (byte)0xff) &&
-                (addr[11] == (byte)0xff))  {
-            return true;
-        }
-        return false;
+                (addr[10] == (byte) 0xff) &&
+                (addr[11] == (byte) 0xff);
     }
 
     // See java.net.URI for more details on how to generate these
@@ -734,6 +731,6 @@ public class IPAddressUtil {
     private final static long TERMINAL_PARSE_ERROR = -2L;
 
     private static final String ALLOW_AMBIGUOUS_IPADDRESS_LITERALS_SP = "jdk.net.allowAmbiguousIPAddressLiterals";
-    private static final boolean ALLOW_AMBIGUOUS_IPADDRESS_LITERALS_SP_VALUE = Boolean.valueOf(
+    private static final boolean ALLOW_AMBIGUOUS_IPADDRESS_LITERALS_SP_VALUE = Boolean.parseBoolean(
             GetPropertyAction.privilegedGetProperty(ALLOW_AMBIGUOUS_IPADDRESS_LITERALS_SP, "false"));
 }

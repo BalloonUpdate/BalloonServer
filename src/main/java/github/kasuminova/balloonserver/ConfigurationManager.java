@@ -23,7 +23,8 @@ public class ConfigurationManager {
         private String IP = "0.0.0.0";
         private int port = 8080;
         private String mainDirPath = "/res";
-        private boolean highPerformanceMode = true;
+        private boolean miniSizeUpdateMode = true;
+        private boolean fileChangeListener = true;
         private String JKSFilePath = "";
         private String JKSSSLPassword = "";
         private String[] common_mode = new String[0];
@@ -44,11 +45,11 @@ public class ConfigurationManager {
         public void setPort(int port) {
             this.port = port;
         }
-        public boolean isHighPerformanceMode() {
-            return highPerformanceMode;
+        public boolean isMiniSizeUpdateMode() {
+            return miniSizeUpdateMode;
         }
-        public void setHighPerformanceMode(boolean highPerformanceMode) {
-            this.highPerformanceMode = highPerformanceMode;
+        public void setMiniSizeUpdateMode(boolean miniSizeUpdateMode) {
+            this.miniSizeUpdateMode = miniSizeUpdateMode;
         }
         public String getJKSFilePath() {
             return JKSFilePath;
@@ -82,6 +83,12 @@ public class ConfigurationManager {
         }
         public void setMainDirPath(String mainDirPath) {
             this.mainDirPath = mainDirPath;
+        }
+        public boolean isFileChangeListener() {
+            return fileChangeListener;
+        }
+        public void setFileChangeListener(boolean fileChangeListener) {
+            this.fileChangeListener = fileChangeListener;
         }
     }
 }

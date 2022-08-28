@@ -1,11 +1,24 @@
 package github.kasuminova.balloonserver.GUI;
 
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatArcDarkContrastIJTheme;
+import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
+import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme;
 import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.Servers.LittleServer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
+import static github.kasuminova.balloonserver.BalloonServer.frame;
 
 public class AboutPanel {
     static final int globalButtonWidth = 165;
@@ -82,11 +95,57 @@ public class AboutPanel {
         JLabel licenseLabel = new JLabel("本软件使用 AGPLv3 协议.", JLabel.RIGHT);
         licenseLabel.setFont(licenseLabel.getFont().deriveFont(18f));
         licenseLabel.setBorder(new EmptyBorder(0,0,10,10));
+        //主题切换
+        List<String> themes = new ArrayList<>();
+        themes.add("FlatLaf Light");
+        themes.add("FlatLaf Dark");
+        themes.add("FlatLaf IntelIJ");
+        themes.add("FlatLaf Dracula");
+        themes.add("Atom One Dark");
+        themes.add("Atom One Dark Contrast");
+        themes.add("Arc Dark Contrast");
+
+        JList<String> themeList = new JList<>();
+        themeList.setListData(themes.toArray(new String[themes.size()]));
+        themeList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        themeList.setSelectedIndex(4);
+        themeList.setBorder(new TitledBorder("选择界面主题"));
+        themeList.addListSelectionListener(e -> {
+            try {
+                switch (themeList.getSelectedValue()) {
+                    case "FlatLaf Light":
+                        UIManager.setLookAndFeel(new FlatLightLaf());
+                        break;
+                    case "FlatLaf Dark":
+                        UIManager.setLookAndFeel(new FlatDarkLaf());
+                        break;
+                    case "FlatLaf IntelIJ":
+                        UIManager.setLookAndFeel(new FlatIntelliJLaf());
+                        break;
+                    case "FlatLaf Dracula":
+                        UIManager.setLookAndFeel(new FlatDarculaLaf());
+                        break;
+                    case "Atom One Dark":
+                        UIManager.setLookAndFeel(new FlatAtomOneDarkIJTheme());
+                        break;
+                    case "Atom One Dark Contrast":
+                        UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
+                        break;
+                    case "Arc Dark Contrast":
+                        UIManager.setLookAndFeel(new FlatArcDarkContrastIJTheme());
+                        break;
+                }
+                SwingUtilities.updateComponentTreeUI(frame);
+            } catch (Exception ex) {
+                LittleServer.logger.error("切换主题的时候出现了一些问题...", ex);
+            }
+        });
 
         descBox.add(titleBox);
         descBox.add(descPanel);
         aboutPanel.add(descBox);
         aboutPanel.add(licenseLabel, BorderLayout.SOUTH);
+        aboutPanel.add(themeList, BorderLayout.WEST);
         return aboutPanel;
     }
 }

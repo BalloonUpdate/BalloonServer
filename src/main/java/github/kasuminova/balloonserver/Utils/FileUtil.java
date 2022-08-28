@@ -1,10 +1,7 @@
 package github.kasuminova.balloonserver.Utils;
 
 import javax.swing.filechooser.FileFilter;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -13,9 +10,6 @@ public class FileUtil {
      * 生成.json格式文件
      */
     public static void createJsonFile(String jsonString, String filePath, String fileName) throws IOException {
-        // 标记文件生成是否成功
-        boolean flag = true;
-
         // 拼接文件完整路径
         String fullPath = filePath + File.separator + fileName + ".json";
 
@@ -72,6 +66,20 @@ public class FileUtil {
         } else {
             return new byte[1024 * 1024 * 4];
         }
+    }
+
+    public static String readStringFromFile(File file) throws IOException {
+        FileReader fileReader = new FileReader(file);
+        Reader reader = new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8);
+        StringBuilder sb = new StringBuilder();
+        int ch;
+        while ((ch = reader.read()) != -1) {
+            sb.append((char) ch);
+        }
+        fileReader.close();
+        reader.close();
+
+        return sb.toString();
     }
 
     /**

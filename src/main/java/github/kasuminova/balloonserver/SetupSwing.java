@@ -6,7 +6,6 @@ import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.Enumeration;
-import java.util.Objects;
 
 public class SetupSwing {
     public static void init() {
@@ -16,7 +15,7 @@ public class SetupSwing {
 
         //设置字体
         try {
-            Font font = Font.createFont(Font.TRUETYPE_FONT, Objects.requireNonNull(BalloonServer.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf")));
+            Font font = Font.createFont(Font.TRUETYPE_FONT, BalloonServer.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf"));
             Font newFont = font.deriveFont(14f);
             initGlobalFont(newFont);
         } catch (Exception e) {

@@ -1,15 +1,18 @@
 package github.kasuminova.balloonserver.Servers;
 
 import com.alibaba.fastjson2.JSONArray;
-import github.balloonupdate.littleserver.AbstractSimpleFileObject;
+import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.ConfigurationManager;
 import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
 import github.kasuminova.balloonserver.Utils.FileListUtils;
+import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 import github.kasuminova.balloonserver.Utils.IPUtil.IPAddressUtil;
-import github.kasuminova.balloonserver.Utils.LogManager;
+import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -18,10 +21,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
@@ -29,8 +33,9 @@ import static github.kasuminova.balloonserver.BalloonServer.*;
 public class LittleServer {
     //服务器启动状态
     public static AtomicBoolean isStarted = new AtomicBoolean(false);
+    public static boolean isGenerating = false;
     public static HttpServer server = new HttpServer();
-    public static LogManager logger;
+    public static GUILogger logger;
     public static LittleServerConfig config;
     public static JButton startOrStop = new JButton("重载配置并启动服务器");
     public static JButton regenDirectoryStructureCache = new JButton("重新生成资源文件夹缓存");
@@ -49,7 +54,7 @@ public class LittleServer {
         JScrollPane logScrollPane = new JScrollPane(logPane);
         logPanel.add(logScrollPane, BorderLayout.CENTER);
 
-        logger = new LogManager("", logPane);
+        logger = new GUILogger("", logPane);
         server.setLogger(logger);
 
         //控制面板
@@ -85,13 +90,6 @@ public class LittleServer {
                 "默认为 /res , 也可输入其他文件夹, 如 /resource、/content/res 等.");
         mainDirBox.add(mainDirLabel);
         mainDirBox.add(mainDirTextField);
-
-        JCheckBox highPerformanceMode = new JCheckBox("高性能模式");
-        highPerformanceMode.setToolTipText(
-                "高性能模式，平时在线人数超过 50 建议开启，否则建议关闭\n" +
-                "开启后，修改更新规则和变动 res 目录下的文件都需要在关闭单文件服务端的情况下进行，否则不会生效\n" +
-                "关闭时，仅修改更新规则需要重启，修改 res 目录下的文件则不需要");
-        mainDirBox.add(highPerformanceMode);
         configPanel.add(mainDirBox);
 
         //SSL 证书
@@ -124,6 +122,25 @@ public class LittleServer {
         JksSslPassBox.add(JksSslPassField);
         configPanel.add(JksSslBox);
         configPanel.add(JksSslPassBox);
+
+        //额外功能
+        Box extraFeaturesBox = Box.createHorizontalBox();
+        //最小化更新模式
+        JCheckBox miniSizeUpdateMode = new JCheckBox("最小化更新模式");
+        miniSizeUpdateMode.setToolTipText(
+                "开启后，程序如果在生成缓存后变动文件，则不需要重新生成缓存文件.\n" +
+                        "程序将会最小化检查差异更新，适合客户端变动较小或服务器 IO 性能较弱的情况下使用.\n" +
+                        "关闭后，程序每次更新缓存文件都会完整计算一次资源文件夹." +
+                        "注意：不推荐在有大量文件变动的情况下使用，会导致运算缓慢.\n");
+        extraFeaturesBox.add(miniSizeUpdateMode);
+        //实时文件监听
+        JCheckBox fileChangeListener = new JCheckBox("实时文件监听");
+        fileChangeListener.setToolTipText(
+                "开启后，启动服务器的同时会启动文件监听服务.\n" +
+                        "文件监听服务会每隔 5 - 10 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.\n" +
+                        "此功能使用最小化更新模式的方法生成缓存.");
+        extraFeaturesBox.add(fileChangeListener);
+        configPanel.add(extraFeaturesBox);
 
         //普通更新模式
         JPanel common_ModePanel = new JPanel(new VFlowLayout());
@@ -228,7 +245,7 @@ public class LittleServer {
         configPanel.add(once_ModePanel);
 
         //载入配置文件
-        loadConfigurationFromFile(IPTextField,portSpinner,highPerformanceMode,JksSslTextField,JksSslPassField,mainDirTextField,common_Mode,once_Mode);
+        loadConfigurationFromFile(IPTextField,portSpinner,miniSizeUpdateMode,JksSslTextField,JksSslPassField,mainDirTextField,common_Mode,once_Mode,fileChangeListener);
 
         JPanel southControlPanel = new JPanel(new VFlowLayout());
         southControlPanel.add(new JLabel("上方配置修改后，请点击重载配置按钮来载入配置."));
@@ -236,15 +253,15 @@ public class LittleServer {
         //重载配置
         JButton reloadButton = new JButton("重载配置");
         reloadButton.setToolTipText("以控制面板当前的配置应用到程序配置，但是不保存配置到磁盘.");
-        reloadButton.addActionListener(e -> reloadConfigurationFromGUI(IPTextField,portSpinner,highPerformanceMode,JksSslPassField,mainDirTextField));
+        reloadButton.addActionListener(e -> reloadConfigurationFromGUI(IPTextField,portSpinner,miniSizeUpdateMode,JksSslPassField,mainDirTextField,fileChangeListener));
         southControlPanel.add(reloadButton);
 
         //存储当前配置
-        JButton saveConfigButton = new JButton("保存当前配置并重载");
+        JButton saveConfigButton = new JButton("保存配置并重载");
         saveConfigButton.setToolTipText("以控制面板当前的配置应用到程序配置，并保存配置到磁盘.");
         southControlPanel.add(saveConfigButton);
         saveConfigButton.addActionListener(e -> {
-            reloadConfigurationFromGUI(IPTextField,portSpinner,highPerformanceMode,JksSslPassField,mainDirTextField);
+            reloadConfigurationFromGUI(IPTextField,portSpinner,miniSizeUpdateMode,JksSslPassField,mainDirTextField,fileChangeListener);
             try {
                 ConfigurationManager.saveConfigurationToFile(config,"./","littleserver");
                 logger.info("已保存配置至磁盘.");
@@ -255,14 +272,42 @@ public class LittleServer {
 
         //重新生成资源文件夹缓存
         southControlPanel.add(regenDirectoryStructureCache);
-        regenDirectoryStructureCache.addActionListener(e -> genDirCache());
+        regenDirectoryStructureCache.addActionListener(e -> {
+            File jsonCache = new File("./res-cache.json");
+            if (jsonCache.exists() && miniSizeUpdateMode.isSelected()) {
+                try {
+                    String jsonString = FileUtil.readStringFromFile(jsonCache);
+                    JSONArray jsonArray = JSONArray.parseArray(jsonString);
+                    cacheUtils.genResDirCache(jsonArray);
+                } catch (Exception ex) {
+                    logger.error("读取缓存文件的时候出现了一些问题...", ex);
+                    logger.warn("缓存文件读取失败, 重新生成缓存...");
+                    cacheUtils.genResDirCache(null);
+                }
+            } else {
+                cacheUtils.genResDirCache(null);
+            }
+        });
 
         //启动服务器
         startOrStop.addActionListener(e -> {
             //如果启动则关闭服务器
             if (!isStarted.get()) {
-                reloadConfigurationFromGUI(IPTextField,portSpinner,highPerformanceMode,JksSslPassField,mainDirTextField);
-                genDirCacheAndStartServer();
+                reloadConfigurationFromGUI(IPTextField,portSpinner,miniSizeUpdateMode,JksSslPassField,mainDirTextField,fileChangeListener);
+                File jsonCache = new File("./res-cache.json");
+                if (jsonCache.exists() && miniSizeUpdateMode.isSelected()) {
+                    try {
+                        String jsonString = FileUtil.readStringFromFile(jsonCache);
+                        JSONArray jsonArray = JSONArray.parseArray(jsonString);
+                        cacheUtils.genResDirCacheAndStartServer(jsonArray);
+                    } catch (Exception ex) {
+                        logger.error("读取缓存文件的时候出现了一些问题...", ex);
+                        logger.warn("缓存文件读取失败, 重新生成缓存...");
+                        cacheUtils.genResDirCacheAndStartServer(null);
+                    }
+                } else {
+                    cacheUtils.genResDirCacheAndStartServer(null);
+                }
             } else {
                 try {
                     server.stop();
@@ -297,179 +342,346 @@ public class LittleServer {
     }
 
     /**
-     * 以多线程方式生成资源缓存结构
-     * 使用配置文件中的资源文件夹路径
-     * WARN: 这段代码稍微有点屎山，慎改
+     * 重新生成缓存
+     * 强制高性能模式.
      */
-    private static void genDirCache() {
-        ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
-
-        File dir = new File("." + config.getMainDirPath());
-        if (!dir.exists()) {
-            logger.warn("设定中的资源目录：" + dir.getPath() + " 不存在, 使用默认路径.");
-            dir = new File("./res");
-            if (!dir.exists()) {
-                logger.warn("默认资源目录不存在：" + dir.getPath() + " 正在创建文件夹.");
-                dir.mkdir();
+    public static void regenCache() {
+        File jsonCache = new File("./res-cache.json");
+        if (jsonCache.exists()) {
+            try {
+                String jsonString = FileUtil.readStringFromFile(jsonCache);
+                JSONArray jsonArray = JSONArray.parseArray(jsonString);
+                cacheUtils.genResDirCache(jsonArray);
+            } catch (Exception ex) {
+                logger.error("读取缓存文件的时候出现了一些问题...", ex);
+                logger.warn("缓存文件读取失败, 重新生成缓存...");
+                cacheUtils.genResDirCache(null);
             }
-        }
-
-        //计算资源目录大小, 用于进度条计算
-        logger.info("正在计算资源目录大小...");
-        long[] dirSize = FileListUtils.getDirSize(dir);
-        String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
-        if (dirSize[0] != 0) {
-            regenDirectoryStructureCache.setEnabled(false);
-            startOrStop.setEnabled(false);
-            logger.info("文件夹大小：" + totalSize + ", 文件数量：" + dirSize[1]);
-
-            //新线程, 计算资源目录缓存
-            logger.info("正在生成资源目录缓存...");
-            statusProgressBar.setMaximum((int) dirSize[1]);
-            for (File childDir : dir.listFiles()) {
-                Thread thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, childDir));
-                thread.start();
-            }
-            //轮询线程, 读取进度
-            Timer timer = new Timer(100, e -> {
-                long completedBytes = FileListUtils.completedBytes.get();
-                int completedFiles = FileListUtils.completedFiles.get();
-                String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
-                statusProgressBar.setValue(completedFiles);
-                statusProgressBar.setString("生成缓存中：" +
-                        completedSize + " / " + totalSize +
-                        " - " +
-                        completedFiles + " 文件 / " + dirSize[1] +
-                        " 文件");
-            });
-            //启动轮询
-            timer.start();
-            statusProgressBar.setVisible(true);
-            //隐藏状态栏进度条
-            changeListener = e -> {
-                if (FileListUtils.completedFiles.get() >= dirSize[1]) {
-                    timer.stop();
-                    logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
-                    //输出 JSON
-                    JSONArray jsonArray = new JSONArray();
-                    jsonArray.addAll(fileObjList);
-                    String resJSONStr = jsonArray.toJSONString();
-                    server.setResJSON(resJSONStr);
-                    try {
-                        FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
-                        logger.info("JSON 缓存生成完毕.");
-                    } catch (IOException ex) {
-                        logger.error("生成 JSON 缓存的时候出现了问题...", ex);
-                    }
-
-                    FileListUtils.completedBytes.set(0);
-                    FileListUtils.completedFiles.set(0);
-                    statusProgressBar.setVisible(false);
-                    regenDirectoryStructureCache.setEnabled(true);
-                    startOrStop.setEnabled(true);
-                }
-            };
-            statusProgressBar.addChangeListener(changeListener);
         } else {
-            logger.warn("资源目录为空, 跳过缓存生成.");
+            cacheUtils.genResDirCache(null);
         }
     }
 
     /**
-     * 以多线程方式生成资源缓存结构并启动服务器
-     * 使用配置文件中的资源文件夹路径
-     * WARN: 这段代码稍微有点屎山，慎改
+     * 一个内部类, 用于 生成/更新/检查 资源文件夹缓存
      */
-    private static void genDirCacheAndStartServer() {
-        regenDirectoryStructureCache.setEnabled(false);
-        startOrStop.setEnabled(false);
-        ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
+    private static class cacheUtils {
+        static Timer timer;
+        static ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
+        static long[] dirSize;
+        static AtomicInteger progress = new AtomicInteger(0);
+        static JSONArray jsonArray;
 
-        File dir = new File("." + config.getMainDirPath());
-
-        if (!dir.exists()) {
-            logger.warn("设定中的资源目录：" + dir.getPath() + " 不存在, 使用默认路径.");
-            dir = new File("./res");
-            if (!dir.exists()) {
-                logger.warn("默认资源目录不存在：" + dir.getPath() + " 正在创建文件夹.");
-                dir.mkdir();
+        /**
+         * 以单线程形式检查 JSON 的变动（多线程下次一定）
+         * @param jsonArray 要检查的 JSONArray
+         * @param path 资源文件夹路径
+         * @return 修正后的 JSONArray
+         */
+        private static JSONArray scanDir(JSONArray jsonArray, String path) {
+            File resDir = new File(path);
+            File[] resDirFiles = resDir.listFiles();
+            for (File resDirFile : resDirFiles) {
+                boolean isExist = false;
+                for (int i1 = 0; i1 < jsonArray.size(); i1++) {
+                    if (jsonArray.getJSONObject(i1).getString("name").equals(resDirFile.getName())) {
+                        isExist = true;
+                        break;
+                    }
+                }
+                if (!isExist) {
+                    if (resDirFile.isFile()) {
+                        logger.info("检测到资源目录下有新文件："+ resDirFile.getPath() + ", 添加中...");
+                        jsonArray.add(new SimpleFileObject(resDirFile.getName(), resDirFile.length(), FileListUtils.getSHA1(resDirFile), resDirFile.lastModified()));
+                        progress.getAndIncrement();
+                    } else {
+                        logger.info("检测到资源目录下有新文件夹：" + resDirFile.getPath() + ", 添加中...");
+                        SimpleDirectoryObject directoryObject = SingleThreadScanDirectory(resDirFile);
+                        jsonArray.add(directoryObject);
+                        progress.getAndAdd(directoryObject.getChildren().size());
+                    }
+                }
             }
-        } else {
-            if (dir.listFiles().length == 1) {
-                dir = dir.listFiles()[0];
+
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject obj = jsonArray.getJSONObject(i);
+
+                String childPath = path + "/" + obj.get("name");
+
+                File childFile = new File(childPath);
+
+                //如果文件或文件夹不存在，直接删除 JSONObject
+                if (childFile.exists()) {
+                    if (obj.getLong("length") == null) {
+                        if (childFile.isFile()) {
+                            obj.remove("children");
+                            obj.put("length", childFile.lastModified());
+                            obj.put("modified", childFile.lastModified());
+                            obj.put("hash", FileListUtils.getSHA1(childFile));
+                            logger.info(childFile.getPath() + " 已变动, 已更新数据.");
+                            progress.getAndIncrement();
+                        } else {
+                            JSONArray children = obj.getJSONArray("children");
+                            obj.put("children", scanDir(children, childPath));
+                        }
+                        //判断修改日期
+                    } else if (childFile.isFile()) {
+                        if (childFile.lastModified() != obj.getLong("modified")) {
+                            obj.put("modified", childFile.lastModified());
+                            obj.put("hash", FileListUtils.getSHA1(childFile));
+                            logger.info(childFile.getPath() + " 已变动, 已更新数据.");
+                        }
+                        progress.getAndIncrement();
+                    } else if (childFile.isDirectory()) {
+                        obj.remove("length");
+                        obj.remove("modified");
+                        obj.remove("hash");
+                        obj.put("children", SingleThreadScanDirectory(childFile).getChildren());
+                    }
+                    jsonArray.set(i,obj);
+                } else {
+                    jsonArray.remove(obj);
+                    i--;
+                    logger.info(childPath + " 不存在, 删除缓存数据.");
+                    progress.getAndIncrement();
+                }
+            }
+            return jsonArray;
+        }
+
+        /**
+         * 更新资源缓存结构
+         */
+        private static void genResDirCache(JSONArray jsonCache) {
+            if (jsonCache != null) {
+                if (genDirCache(jsonCache)) {
+                    changeListener = e -> {
+                        if (jsonArray != null) {
+                            timer.stop();
+                            logger.info("资源变化计算完毕, 正在向磁盘生成 JSON 缓存.");
+                            //输出 JSON
+                            String resJSONStr = jsonArray.toJSONString();
+                            server.setResJSON(resJSONStr);
+                            try {
+                                FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
+                                logger.info("JSON 缓存生成完毕.");
+                            } catch (IOException ex) {
+                                logger.error("生成 JSON 缓存的时候出现了问题...", ex);
+                            }
+                            //隐藏状态栏进度条
+                            statusProgressBar.setVisible(false);
+                            regenDirectoryStructureCache.setEnabled(true);
+                            startOrStop.setEnabled(true);
+                            //重置变量
+                            jsonArray = null;
+                            progress.set(0);
+                            isGenerating = false;
+                        }
+                    };
+                    statusProgressBar.addChangeListener(changeListener);
+                }
+            } else if (genDirCache(null)) {
+                changeListener = e -> {
+                    if (FileListUtils.completedFiles.get() >= dirSize[1]) {
+                        timer.stop();
+                        logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
+                        //输出 JSON
+                        JSONArray jsonArray = new JSONArray();
+                        jsonArray.addAll(fileObjList);
+                        String resJSONStr = jsonArray.toJSONString();
+                        server.setResJSON(resJSONStr);
+                        try {
+                            FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
+                            logger.info("JSON 缓存生成完毕.");
+                        } catch (IOException ex) {
+                            logger.error("生成 JSON 缓存的时候出现了问题...", ex);
+                        }
+
+                        //隐藏状态栏进度条
+                        statusProgressBar.setVisible(false);
+                        regenDirectoryStructureCache.setEnabled(true);
+                        startOrStop.setEnabled(true);
+                        //重置变量
+                        FileListUtils.completedBytes.set(0);
+                        FileListUtils.completedFiles.set(0);
+                        isGenerating = false;
+                    }
+                };
+                statusProgressBar.addChangeListener(changeListener);
+            } else {
+                regenDirectoryStructureCache.setEnabled(true);
+                startOrStop.setEnabled(true);
             }
         }
 
-        //计算资源目录大小, 用于进度条计算
-        logger.info("正在计算资源目录大小...");
-        long[] dirSize = FileListUtils.getDirSize(dir);
-        String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
-        if (dirSize[0] != 0) {
-            logger.info("文件夹大小：" + totalSize + ", 文件数量：" + dirSize[1]);
+        /**
+         * 更新资源缓存结构并启动服务器
+         */
+        private static void genResDirCacheAndStartServer(JSONArray jsonCache) {
+            if (jsonCache != null) {
+                if (genDirCache(jsonCache)) {
+                    changeListener = e -> {
+                        if (jsonArray != null) {
+                            timer.stop();
+                            logger.info("资源变化计算完毕, 正在向磁盘生成 JSON 缓存.");
+                            //输出 JSON
+                            String resJSONStr = jsonArray.toJSONString();
+                            server.setResJSON(resJSONStr);
+                            try {
+                                FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
+                                logger.info("JSON 缓存生成完毕.");
+                            } catch (IOException ex) {
+                                logger.error("生成 JSON 缓存的时候出现了问题...", ex);
+                            }
+                            //隐藏状态栏进度条
+                            statusProgressBar.setVisible(false);
+                            regenDirectoryStructureCache.setEnabled(true);
+                            startOrStop.setEnabled(true);
 
-            //新线程, 计算资源目录缓存
-            logger.info("正在生成资源目录缓存...");
-            statusProgressBar.setMaximum((int) dirSize[1]);
-            for (File childDir : dir.listFiles()) {
-                Thread thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, childDir));
-                thread.start();
-            }
-            //轮询线程, 读取进度
-            Timer timer = new Timer(100, e -> {
-                long completedBytes = FileListUtils.completedBytes.get();
-                long completedFiles = FileListUtils.completedFiles.get();
-                String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
-                statusProgressBar.setValue((int) completedFiles);
-                statusProgressBar.setString("生成缓存中：" +
-                        completedSize + " / " + totalSize +
-                        " - " +
-                        completedFiles + " 文件 / " + dirSize[1] +
-                        " 文件");
-            });
-            //启动轮询
-            timer.start();
-            statusProgressBar.setVisible(true);
-            //隐藏状态栏进度条
-            changeListener = e -> {
-                if (FileListUtils.completedFiles.get() >= dirSize[1]) {
-                    timer.stop();
-                    logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
-                    //输出 JSON
-                    JSONArray jsonArray = new JSONArray();
-                    jsonArray.addAll(fileObjList);
-                    String resJSONStr = jsonArray.toJSONString();
-                    server.setResJSON(resJSONStr);
-                    try {
-                        FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
-                        logger.info("JSON 缓存生成完毕.");
-                    } catch (IOException ex) {
-                        logger.error("生成 JSON 缓存的时候出现了问题...", ex);
-                    }
-                    server.start();
-
-                    FileListUtils.completedBytes.set(0);
-                    FileListUtils.completedFiles.set(0);
+                            server.start();
+                            //重置变量
+                            progress.set(0);
+                            jsonArray = null;
+                            isGenerating = false;
+                        }
+                    };
+                    statusProgressBar.addChangeListener(changeListener);
                 }
-            };
-            statusProgressBar.addChangeListener(changeListener);
-        } else {
-            logger.warn("资源目录为空, 跳过缓存生成.");
-            server.start();
+            } else if (genDirCache(null)) {
+                changeListener = e -> {
+                    if (FileListUtils.completedFiles.get() >= dirSize[1]) {
+                        timer.stop();
+                        logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
+                        //输出 JSON
+                        JSONArray jsonArray = new JSONArray();
+                        jsonArray.addAll(fileObjList);
+                        String resJSONStr = jsonArray.toJSONString();
+                        server.setResJSON(resJSONStr);
+                        try {
+                            FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
+                            logger.info("JSON 缓存生成完毕.");
+                        } catch (IOException ex) {
+                            logger.error("生成 JSON 缓存的时候出现了问题...", ex);
+                        }
+                        //隐藏状态栏进度条
+                        statusProgressBar.setVisible(false);
+                        regenDirectoryStructureCache.setEnabled(true);
+                        startOrStop.setEnabled(true);
 
-            startOrStop.setEnabled(true);
-            startOrStop.setText("关闭服务器");
+                        server.start();
+                        //重置变量
+                        FileListUtils.completedBytes.set(0);
+                        FileListUtils.completedFiles.set(0);
+                        isGenerating = false;
+                    }
+                };
+                statusProgressBar.addChangeListener(changeListener);
+            } else {
+                regenDirectoryStructureCache.setEnabled(true);
+                startOrStop.setEnabled(true);
+                server.start();
+            }
+        }
+
+        /**
+         * 以多线程方式生成资源缓存结构
+         * 如果资源文件夹为空返回 false, 否则返回 true
+         * 使用配置文件中的资源文件夹路径
+         * WARN: 这段代码稍微有点屎山，慎改
+         */
+        private static boolean genDirCache(JSONArray jsonCache) {
+            isGenerating = true;
+            regenDirectoryStructureCache.setEnabled(false);
+            startOrStop.setEnabled(false);
+
+            File dir = new File("." + config.getMainDirPath());
+            if (!dir.exists()) {
+                logger.warn("设定中的资源目录：" + dir.getPath() + " 不存在, 使用默认路径.");
+                dir = new File("./res");
+                if (!dir.exists()) {
+                    logger.warn("默认资源目录不存在：" + dir.getPath() + " 正在创建文件夹.");
+                    dir.mkdir();
+                }
+            }
+
+            logger.info("正在计算资源目录大小...");
+            dirSize = FileListUtils.getDirSize(dir);
+            String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
+            if (dirSize[0] != 0) {
+                logger.info("文件夹大小：" + totalSize + ", 文件数量：" + dirSize[1]);
+
+                Thread thread;
+                if (jsonCache != null) {
+                    logger.info("检测到已缓存的 JSON, 正在检查变化...");
+                    thread = new Thread(() -> jsonArray = scanDir(jsonCache, "." + config.getMainDirPath()));
+                    thread.start();
+                    statusProgressBar = addNewStatusProgressBar();
+                    statusProgressBar.setString("检查变化中：" + 0 + " 文件 / " + dirSize[1] + " 文件");
+                    timer = new Timer(100, e -> {
+                        statusProgressBar.setValue((int) ((double) progress.get() * 100 / dirSize[1]));
+                        statusProgressBar.setString("检查变化中：" + progress.get() + " 文件 / " + dirSize[1] + " 文件");
+                    });
+                } else {
+                    //新线程, 计算资源目录缓存
+                    logger.info("正在生成资源目录缓存...");
+                    for (File childDir : dir.listFiles()) {
+                        thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, childDir));
+                        thread.start();
+                    }
+                    //轮询线程, 读取进度
+                    timer = new Timer(100, e -> {
+                        long completedBytes = FileListUtils.completedBytes.get();
+                        long completedFiles = FileListUtils.completedFiles.get();
+                        String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
+                        statusProgressBar.setValue((int) ((double)completedBytes * 100 / dirSize[0]));
+                        statusProgressBar.setString("生成缓存中：" +
+                                completedSize + " / " + totalSize +
+                                " - " +
+                                completedFiles + " 文件 / " + dirSize[1] +
+                                " 文件");
+                    });
+                    //启动轮询
+                }
+                timer.start();
+                statusProgressBar.setVisible(true);
+                return true;
+            } else {
+                logger.warn("资源目录为空, 跳过缓存生成.");
+                return false;
+            }
+        }
+
+        /**
+         * 以单线程方式扫描目标文件夹内的所有文件
+         * @param directory 目标文件夹
+         * @return SimpleDirectoryObject
+         */
+        private static SimpleDirectoryObject SingleThreadScanDirectory(File directory) {
+            List<AbstractSimpleFileObject> fileList = new ArrayList<>();
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile()) {
+                        fileList.add(new SimpleFileObject(file.getName(), file.length(), FileListUtils.getSHA1(file), file.lastModified()));
+                    } else {
+                        fileList.add(SingleThreadScanDirectory(file));
+                    }
+                }
+            }
+            return new SimpleDirectoryObject(directory.getName(), fileList);
         }
     }
 
     private static void loadConfigurationFromFile(
             JTextField IPTextField,
             JSpinner portSpinner,
-            JCheckBox highPerformanceMode,
+            JCheckBox miniSizeUpdateMode,
             JTextField JksSslTextField,
             JPasswordField JksSslPassField,
             JTextField mainDirTextField,
             JList<String> common_Mode,
-            JList<String> once_Mode) {
+            JList<String> once_Mode,
+            JCheckBox fileChangeListener) {
         if (new File("./littleserver.json").exists()) {
             try {
                 config = ConfigurationManager.loadLittleServerConfigFromFile("./littleserver.json");
@@ -480,14 +692,16 @@ public class LittleServer {
                 //资源文件夹
                 mainDirTextField.setText(config.getMainDirPath());
                 //高性能模式
-                highPerformanceMode.setSelected(config.isHighPerformanceMode());
+                miniSizeUpdateMode.setSelected(config.isMiniSizeUpdateMode());
+                //实时文件监听器
+                fileChangeListener.setSelected(config.isMiniSizeUpdateMode());
                 //Jks 证书
                 if (!config.getJKSFilePath().isEmpty()) {
                     File JksSsl = new File(config.getJKSFilePath());
                     if (JksSsl.exists()) {
                         JksSslTextField.setText(JksSsl.getName());
                     } else {
-                        logger.warn("Jks 证书文件不存在.");
+                        logger.warn("JKS 证书文件不存在.");
                     }
                 }
                 //Jks 证书密码
@@ -520,9 +734,10 @@ public class LittleServer {
     private static void reloadConfigurationFromGUI(
             JTextField IPTextField,
             JSpinner portSpinner,
-            JCheckBox highPerformanceMode,
+            JCheckBox miniSizeUpdateMode,
             JPasswordField JksSslPassField,
-            JTextField mainDirTextField) {
+            JTextField mainDirTextField,
+            JCheckBox fileChangeListener) {
         //设置端口
         config.setPort((Integer) portSpinner.getValue());
         //设置 IP
@@ -538,15 +753,15 @@ public class LittleServer {
         //设置资源目录
         config.setMainDirPath(mainDirTextField.getText());
         //设置高性能模式
-        config.setHighPerformanceMode(highPerformanceMode.isSelected());
+        config.setMiniSizeUpdateMode(miniSizeUpdateMode.isSelected());
+        //设置实时文件监听器
+        config.setFileChangeListener(fileChangeListener.isSelected());
         //设置 Jks 证书密码
         config.setJKSSSLPassword(String.valueOf(JksSslPassField.getPassword()));
         //设置普通模式
         config.setCommon_mode(common_ModeList.toArray(new String[common_ModeList.size()]));
-        config.setOnce_mode(once_ModeList.toArray(new String[once_ModeList.size()]));
         //设置补全模式
-        //设置 HTTP 服务器配置
-        server.setConfig(config);
+        config.setOnce_mode(once_ModeList.toArray(new String[once_ModeList.size()]));
         logger.info("已加载配置.");
     }
 }

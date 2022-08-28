@@ -1,8 +1,8 @@
 package github.kasuminova.balloonserver.Utils;
 
-import github.balloonupdate.littleserver.AbstractSimpleFileObject;
-import github.balloonupdate.littleserver.SimpleDirectoryObject;
-import github.balloonupdate.littleserver.SimpleFileObject;
+import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.zip.CRC32;
 
-import static github.kasuminova.balloonserver.BalloonServer.logger;
+import static github.kasuminova.balloonserver.Servers.LittleServer.logger;
 
 public class FileListUtils {
     static final int maxThreads = Runtime.getRuntime().availableProcessors() * 4;

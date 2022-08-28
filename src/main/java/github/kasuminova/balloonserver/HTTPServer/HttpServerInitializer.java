@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import github.kasuminova.balloonserver.Utils.LogManager;
+import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -8,21 +8,18 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLEngine;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.Arrays;
 
 public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
     File JKS;
     String resPath;
     char[] JKSPasswd;
     public static boolean useSSL = false;
-    public HttpServerInitializer(@Nullable File JKS, @Nullable char[] JKSPasswd,String resPath,LogManager logger) {
+    public HttpServerInitializer(File JKS, char[] JKSPasswd, String resPath, GUILogger logger) {
         this.resPath = resPath;
         if (JKS != null) {
             if (JKSPasswd != null && JKSPasswd.length != 0) {

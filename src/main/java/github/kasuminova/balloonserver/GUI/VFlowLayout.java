@@ -1,10 +1,6 @@
 package github.kasuminova.balloonserver.GUI;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Insets;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -282,7 +278,7 @@ public class VFlowLayout extends FlowLayout
         List<Component> components = this.getVisibleComponents(container);
         Dimension preferredComponentsSize = this.preferredComponentsSize(components);
         int alignment = this.getAlignment();
-        int y = insets.top + this.topVerticalGap;;
+        int y = insets.top + this.topVerticalGap;
 
         if(!this.isVerticalFill && preferredComponentsSize.height < maxHeight)
         {
@@ -374,7 +370,7 @@ public class VFlowLayout extends FlowLayout
 
     private List<Component> getVisibleComponents(Container container)
     {
-        List<Component> rs = new ArrayList<Component>();
+        List<Component> rs = new ArrayList<>();
 
         for(Component component : container.getComponents())
         {

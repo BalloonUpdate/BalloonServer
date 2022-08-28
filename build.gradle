@@ -1,10 +1,9 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.7.10'
 }
 
 group 'github.kasuminova'
-version '1.0.3-BETA'
+version '1.0.4-BETA'
 
 
 repositories {
@@ -37,7 +36,6 @@ jar {
 }
 
 dependencies {
-    testImplementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     testImplementation 'org.projectlombok:lombok:1.18.24'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
@@ -46,6 +44,7 @@ dependencies {
     implementation 'com.formdev:flatlaf:2.4'
     implementation 'com.formdev:flatlaf-intellij-themes:2.4'
     implementation 'org.yaml:snakeyaml:1.30'
+    implementation 'commons-io:commons-io:2.11.0'
 }
 
 tasks.withType(JavaCompile) {
