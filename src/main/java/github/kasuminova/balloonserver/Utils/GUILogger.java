@@ -39,7 +39,7 @@ public class GUILogger {
         this.name = name;
     }
 
-    public void info(String msg) {
+    public synchronized void info(String msg) {
         logger.info(msg);
         Document document = logPane.getDocument();
         StyleConstants.setForeground(attrSet, Color.GREEN);//设置颜色
@@ -52,7 +52,7 @@ public class GUILogger {
         }
     }
 
-    public void debug(String msg) {
+    public synchronized void debug(String msg) {
         logger.info(msg);
         Document document = logPane.getDocument();
         StyleConstants.setForeground(attrSet, Color.MAGENTA);//设置颜色
@@ -65,7 +65,7 @@ public class GUILogger {
         }
     }
 
-    public void warn(String msg) {
+    public synchronized void warn(String msg) {
         logger.warning(msg);
         Document document = logPane.getDocument();
         StyleConstants.setForeground(attrSet, Color.YELLOW);//设置颜色
@@ -78,7 +78,7 @@ public class GUILogger {
         }
     }
 
-    public void error(String msg) {
+    public synchronized void error(String msg) {
         logger.warning(msg);
         Document document = logPane.getDocument();
         StyleConstants.setForeground(attrSet, Color.RED);//设置颜色
@@ -91,7 +91,7 @@ public class GUILogger {
         }
     }
 
-    public void error(String msg, Throwable e) {
+    public synchronized void error(String msg, Throwable e) {
         logger.warning(msg);
         if (e.getLocalizedMessage() != null) {
             logger.warning(e.getLocalizedMessage());
@@ -113,7 +113,7 @@ public class GUILogger {
         }
     }
 
-    public void error(Throwable e) {
+    public synchronized void error(Throwable e) {
         if (e.getLocalizedMessage() != null) {
             logger.warning(e.getLocalizedMessage());
         }

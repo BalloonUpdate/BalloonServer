@@ -10,19 +10,24 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.zip.CRC32;
 
-import static github.kasuminova.balloonserver.Servers.LittleServer.logger;
-
+/**
+ * 完全计算一次资源文件夹缓存的工具类
+ * TODO:计划将 Runnable 类改成 Callable
+ */
 public class FileListUtils {
-    static final int maxThreads = Runtime.getRuntime().availableProcessors() * 4;
-    static AtomicInteger runningThreads = new AtomicInteger(0);
     public static AtomicLong completedBytes = new AtomicLong(0);
     public static AtomicInteger completedFiles = new AtomicInteger(0);
-
+    //文件夹计算线程的线程池
+    static ExecutorService dirThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    //文件计算线程的线程池
+    static ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
     /**
      * 统计目标文件夹内包含的 文件/文件夹 大小,
      * 并将其大小整合在一起至一个变量, 用于轮询线程的查询
@@ -70,59 +75,20 @@ public class FileListUtils {
             ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
             File[] fileList = dir.listFiles();
             if (dir.isFile()) {
-                while (true) {
-                    if (runningThreads.get() <= maxThreads) {
-                        Thread fileCounterThread = new Thread(new FileCounterThread(fileObjList, dir));
-                        threadList.add(fileCounterThread);
-                        fileCounterThread.start();
-                        try {
-                            fileCounterThread.join();
-                            addFileObjToFileObjList(fileObjList.get(0), this.fileObjList);
-                        } catch (Exception e) {
-                            logger.error(e);
-                        }
-                        break;
-                    }
-                    try {
-                        Thread.sleep(25);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                runningThreads.getAndDecrement();
+                new FileCounterThread(fileObjList, dir).run();
+                syncAddFileObjToFileObjList(fileObjList.get(0), this.fileObjList);
             } else if (fileList != null) {
                 for (File file : fileList) {
                     if (file.isFile()) {
-                        while (true) {
-                            if (runningThreads.get() <= maxThreads) {
-                                Thread fileCounterThread = new Thread(new FileCounterThread(fileObjList, file));
-                                threadList.add(fileCounterThread);
-                                fileCounterThread.start();
-                                break;
-                            }
-                            try {
-                                Thread.sleep(25);
-                            } catch (Exception e) {
-                                logger.error(e);
-                            }
-                        }
+                        Thread fileCounterThread = new Thread(new FileCounterThread(fileObjList, file));
+                        threadList.add(fileCounterThread);
+                        fileThreadPool.execute(fileCounterThread);
                     } else if (file.isDirectory()) {
-                        while (true) {
-                            if (runningThreads.get() <= maxThreads) {
-                                Thread dirCounterThread = new Thread(new DirCounterThread(fileObjList, file));
-                                threadList.add(dirCounterThread);
-                                dirCounterThread.start();
-                                break;
-                            }
-                            try {
-                                Thread.sleep(25);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
+                        Thread dirCounterThread = new Thread(new DirCounterThread(fileObjList, file));
+                        dirThreadPool.execute(dirCounterThread);
+                        threadList.add(dirCounterThread);
                     }
                 }
-                runningThreads.getAndDecrement();
                 for (Thread thread : threadList) {
                     try {
                         thread.join();
@@ -130,10 +96,9 @@ public class FileListUtils {
                         e.printStackTrace();
                     }
                 }
-                addFileObjToFileObjList(new SimpleDirectoryObject(dir.getName(), fileObjList), this.fileObjList);
+                syncAddFileObjToFileObjList(new SimpleDirectoryObject(dir.getName(), fileObjList), this.fileObjList);
             } else {
-                addFileObjToFileObjList(new SimpleDirectoryObject(dir.getName(), new ArrayList<>()), this.fileObjList);
-                runningThreads.getAndDecrement();
+                syncAddFileObjToFileObjList(new SimpleDirectoryObject(dir.getName(), new ArrayList<>()), this.fileObjList);
             }
         }
     }
@@ -153,10 +118,8 @@ public class FileListUtils {
         }
         @Override
         public void run() {
-            runningThreads.getAndIncrement();
             SimpleFileObject fileObj = new SimpleFileObject(file.getName(),file.length(),getSHA1(file),file.lastModified() / 1000);
-            addFileObjToFileObjList(fileObj,fileList);
-            runningThreads.getAndDecrement();
+            syncAddFileObjToFileObjList(fileObj,fileList);
             completedFiles.getAndIncrement();
         }
     }
@@ -167,7 +130,7 @@ public class FileListUtils {
      * @param obj 对象
      * @param objList 对象列表
      */
-    public static synchronized void addFileObjToFileObjList(AbstractSimpleFileObject obj, ArrayList<AbstractSimpleFileObject> objList) {
+    public static synchronized void syncAddFileObjToFileObjList(AbstractSimpleFileObject obj, ArrayList<AbstractSimpleFileObject> objList) {
         objList.add(obj);
     }
 

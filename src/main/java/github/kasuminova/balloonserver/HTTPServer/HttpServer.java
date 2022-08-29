@@ -80,7 +80,7 @@ public class HttpServer {
             try {
                 fileMonitor.start();
                 logger.info("实时文件监听器已启动.");
-                fileChangeListener = new Timer(5000, e -> {
+                fileChangeListener = new Timer(2000, e -> {
                     if (isFileChanged.get() && !isGenerating) {
                         logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
                         LittleServer.regenCache();

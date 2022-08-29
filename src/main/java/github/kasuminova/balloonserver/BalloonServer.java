@@ -16,11 +16,12 @@ import java.util.logging.Logger;
 
 public class BalloonServer {
     static {
+        //设置全局主题，字体等
         SetupSwing.init();
     }
     //软件图标
     public static final ImageIcon image = new ImageIcon(BalloonServer.class.getResource("/image/icon_128x128.jpg"));
-    public static final String version = "1.0.4-BETA";
+    public static final String version = "1.0.5-BETA";
     public static JFrame premainFrame = new JFrame("加载中");
     public static JFrame frame = new JFrame("BalloonServer " + version);
     public static JProgressBar statusProgressBar = new JProgressBar();
@@ -48,8 +49,7 @@ public class BalloonServer {
         statusPanel.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
-        JProgressBar memBar = new JProgressBar();
-        memBar.setMaximum(100);
+        JProgressBar memBar = new JProgressBar(0,100);
         memBar.setPreferredSize(new Dimension(225,memBar.getHeight()));
         memBar.setStringPainted(true);
         memBarBox.add(new JLabel("内存使用情况："));
