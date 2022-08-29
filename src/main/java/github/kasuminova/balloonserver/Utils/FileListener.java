@@ -13,38 +13,37 @@ import static github.kasuminova.balloonserver.Servers.LittleServer.server;
 public class FileListener extends FileAlterationListenerAdaptor {
     @Override
     public void onDirectoryCreate(File directory) {
-        logger.info("新建：" + directory.getAbsolutePath());
+        logger.info("新建：" + directory.getPath());
         server.isFileChanged.set(true);
     }
 
     @Override
     public void onDirectoryChange(File directory) {
-        logger.info("修改：" + directory.getAbsolutePath());
+        logger.info("修改：" + directory.getPath());
         server.isFileChanged.set(true);
     }
 
     @Override
     public void onDirectoryDelete(File directory) {
-        logger.info("删除：" + directory.getAbsolutePath());
+        logger.info("删除：" + directory.getPath());
         server.isFileChanged.set(true);
     }
 
     @Override
     public void onFileCreate(File file) {
-        logger.info("新建：" + file.getAbsolutePath());
+        logger.info("新建：" + file.getPath());
         server.isFileChanged.set(true);
     }
 
     @Override
     public void onFileChange(File file) {
-        String compressedPath = file.getAbsolutePath();
-        logger.info("修改：" + compressedPath);
+        logger.info("修改：" + file.getPath());
         server.isFileChanged.set(true);
     }
 
     @Override
     public void onFileDelete(File file) {
-        logger.info("删除：" + file.getAbsolutePath());
+        logger.info("删除：" + file.getPath());
         server.isFileChanged.set(true);
     }
 
