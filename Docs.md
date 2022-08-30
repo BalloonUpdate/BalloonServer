@@ -12,6 +12,8 @@ BalloonServer 是 LittleServer 的一个完全图形化扩展，并且底层基�
 ## 下载
 你可以在 [GitHub Release](https://github.com/BalloonUpdate/BalloonServer/releases/tag/1.0.5-BETA) 或在我们的 [官方群聊](https://jq.qq.com/?_wv=1027&k=bhNBCnUQ) 内找到本软件的发行版。
 
+**注意：从 1.0.6-BETA 版本起，程序的最低 JAVA 版本要求提高到了 17。**
+
 下载程序后，双击 JAR 或执行命令 `java -jar BalloonServer-1.x.x-BETA.jar` 即可启动程序。
 
 ## 窗口介绍
