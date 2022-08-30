@@ -8,7 +8,7 @@ BalloonServer 是 LittleServer 的一个完全图形化扩展，并且底层基�
 - 支持实时文件监听，实现全自动服务端维护
 - 支持最小化到任务栏托盘（需要系统支持）
 - 支持跨平台（Linux, Windows, MacOS）
-- 无处不在的多线程处理，最大化利用服务器资源，减少卡顿
+- 高性能多线程处理，最大化利用服务器资源，减少卡顿
 ## 下载
 你可以在 [GitHub Release](https://github.com/BalloonUpdate/BalloonServer/releases/tag/1.0.5-BETA) 或在我们的 [官方群聊](https://jq.qq.com/?_wv=1027&k=bhNBCnUQ) 内找到本软件的发行版。
 
