@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.URL;
 
 /**
@@ -37,6 +39,7 @@ public class SwingSystemTray {
         showMainFrame.addActionListener(e -> {
             //显示窗口
             frame.setVisible(true);
+            frame.toFront();
         });
 
         jPopupMenu.add(showMainFrame);
@@ -47,6 +50,7 @@ public class SwingSystemTray {
         Image image = Toolkit.getDefaultToolkit().createImage(resource);
         // 创建系统托盘图标
         TrayIcon trayIcon = new TrayIcon(image);
+        trayIcon.setToolTip("BalloonServer " + BalloonServer.version);
         // 自动调整系统托盘图标大小
         trayIcon.setImageAutoSize(true);
 
@@ -58,18 +62,26 @@ public class SwingSystemTray {
                 if (e.getButton() == 1) {
                     //显示窗口
                     frame.setVisible(true);
+                    frame.toFront();
                 } else if (e.getButton() == 3 && e.isPopupTrigger()) {
                     // 右键点击弹出JPopupMenu绑定的载体以及JPopupMenu
                     dialog.setLocation(e.getX() + 5, e.getY() - 5 - jPopupMenu.getHeight());
                     // 显示载体
                     dialog.setVisible(true);
-                    // 在载体的0,0处显示对话框
+                    // 在载体的 0,0 处显示对话框
                     jPopupMenu.show(dialog, 0, 0);
                 }
             }
         });
         // 添加托盘图标到系统托盘
         systemTrayAdd(trayIcon);
+        // 关闭窗口时显示信息
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                trayIcon.displayMessage("提示","程序已最小化至后台运行。", TrayIcon.MessageType.INFO);
+            }
+        });
     }
 
     /**

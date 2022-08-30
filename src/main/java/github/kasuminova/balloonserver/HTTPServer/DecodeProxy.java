@@ -1,6 +1,5 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -10,13 +9,12 @@ import io.netty.util.AttributeKey;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static github.kasuminova.balloonserver.Servers.LittleServer.logger;
+
 /**
- * @Description nginx代理netty tcp服务端负载均衡，nginx stream要打开 proxy_protocol on; 配置
+ * &#064;Description nginx代理 netty tcp服务端负载均衡，nginx stream要打开 proxy_protocol on; 配置
  */
 public class DecodeProxy extends ByteToMessageDecoder {
-
-    private GUILogger logger = new GUILogger("Server");
-
     /**
      * 保存客户端IP
      */
@@ -29,7 +27,6 @@ public class DecodeProxy extends ByteToMessageDecoder {
      * @param ctx 上下文对象
      * @param byteBuf 入站后的 ByteBuf
      * @param out 将解码后的数据传递给下一个 handler
-     * @throws Exception
      */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) {

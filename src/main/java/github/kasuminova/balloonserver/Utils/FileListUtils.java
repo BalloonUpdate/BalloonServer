@@ -5,8 +5,11 @@ import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
 import java.util.zip.CRC32;
 
 /**
@@ -27,7 +29,7 @@ public class FileListUtils {
     //文件夹计算线程的线程池
     static ExecutorService dirThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     //文件计算线程的线程池
-    static ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
+    static ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 6);
     /**
      * 统计目标文件夹内包含的 文件/文件夹 大小,
      * 并将其大小整合在一起至一个变量, 用于轮询线程的查询
@@ -161,49 +163,18 @@ public class FileListUtils {
     }
 
     public static String getSHA1(File file) {
-        //计算 MD5
         try {
-            FileInputStream in = new FileInputStream(file);
+            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
+            int len;
             MessageDigest md = MessageDigest.getInstance("SHA1");
-            byte[] buffer = FileUtil.formatFileSizeByte(file.length());
-
-            int len;
-            while ((len = in.read(buffer)) != -1) {
-                md.update(buffer, 0, len);
+            while ((len = fc.read(byteBuffer)) > 0) {
+                md.update(byteBuffer.array(), 0, len);
                 completedBytes.getAndAdd(len);
+                byteBuffer.flip();
+                byteBuffer.clear();
             }
-
-            in.close();
-
-            //转换并返回包含 20 个元素字节数组,返回数值范围为 -128 到 127
-            byte[] sha1Bytes = md.digest();
-            //1 代表绝对值
-            BigInteger bigInt = new BigInteger(1, sha1Bytes);
-            //转换为 16 进制
-            return bigInt.toString(16);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "ERROR";
-        }
-    }
-
-    public static String getMD5(File file) {
-        //计算 MD5
-        try {
-            FileInputStream in = new FileInputStream(file);
-            //拿到一个 MD5 转换器，此外还有 SHA-1, SHA-256
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            //分多次将一个文件读入，对于大型文件而言，比较推荐这种方式，占用内存比较少。
-            byte[] buffer = FileUtil.formatFileSizeByte(file.length());
-
-            int len;
-            while ((len = in.read(buffer)) != -1) {
-                md.update(buffer, 0, len);
-                completedBytes.getAndAdd(len);
-            }
-
-            in.close();
-
+            fc.close();
             //转换并返回包含 16 个元素字节数组,返回数值范围为 -128 到 127
             byte[] md5Bytes = md.digest();
             //1 代表绝对值
@@ -212,32 +183,52 @@ public class FileListUtils {
             return bigInt.toString(16);
         } catch (Exception e) {
             e.printStackTrace();
-            return "ERROR";
         }
+        return "ERROR";
+    }
+
+    public static String getMD5(File file) {
+        try {
+            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
+            int len;
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            while ((len = fc.read(byteBuffer)) > 0) {
+                md.update(byteBuffer.array(), 0, len);
+                completedBytes.getAndAdd(len);
+                byteBuffer.flip();
+                byteBuffer.clear();
+            }
+            fc.close();
+            //转换并返回包含 16 个元素字节数组,返回数值范围为 -128 到 127
+            byte[] md5Bytes = md.digest();
+            //1 代表绝对值
+            BigInteger bigInt = new BigInteger(1, md5Bytes);
+            //转换为 16 进制
+            return bigInt.toString(16);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "ERROR";
     }
 
     public static String getCRC32(File file) {
         try {
-            CRC32 crc32 = new CRC32();
-            FileInputStream in = new FileInputStream(file);
-            byte[] buffer = FileUtil.formatFileSizeByte(file.length());
-
+            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
             int len;
-            while ((len = in.read(buffer)) != -1) {
-                crc32.update(buffer, 0, len);
+            CRC32 crc32 = new CRC32();
+            while ((len = fc.read(byteBuffer)) > 0) {
+                crc32.update(byteBuffer.array(), 0, len);
                 completedBytes.getAndAdd(len);
+                byteBuffer.flip();
+                byteBuffer.clear();
             }
-
-            in.close();
-
+            fc.close();
             return String.valueOf(crc32.getValue());
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-            return "ERROR";
         }
-    }
-
-    public static String replaceString(String str) {
-        return str.replaceFirst(Matcher.quoteReplacement("." + File.separator), "");
+        return "ERROR";
     }
 }

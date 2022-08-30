@@ -108,32 +108,18 @@ public class AboutPanel {
         JList<String> themeList = new JList<>();
         themeList.setListData(themes.toArray(new String[themes.size()]));
         themeList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        themeList.setSelectedIndex(4);
+        themeList.setSelectedIndex(5);
         themeList.setBorder(new TitledBorder("选择界面主题"));
         themeList.addListSelectionListener(e -> {
             try {
                 switch (themeList.getSelectedValue()) {
-                    case "FlatLaf Light":
-                        UIManager.setLookAndFeel(new FlatLightLaf());
-                        break;
-                    case "FlatLaf Dark":
-                        UIManager.setLookAndFeel(new FlatDarkLaf());
-                        break;
-                    case "FlatLaf IntelIJ":
-                        UIManager.setLookAndFeel(new FlatIntelliJLaf());
-                        break;
-                    case "FlatLaf Dracula":
-                        UIManager.setLookAndFeel(new FlatDarculaLaf());
-                        break;
-                    case "Atom One Dark":
-                        UIManager.setLookAndFeel(new FlatAtomOneDarkIJTheme());
-                        break;
-                    case "Atom One Dark Contrast":
-                        UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
-                        break;
-                    case "Arc Dark Contrast":
-                        UIManager.setLookAndFeel(new FlatArcDarkContrastIJTheme());
-                        break;
+                    case "FlatLaf Light" -> UIManager.setLookAndFeel(new FlatLightLaf());
+                    case "FlatLaf Dark" -> UIManager.setLookAndFeel(new FlatDarkLaf());
+                    case "FlatLaf IntelIJ" -> UIManager.setLookAndFeel(new FlatIntelliJLaf());
+                    case "FlatLaf Dracula" -> UIManager.setLookAndFeel(new FlatDarculaLaf());
+                    case "Atom One Dark" -> UIManager.setLookAndFeel(new FlatAtomOneDarkIJTheme());
+                    case "Atom One Dark Contrast" -> UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
+                    case "Arc Dark Contrast" -> UIManager.setLookAndFeel(new FlatArcDarkContrastIJTheme());
                 }
                 SwingUtilities.updateComponentTreeUI(frame);
             } catch (Exception ex) {

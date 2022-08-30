@@ -5,12 +5,8 @@ import github.kasuminova.balloonserver.ConfigurationManager;
 import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
-import github.kasuminova.balloonserver.Utils.FileCacheCalculator;
-import github.kasuminova.balloonserver.Utils.FileListUtils;
+import github.kasuminova.balloonserver.Utils.*;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
-import github.kasuminova.balloonserver.Utils.FileUtil;
-import github.kasuminova.balloonserver.Utils.IPUtil.IPAddressUtil;
-import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -124,23 +120,25 @@ public class LittleServer {
         configPanel.add(JksSslPassBox);
 
         //额外功能
-        Box extraFeaturesBox = Box.createHorizontalBox();
+        JPanel extraFeaturesPanel = new JPanel(new BorderLayout());
         //最小化更新模式
-        JCheckBox miniSizeUpdateMode = new JCheckBox("最小化更新模式");
-        miniSizeUpdateMode.setToolTipText(
-                "开启后，程序如果在生成缓存后变动文件，则不需要重新生成缓存文件.\n" +
-                        "程序将会最小化检查差异更新，适合服务器 IO 性能较弱的情况下使用.\n" +
-                        "关闭后，程序每次更新缓存文件都会完整计算一次资源文件夹." +
-                        "Feature: 此功能已加入多线程全家桶，预计会在下个版本并入程序~");
-        extraFeaturesBox.add(miniSizeUpdateMode);
+        JCheckBox miniSizeUpdateMode = new JCheckBox("启用最小化更新模式");
+        miniSizeUpdateMode.setToolTipText("""
+                        开启后，程序如果在生成缓存后变动文件，则不需要重新生成缓存文件.
+                        程序将会最小化检查差异更新，适合服务器 IO 性能较弱的情况下使用.
+                        关闭后，程序每次更新缓存文件都会完整计算一次资源文件夹.
+                        Feature: 此功能已加入多线程全家桶，预计会在下个版本并入程序~""");
+        miniSizeUpdateMode.setSelected(true);
+        extraFeaturesPanel.add(miniSizeUpdateMode,BorderLayout.WEST);
         //实时文件监听
-        JCheckBox fileChangeListener = new JCheckBox("实时文件监听");
-        fileChangeListener.setToolTipText(
-                "开启后，启动服务器的同时会启动文件监听服务.\n" +
-                        "文件监听服务会每隔 5 - 7 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.\n" +
-                        "此功能使用最小化更新模式的方法生成缓存.");
-        extraFeaturesBox.add(fileChangeListener);
-        configPanel.add(extraFeaturesBox);
+        JCheckBox fileChangeListener = new JCheckBox("启用实时文件监听");
+        fileChangeListener.setToolTipText("""
+                        开启后，启动服务器的同时会启动文件监听服务.
+                        文件监听服务会每隔 5 - 7 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.
+                        此功能使用最小化更新模式的方法生成缓存.""");
+        fileChangeListener.setSelected(true);
+        extraFeaturesPanel.add(fileChangeListener,BorderLayout.EAST);
+        configPanel.add(extraFeaturesPanel);
 
         /*
           普通更新模式和补全更新模式的 List 变动是实时监听的，无需重载配置文件。
@@ -251,17 +249,11 @@ public class LittleServer {
         loadConfigurationFromFile(IPTextField,portSpinner,miniSizeUpdateMode,JksSslTextField,JksSslPassField,mainDirTextField,common_Mode,once_Mode,fileChangeListener);
 
         JPanel southControlPanel = new JPanel(new VFlowLayout());
-        southControlPanel.add(new JLabel("上方配置修改后，请点击重载配置按钮来载入配置."));
-
-        //重载配置
-        JButton reloadButton = new JButton("重载配置");
-        reloadButton.setToolTipText("以控制面板当前的配置应用到程序配置，但是不保存配置到磁盘.");
-        reloadButton.addActionListener(e -> reloadConfigurationFromGUI(IPTextField,portSpinner,miniSizeUpdateMode,JksSslPassField,mainDirTextField,fileChangeListener));
-        southControlPanel.add(reloadButton);
+        southControlPanel.add(new JLabel("上方配置修改后，请点击保存配置按钮来载入配置."));
 
         //存储当前配置
-        JButton saveConfigButton = new JButton("保存配置并重载");
-        saveConfigButton.setToolTipText("以控制面板当前的配置应用到程序配置，并保存配置到磁盘.");
+        JButton saveConfigButton = new JButton("保存配置");
+        saveConfigButton.setToolTipText("以控制面板当前的配置应用到服务器，并保存配置到磁盘.");
         southControlPanel.add(saveConfigButton);
         saveConfigButton.addActionListener(e -> {
             reloadConfigurationFromGUI(IPTextField,portSpinner,miniSizeUpdateMode,JksSslPassField,mainDirTextField,fileChangeListener);
@@ -346,7 +338,6 @@ public class LittleServer {
 
     /**
      * 重新生成缓存
-     * 强制高性能模式.
      */
     public static void regenCache() {
         File jsonCache = new File("./res-cache.json");
@@ -381,6 +372,7 @@ public class LittleServer {
 
         /**
          * 更新资源缓存结构
+         *          * 传入的参数如果为 null，则完整生成一次缓存
          */
         private static void updateDirCache(JSONArray jsonCache) {
             if (jsonCache != null) {
@@ -409,6 +401,9 @@ public class LittleServer {
                         }
                     };
                     statusProgressBar.addChangeListener(changeListener);
+                } else {
+                    regenDirectoryStructureCache.setEnabled(true);
+                    startOrStop.setEnabled(true);
                 }
             } else if (genDirCache(null)) {
                 changeListener = e -> {
@@ -446,6 +441,7 @@ public class LittleServer {
 
         /**
          * 更新资源缓存结构并启动服务器
+         * 传入的参数如果为 null，则完整生成一次缓存
          */
         private static void genResDirCacheAndStartServer(JSONArray jsonCache) {
             if (jsonCache != null) {
@@ -476,6 +472,9 @@ public class LittleServer {
                         }
                     };
                     statusProgressBar.addChangeListener(changeListener);
+                } else {
+                    regenDirectoryStructureCache.setEnabled(true);
+                    startOrStop.setEnabled(true);
                 }
             } else if (genDirCache(null)) {
                 changeListener = e -> {
@@ -614,7 +613,7 @@ public class LittleServer {
                 portSpinner.setValue(config.getPort());
                 //资源文件夹
                 mainDirTextField.setText(config.getMainDirPath());
-                //高性能模式
+                //最小化更新模式
                 miniSizeUpdateMode.setSelected(config.isMiniSizeUpdateMode());
                 //实时文件监听器
                 fileChangeListener.setSelected(config.isMiniSizeUpdateMode());
@@ -675,10 +674,13 @@ public class LittleServer {
         config.setPort((Integer) portSpinner.getValue());
         //设置 IP
         String IP = IPTextField.getText();
-        if (IP.contains("0.0.0.0")) {
-            config.setIP("0.0.0.0");
-        } else if (IPAddressUtil.isIPv4LiteralAddress(IP) || IPAddressUtil.isIPv6LiteralAddress(IP)) {
-            config.setIP(IP);
+        String IPType = IPAddressUtil.checkAddress(IP);
+        if (IPType != null) {
+            if (IP.contains("0.0.0.0")) {
+                config.setIP("0.0.0.0");
+            } else if (IPType.equals("v4") || IPType.equals("v6")) {
+                config.setIP(IP);
+            }
         } else {
             config.setIP("0.0.0.0");
             logger.warn("配置中的 IP 格式错误，使用默认 IP 地址 0.0.0.0");

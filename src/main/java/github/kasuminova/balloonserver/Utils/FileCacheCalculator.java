@@ -2,10 +2,16 @@ package github.kasuminova.balloonserver.Utils;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -13,7 +19,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
-import github.kasuminova.balloonserver.Utils.FileObject.*;
+import java.util.zip.CRC32;
+
 import static github.kasuminova.balloonserver.Servers.LittleServer.logger;
 
 /**
@@ -23,9 +30,10 @@ public class FileCacheCalculator {
     //文件夹计算线程的线程池
     static ExecutorService dirThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
     //文件计算线程的线程池
-    static ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4);
+    static ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 6);
     public static AtomicInteger progress = new AtomicInteger(0);
     public static JSONArray scanDir(JSONArray jsonArray, File dir) {
+        jsonArray = deDumpJson(jsonArray);
         //两个 ArrayList 存储启动的线程，用于读取变量
         ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
         ArrayList<FutureTask<SimpleDirectoryObject>> dirThreadList = new ArrayList<>();
@@ -137,6 +145,7 @@ public class FileCacheCalculator {
                 SimpleDirectoryObject directoryObject = simpleDirectoryObjectFutureTask.get();
                 logger.info("检测到文件夹变动：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
+                progress.getAndAdd(directoryObject.getChildren().size());
                 addObjectObjectToJSONArray(jsonArray,directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -148,6 +157,7 @@ public class FileCacheCalculator {
                 logger.info("检测到文件变动：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
                 addObjectObjectToJSONArray(jsonArray,fileObject);
+                progress.getAndIncrement();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -230,34 +240,83 @@ public class FileCacheCalculator {
         @Override
         public SimpleFileObject call() {
             String hash = getSHA1(file);
-            progress.getAndIncrement();
             return new SimpleFileObject(file.getName(),file.length(),hash,file.lastModified() / 1000);
         }
     }
 
+    /**
+     * 对 JSONArray 去重
+     * 关于为什么要去重，因为 FileListUtils 在生成完整 JSON 的时候有小概率生成两个相同的对象... (下次一定修)
+     * @param jsonArray 要去重的 JSONArray
+     */
+    public static JSONArray deDumpJson(JSONArray jsonArray) {
+        return JSONArray.of(jsonArray.stream().distinct().toArray());
+    }
+
     public static String getSHA1(File file) {
-        //计算 MD5
         try {
-            FileInputStream in = new FileInputStream(file);
-            MessageDigest md = MessageDigest.getInstance("SHA1");
-            byte[] buffer = FileUtil.formatFileSizeByte(file.length());
-
+            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
             int len;
-            while ((len = in.read(buffer)) != -1) {
-                md.update(buffer, 0, len);
+            MessageDigest md = MessageDigest.getInstance("SHA1");
+            while ((len = fc.read(byteBuffer)) > 0) {
+                md.update(byteBuffer.array(), 0, len);
+                byteBuffer.flip();
+                byteBuffer.clear();
             }
-
-            in.close();
-
-            //转换并返回包含 20 个元素字节数组,返回数值范围为 -128 到 127
-            byte[] sha1Bytes = md.digest();
+            fc.close();
+            //转换并返回包含 16 个元素字节数组,返回数值范围为 -128 到 127
+            byte[] md5Bytes = md.digest();
             //1 代表绝对值
-            BigInteger bigInt = new BigInteger(1, sha1Bytes);
+            BigInteger bigInt = new BigInteger(1, md5Bytes);
             //转换为 16 进制
             return bigInt.toString(16);
         } catch (Exception e) {
             e.printStackTrace();
-            return "ERROR";
         }
+        return "ERROR";
+    }
+
+    public static String getMD5(File file) {
+        try {
+            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
+            int len;
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            while ((len = fc.read(byteBuffer)) > 0) {
+                md.update(byteBuffer.array(), 0, len);
+                byteBuffer.flip();
+                byteBuffer.clear();
+            }
+            fc.close();
+            //转换并返回包含 16 个元素字节数组,返回数值范围为 -128 到 127
+            byte[] md5Bytes = md.digest();
+            //1 代表绝对值
+            BigInteger bigInt = new BigInteger(1, md5Bytes);
+            //转换为 16 进制
+            return bigInt.toString(16);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "ERROR";
+    }
+
+    public static String getCRC32(File file) {
+        try {
+            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
+            int len;
+            CRC32 crc32 = new CRC32();
+            while ((len = fc.read(byteBuffer)) > 0) {
+                crc32.update(byteBuffer.array(), 0, len);
+                byteBuffer.flip();
+                byteBuffer.clear();
+            }
+            fc.close();
+            return String.valueOf(crc32.getValue());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "ERROR";
     }
 }

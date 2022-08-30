@@ -21,7 +21,7 @@ public class BalloonServer {
     }
     //软件图标
     public static final ImageIcon image = new ImageIcon(BalloonServer.class.getResource("/image/icon_128x128.jpg"));
-    public static final String version = "1.0.5-BETA";
+    public static final String version = "1.0.6-BETA";
     public static JFrame premainFrame = new JFrame("加载中");
     public static JFrame frame = new JFrame("BalloonServer " + version);
     public static JProgressBar statusProgressBar = new JProgressBar();
@@ -33,7 +33,7 @@ public class BalloonServer {
     static long start = System.currentTimeMillis();
     public static void init(){
         //大小设置
-        frame.setSize(1300,725);
+        frame.setSize(1300,695);
         frame.setMinimumSize(new Dimension((int) (frame.getWidth() * 0.8), frame.getHeight()));
         //主面板
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -55,6 +55,9 @@ public class BalloonServer {
         memBarBox.add(new JLabel("内存使用情况："));
         memBarBox.add(memBar);
         statusPanel.add(memBarBox, BorderLayout.EAST);
+        statusProgressBar.setVisible(false);
+        statusProgressBar.setStringPainted(true);
+        statusProgressBar.setBorder(new EmptyBorder(0, 40, 0, 40));
         statusProgressBar.setVisible(false);
         statusPanel.add(statusProgressBar);
         mainPanel.add(statusPanel, BorderLayout.SOUTH);

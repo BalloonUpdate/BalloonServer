@@ -3,9 +3,9 @@ package github.kasuminova.balloonserver.HTTPServer;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.Servers.LittleServer;
 import github.kasuminova.balloonserver.Utils.FileListener;
-import github.kasuminova.balloonserver.Utils.FileListener.*;
-import github.kasuminova.balloonserver.Utils.IPUtil.IPAddressUtil;
+import github.kasuminova.balloonserver.Utils.FileListener.FileMonitor;
 import github.kasuminova.balloonserver.Utils.GUILogger;
+import github.kasuminova.balloonserver.Utils.IPAddressUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
@@ -63,8 +63,11 @@ public class HttpServer {
         try {
             f = bootstrap.bind(new InetSocketAddress(IP, port)).sync();
             startOrStop.setText("关闭服务器");
-            if (IPAddressUtil.isIPv6LiteralAddress(IP)) {
-                logger.info("服务器已启动，地址：[" + IP + "]:" + port);
+            String addressType = IPAddressUtil.checkAddress(IP);
+            if (addressType != null) {
+                if (addressType.equals("v6")) {
+                    logger.info("服务器已启动，地址：[" + IP + "]:" + port);
+                }
             } else {
                 logger.info("服务器已启动，地址：" + IP + ":" + port);
             }
@@ -102,17 +105,15 @@ public class HttpServer {
         BalloonServer.statusProgressBar.removeChangeListener(changeListener);
     }
 
-    public void stop() {
+    public void stop() throws Exception {
         work.shutdownGracefully();
         boss.shutdownGracefully();
         f.channel().close();
         //文件监听器
         if (fileChangeListener.isRunning()) fileChangeListener.stop();
-        try {
+        if (fileMonitor != null) {
             fileMonitor.stop();
             logger.info("实时文件监听器已停止.");
-        } catch (Exception e) {
-            logger.error("关闭文件监听器的时候出现了一些问题...",e);
         }
         logger.info("服务器已停止.");
     }

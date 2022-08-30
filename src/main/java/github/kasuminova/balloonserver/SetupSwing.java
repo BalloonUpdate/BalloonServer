@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver;
 
-import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme;
+import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -24,7 +24,7 @@ public class SetupSwing {
 
         //更新 UI
         try {
-            UIManager.setLookAndFeel(new FlatAtomOneDarkIJTheme());
+            UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
         } catch( Exception ex ) {
             System.err.println("Failed to initialize LaF");
         }

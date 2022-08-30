@@ -11,7 +11,6 @@ import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.Attribute;
 import io.netty.util.CharsetUtil;
 
-import javax.activation.MimetypesFileTypeMap;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -20,6 +19,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import static github.kasuminova.balloonserver.Servers.LittleServer.*;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
@@ -37,7 +37,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         long start = System.currentTimeMillis();
 
         String clientIP = getClientIP(ctx,req);
-        String decodedURI = URLDecoder.decode(uri, "utf-8");
+        String decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
 
         //JSON 请求监听
         if (uri.equals("/res.json")) {
@@ -68,7 +68,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             index.put("update", config.getMainDirPath().replace("/", ""));
             // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象
-            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(index.toString(), CharsetUtil.UTF_8));
+            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(index.toJSONString(), CharsetUtil.UTF_8));
             // 设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
             // 响应写回给客户端,并在协会后断开这个连接
@@ -104,15 +104,13 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         long fileLength = randomAccessFile.length();    //文件大小
         HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK);
         setContentLength(response,fileLength);
-        setContentTypeHeader(response,file);
         if (isKeepAlive(req)){
             response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
         }
         ctx.write(response);
-        ChannelFuture sendFileFuture;
 
-        sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, FileUtil.formatFileSizeInt(fileLength)), ctx.newProgressivePromise());
-
+        //发送文件
+        ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
         JComponent[] uploadPanelComponents = createUploadPanel(getClientIP(ctx,req), file.getName());
         JPanel uploadPanel = (JPanel) uploadPanelComponents[0];
         JProgressBar uploadProgressBar = (JProgressBar) uploadPanelComponents[1];
@@ -153,7 +151,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * 创建一个进度条面板记录单独文件的显示
      * @return Component[] 第一个为面板, 第二个为进度条
      */
-    public static JComponent[] createUploadPanel(String IP, String fileName) {
+    public synchronized static JComponent[] createUploadPanel(String IP, String fileName) {
         //单个线程的面板
         JPanel uploadPanel = new JPanel(new VFlowLayout());
         //单个线程的 Box
@@ -212,10 +210,5 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         response.headers().set(HttpHeaderNames.CONTENT_TYPE,HttpHeaderValues.TEXT_PLAIN);
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
         printLog(String.valueOf(status.code()), start, clientIP, decodedURI);
-    }
-
-    private static void setContentTypeHeader(HttpResponse response, File file){
-        MimetypesFileTypeMap mimetypesFileTypeMap = new MimetypesFileTypeMap();
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE,mimetypesFileTypeMap.getContentType(file.getParent()));
     }
 }

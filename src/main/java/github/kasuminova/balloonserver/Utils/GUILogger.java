@@ -93,14 +93,14 @@ public class GUILogger {
 
     public synchronized void error(String msg, Throwable e) {
         logger.warning(msg);
-        if (e.getLocalizedMessage() != null) {
-            logger.warning(e.getLocalizedMessage());
+        if (e.getCause() != null) {
+            logger.warning(e.getCause().toString());
         }
         Document document = logPane.getDocument();
         StyleConstants.setForeground(attrSet, Color.RED);//设置颜色
         try {
-            if (e.getLocalizedMessage() != null) {
-                document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg + ": " + e.getLocalizedMessage()), attrSet);
+            if (e.getCause() != null) {
+                document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg + ": " + e.getCause()), attrSet);
             } else {
                 document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg), attrSet);
             }
@@ -114,14 +114,14 @@ public class GUILogger {
     }
 
     public synchronized void error(Throwable e) {
-        if (e.getLocalizedMessage() != null) {
-            logger.warning(e.getLocalizedMessage());
+        if (e.getCause() != null) {
+            logger.warning(e.getCause().toString());
         }
         Document document = logPane.getDocument();
         StyleConstants.setForeground(attrSet, Color.RED);//设置颜色
         try {
-            if (e.getLocalizedMessage() != null) {
-                document.insertString(document.getLength(), buildNormalLogMessage("ERROR", e.getLocalizedMessage()), attrSet);
+            if (e.getCause() != null) {
+                document.insertString(document.getLength(), buildNormalLogMessage("ERROR", e.getCause().toString()), attrSet);
             }
             logPane.setCaretPosition(document.getLength());
             for (StackTraceElement stackTraceElement : e.getStackTrace()) {
