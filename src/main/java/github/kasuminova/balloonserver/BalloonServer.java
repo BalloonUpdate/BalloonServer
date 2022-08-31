@@ -21,7 +21,7 @@ public class BalloonServer {
     }
     //软件图标
     public static final ImageIcon image = new ImageIcon(BalloonServer.class.getResource("/image/icon_128x128.jpg"));
-    public static final String version = "1.0.6-BETA";
+    public static final String version = "1.0.7-BETA";
     public static JFrame premainFrame = new JFrame("加载中");
     public static JFrame frame = new JFrame("BalloonServer " + version);
     public static JProgressBar statusProgressBar = new JProgressBar();

@@ -40,7 +40,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         String decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
 
         //JSON 请求监听
-        if (uri.equals("/res.json")) {
+        if (decodedURI.contains(config.getMainDirPath() + ".json")) {
             // 检测 100 Continue，是否同意接收将要发送过来的实体
             ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
             // 获取 resJSON
@@ -58,7 +58,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             return;
         }
 
-        if (uri.equals("/index.json")) {
+        if (decodedURI.contains("/index.json")) {
             // 检测 100 Continue，是否同意接收将要发送过来的实体
             ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
             // 构建 index

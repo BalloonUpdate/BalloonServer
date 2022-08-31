@@ -42,7 +42,7 @@ public class GUILogger {
     public synchronized void info(String msg) {
         logger.info(msg);
         Document document = logPane.getDocument();
-        StyleConstants.setForeground(attrSet, Color.GREEN);//设置颜色
+        StyleConstants.setForeground(attrSet, new Color(30,144,255));//设置颜色
 
         try {
             document.insertString(document.getLength(), buildNormalLogMessage("INFO", msg), attrSet);
@@ -55,7 +55,7 @@ public class GUILogger {
     public synchronized void debug(String msg) {
         logger.info(msg);
         Document document = logPane.getDocument();
-        StyleConstants.setForeground(attrSet, Color.MAGENTA);//设置颜色
+        StyleConstants.setForeground(attrSet, new Color(160,32,240));//设置颜色
 
         try {
             document.insertString(document.getLength(), buildNormalLogMessage("DEBUG", msg), attrSet);
@@ -68,7 +68,7 @@ public class GUILogger {
     public synchronized void warn(String msg) {
         logger.warning(msg);
         Document document = logPane.getDocument();
-        StyleConstants.setForeground(attrSet, Color.YELLOW);//设置颜色
+        StyleConstants.setForeground(attrSet, new Color(255,215,0));//设置颜色
 
         try {
             document.insertString(document.getLength(), buildNormalLogMessage("WARN", msg), attrSet);
@@ -81,7 +81,7 @@ public class GUILogger {
     public synchronized void error(String msg) {
         logger.warning(msg);
         Document document = logPane.getDocument();
-        StyleConstants.setForeground(attrSet, Color.RED);//设置颜色
+        StyleConstants.setForeground(attrSet, new Color(255,64,64));//设置颜色
 
         try {
             document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg), attrSet);
@@ -97,7 +97,7 @@ public class GUILogger {
             logger.warning(e.getCause().toString());
         }
         Document document = logPane.getDocument();
-        StyleConstants.setForeground(attrSet, Color.RED);//设置颜色
+        StyleConstants.setForeground(attrSet, new Color(255,64,64));//设置颜色
         try {
             if (e.getCause() != null) {
                 document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg + ": " + e.getCause()), attrSet);
@@ -118,7 +118,7 @@ public class GUILogger {
             logger.warning(e.getCause().toString());
         }
         Document document = logPane.getDocument();
-        StyleConstants.setForeground(attrSet, Color.RED);//设置颜色
+        StyleConstants.setForeground(attrSet, new Color(255,64,64));//设置颜色
         try {
             if (e.getCause() != null) {
                 document.insertString(document.getLength(), buildNormalLogMessage("ERROR", e.getCause().toString()), attrSet);

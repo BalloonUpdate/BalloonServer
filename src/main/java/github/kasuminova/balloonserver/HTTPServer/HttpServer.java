@@ -64,10 +64,9 @@ public class HttpServer {
             f = bootstrap.bind(new InetSocketAddress(IP, port)).sync();
             startOrStop.setText("关闭服务器");
             String addressType = IPAddressUtil.checkAddress(IP);
-            if (addressType != null) {
-                if (addressType.equals("v6")) {
-                    logger.info("服务器已启动，地址：[" + IP + "]:" + port);
-                }
+            assert addressType != null;
+            if (addressType.equals("v6")) {
+                logger.info("服务器已启动，地址：[" + IP + "]:" + port);
             } else {
                 logger.info("服务器已启动，地址：" + IP + ":" + port);
             }
@@ -113,6 +112,7 @@ public class HttpServer {
         if (fileChangeListener.isRunning()) fileChangeListener.stop();
         if (fileMonitor != null) {
             fileMonitor.stop();
+            fileMonitor = null;
             logger.info("实时文件监听器已停止.");
         }
         logger.info("服务器已停止.");

@@ -135,7 +135,8 @@ public class LittleServer {
         fileChangeListener.setToolTipText("""
                         开启后，启动服务器的同时会启动文件监听服务.
                         文件监听服务会每隔 5 - 7 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.
-                        此功能使用最小化更新模式的方法生成缓存.""");
+                        此功能使用最小化更新模式的方法生成缓存.
+                        注意：不推荐在超大文件夹(20000 文件/文件夹 以上)上使用此功能，可能会造成 CPU 卡顿.""");
         fileChangeListener.setSelected(true);
         extraFeaturesPanel.add(fileChangeListener,BorderLayout.EAST);
         configPanel.add(extraFeaturesPanel);
@@ -372,7 +373,7 @@ public class LittleServer {
 
         /**
          * 更新资源缓存结构
-         *          * 传入的参数如果为 null，则完整生成一次缓存
+         * 传入的参数如果为 null，则完整生成一次缓存
          */
         private static void updateDirCache(JSONArray jsonCache) {
             if (jsonCache != null) {
