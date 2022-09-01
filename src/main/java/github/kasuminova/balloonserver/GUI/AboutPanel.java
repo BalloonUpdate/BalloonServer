@@ -14,6 +14,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,10 @@ public class AboutPanel {
         title.setBorder(new EmptyBorder(0,30,0,0));
         //设置字体
         try {
-            title.setFont(Font.createFont(Font.TRUETYPE_FONT, AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf")).deriveFont(35f));
+            InputStream ttfFile = AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf");
+            if (ttfFile != null) {
+                title.setFont(Font.createFont(Font.TRUETYPE_FONT, ttfFile).deriveFont(35f));
+            }
         } catch (Exception e) {
             title.setFont(title.getFont().deriveFont(35f));
         }

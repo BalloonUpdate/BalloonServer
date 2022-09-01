@@ -79,21 +79,23 @@ public class HttpServer {
         if (config.isFileChangeListener()) {
             fileMonitor = new FileMonitor(5000);
             fileMonitor.monitor("." + config.getMainDirPath(), new FileListener());
-            try {
-                fileMonitor.start();
+            threadPool.execute(() -> {
+                try {
+                    fileMonitor.start();
+                    fileChangeListener = new Timer(2000, e -> {
+                        if (isFileChanged.get() && !isGenerating) {
+                            logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
+                            LittleServer.regenCache();
+                            isFileChanged.set(false);
+                        }
+                    });
+                    fileChangeListener.start();
+                } catch (Exception e) {
+                    fileMonitor = null;
+                    logger.error("启动文件监听器的时候出现了一些问题...",e);
+                }
                 logger.info("实时文件监听器已启动.");
-                fileChangeListener = new Timer(2000, e -> {
-                    if (isFileChanged.get() && !isGenerating) {
-                        logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
-                        LittleServer.regenCache();
-                        isFileChanged.set(false);
-                    }
-                });
-                fileChangeListener.start();
-            } catch (Exception e) {
-                fileChangeListener.stop();
-                logger.error("启动文件监听器的时候出现了一些问题...",e);
-            }
+            });
         }
 
         isStarted.set(true);

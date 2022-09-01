@@ -5,6 +5,7 @@ import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkCon
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
+import java.io.InputStream;
 import java.util.Enumeration;
 
 public class SetupSwing {
@@ -15,9 +16,12 @@ public class SetupSwing {
 
         //设置字体
         try {
-            Font font = Font.createFont(Font.TRUETYPE_FONT, BalloonServer.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf"));
-            Font newFont = font.deriveFont(14f);
-            initGlobalFont(newFont);
+            InputStream ttfFile = BalloonServer.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf");
+            if (ttfFile != null) {
+                Font font = Font.createFont(Font.TRUETYPE_FONT, ttfFile);
+                Font newFont = font.deriveFont(14f);
+                initGlobalFont(newFont);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

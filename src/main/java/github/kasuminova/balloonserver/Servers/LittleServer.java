@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,8 @@ public class LittleServer {
     public static JPanel requestListPanel = new JPanel(new VFlowLayout());
     static List<String> common_ModeList = new ArrayList<>();
     static List<String> once_ModeList = new ArrayList<>();
+    //线程池
+    public static ExecutorService threadPool = Executors.newCachedThreadPool();
     public static JPanel createPanel() {
         //主面板
         JPanel littleServerPanel = new JPanel(new BorderLayout());
@@ -367,7 +371,7 @@ public class LittleServer {
         //fileObjList，用于序列化 JSON
         static ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
         //计算文件夹内的文件和总大小（文件夹不计入），用于进度条显示
-        static long[] dirSize;
+        static long[] dirSize = null;
         //jsonArray 转化为资源文件夹缓存必要的变量
         static JSONArray jsonArray;
 
@@ -399,6 +403,7 @@ public class LittleServer {
                             jsonArray = null;
                             FileCacheCalculator.progress.set(0);
                             isGenerating = false;
+                            dirSize = null;
                         }
                     };
                     statusProgressBar.addChangeListener(changeListener);
@@ -431,6 +436,7 @@ public class LittleServer {
                         FileListUtils.completedBytes.set(0);
                         FileListUtils.completedFiles.set(0);
                         isGenerating = false;
+                        dirSize = null;
                     }
                 };
                 statusProgressBar.addChangeListener(changeListener);
@@ -539,12 +545,11 @@ public class LittleServer {
             String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
             if (dirSize[0] != 0) {
                 logger.info("文件夹大小：" + totalSize + ", 文件数量：" + dirSize[1]);
-
                 Thread thread;
                 if (jsonCache != null) {
                     logger.info("检测到已缓存的 JSON, 正在检查变化...");
                     thread = new Thread(() -> jsonArray = FileCacheCalculator.scanDir(jsonCache, new File("." + config.getMainDirPath())));
-                    thread.start();
+                    threadPool.execute(thread);
                     statusProgressBar = addNewStatusProgressBar();
                     statusProgressBar.setString("检查变化中：" + 0 + " 文件 / " + dirSize[1] + " 文件");
                     timer = new Timer(100, e -> {
@@ -557,7 +562,7 @@ public class LittleServer {
                     logger.info("正在生成资源目录缓存...");
                     for (File childDir : dir.listFiles()) {
                         thread = new Thread(new FileListUtils.DirCounterThread(fileObjList, childDir));
-                        thread.start();
+                        threadPool.execute(thread);
                     }
                     //轮询线程, 读取进度
                     timer = new Timer(100, e -> {
@@ -571,8 +576,8 @@ public class LittleServer {
                                 completedFiles + " 文件 / " + dirSize[1] +
                                 " 文件");
                     });
-                    //启动轮询
                 }
+                //启动轮询
                 timer.start();
                 statusProgressBar.setVisible(true);
                 return true;

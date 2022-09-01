@@ -37,7 +37,7 @@ public class FileListUtils {
      * size[1] 为总文件数量
      */
     public static long[] getDirSize(File dir) {
-        long[] size = new long[2];
+        long[] size = {0,0};
         List<File> files = new fileCounter().getFiles(dir.getPath());
         if (files != null) {
             size[1] = files.size();
