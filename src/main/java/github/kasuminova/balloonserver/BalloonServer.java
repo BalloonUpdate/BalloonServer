@@ -21,7 +21,7 @@ public class BalloonServer {
     }
     //软件图标
     public static final ImageIcon image = new ImageIcon(BalloonServer.class.getResource("/image/icon_128x128.jpg"));
-    public static final String version = "1.0.8-BETA";
+    public static final String version = "1.0.9-BETA";
     public static JFrame premainFrame = new JFrame("加载中");
     public static JFrame frame = new JFrame("BalloonServer " + version);
     public static JProgressBar statusProgressBar = new JProgressBar();
@@ -31,7 +31,7 @@ public class BalloonServer {
     static JPanel statusPanel = new JPanel(new BorderLayout());
     static JProgressBar preLoadProgressBar = new JProgressBar();
     static long start = System.currentTimeMillis();
-    public static void init(){
+    private static void init(){
         //大小设置
         frame.setSize(1300,695);
         frame.setMinimumSize(new Dimension((int) (frame.getWidth() * 0.8), frame.getHeight()));
@@ -89,7 +89,11 @@ public class BalloonServer {
         frame.setVisible(true);
         logger.info("程序已启动, 耗时 " + (System.currentTimeMillis() - start) + "ms");
     }
-    public static void preInit() {
+
+    /**
+     * 程序预加载
+     */
+    private static void preInit() {
         JPanel panel = new JPanel(new VFlowLayout());
         panel.add(new JLabel(new ImageIcon(image.getImage().getScaledInstance(96,96,Image.SCALE_DEFAULT))));
         panel.add(new JLabel("程序启动中，请稍等..."));
@@ -102,7 +106,32 @@ public class BalloonServer {
         premainFrame.setUndecorated(true);
         premainFrame.setLocationRelativeTo(null);
         premainFrame.setVisible(true);
+
+        //运行环境检测
+        preLoadProgressBar.setString("检查运行环境...");
+        int version = Integer.parseInt(System.getProperty("java.specification.version"));
+        logger.info("Java 版本为 " + version);
+        if (version < 17) {
+            int selection = JOptionPane.showConfirmDialog(premainFrame,
+                            "检测到当前 Java 运行库版本为 JAVA " +
+                                    version +
+                                    " 程序要求的运行库版本应为 JAVA 17 及以上, 您要强制使用不安全的版本启动程序吗?\n" +
+                                    "选择 “是” 启用不安全模式, 选择 “否” 退出程序",
+                            "不受支持的 JAVA 版本",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE);
+            if (selection == JOptionPane.YES_OPTION) {
+                frame.setTitle(frame.getTitle() + " (Unsafe Mode)");
+            } else {
+                System.exit(0);
+            }
+        }
     }
+
+    /**
+     * 添加一个状态面板进度条, 并删除原先存在的进度条
+     * @return 进度条
+     */
     public static JProgressBar addNewStatusProgressBar() {
         statusProgressBar.getParent().remove(statusProgressBar);
         statusProgressBar = new JProgressBar();
