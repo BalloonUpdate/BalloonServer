@@ -8,7 +8,6 @@ import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatArcDarkContras
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme;
 import github.kasuminova.balloonserver.BalloonServer;
-import github.kasuminova.balloonserver.Servers.LittleServer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -110,7 +109,7 @@ public class AboutPanel {
         themes.add("Arc Dark Contrast");
 
         JList<String> themeList = new JList<>();
-        themeList.setListData(themes.toArray(new String[themes.size()]));
+        themeList.setListData(themes.toArray(new String[0]));
         themeList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         themeList.setSelectedIndex(5);
         themeList.setBorder(new TitledBorder("选择界面主题"));
@@ -127,7 +126,7 @@ public class AboutPanel {
                 }
                 SwingUtilities.updateComponentTreeUI(frame);
             } catch (Exception ex) {
-                LittleServer.logger.error("切换主题的时候出现了一些问题...", ex);
+                ex.printStackTrace();
             }
         });
 

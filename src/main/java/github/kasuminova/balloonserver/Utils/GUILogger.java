@@ -39,7 +39,7 @@ public class GUILogger {
     }
 
     public synchronized void info(String msg) {
-        loggerThreadPool.execute(() -> {
+        loggerThreadPool.execute(new Thread(() -> {
             logger.info(msg);
             Document document = logPane.getDocument();
             StyleConstants.setForeground(attrSet, new Color(30,144,255));//设置颜色
@@ -50,11 +50,11 @@ public class GUILogger {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }));
     }
 
     public synchronized void debug(String msg) {
-        loggerThreadPool.execute(() -> {
+        loggerThreadPool.execute(new Thread(() -> {
             logger.info(msg);
             Document document = logPane.getDocument();
             StyleConstants.setForeground(attrSet, new Color(160,32,240));//设置颜色
@@ -65,11 +65,11 @@ public class GUILogger {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }));
     }
 
     public synchronized void warn(String msg) {
-        loggerThreadPool.execute(() -> {
+        loggerThreadPool.execute(new Thread(() -> {
             logger.warning(msg);
             Document document = logPane.getDocument();
             StyleConstants.setForeground(attrSet, new Color(255,215,0));//设置颜色
@@ -80,11 +80,11 @@ public class GUILogger {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }));
     }
 
     public synchronized void error(String msg) {
-        loggerThreadPool.execute(() -> {
+        loggerThreadPool.execute(new Thread(() -> {
             logger.warning(msg);
             Document document = logPane.getDocument();
             StyleConstants.setForeground(attrSet, new Color(255,64,64));//设置颜色
@@ -95,11 +95,11 @@ public class GUILogger {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }));
     }
 
     public synchronized void error(String msg, Exception e) {
-        loggerThreadPool.execute(() -> {
+        loggerThreadPool.execute(new Thread(() -> {
             logger.warning(msg);
             if (e.getCause() != null) {
                 logger.warning(e.getCause().toString());
@@ -119,11 +119,11 @@ public class GUILogger {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-        });
+        }));
     }
 
     public synchronized void error(Exception e) {
-        loggerThreadPool.execute(() -> {
+        loggerThreadPool.execute(new Thread(() -> {
             if (e.getCause() != null) {
                 logger.warning(e.getCause().toString());
             }
@@ -141,7 +141,7 @@ public class GUILogger {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-        });
+        }));
     }
 
     public String buildNormalLogMessage(String level, String msg){

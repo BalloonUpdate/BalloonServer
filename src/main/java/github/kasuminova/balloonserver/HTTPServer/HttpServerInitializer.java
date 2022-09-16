@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
+import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -10,6 +11,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
 import javax.net.ssl.SSLEngine;
+import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -17,14 +19,22 @@ import java.nio.file.Files;
 public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
     File JKS;
     String resPath;
+    String resJSON;
     char[] JKSPasswd;
-    public static boolean useSSL = false;
-    public HttpServerInitializer(File JKS, char[] JKSPasswd, String resPath, GUILogger logger) {
-        this.resPath = resPath;
+    boolean useSSL;
+    GUILogger logger;
+    LittleServerConfig config;
+    JPanel requestListPanel;
+    public HttpServerInitializer(LittleServerConfig config, GUILogger logger, String resJSON, JPanel requestListPanel) {
+        this.resPath = config.getMainDirPath();
+        this.config = config;
+        this.logger = logger;
+        this.resJSON = resJSON;
+        this.requestListPanel = requestListPanel;
         if (JKS != null) {
             if (JKSPasswd != null && JKSPasswd.length != 0) {
-                this.JKS = JKS;
-                this.JKSPasswd = JKSPasswd;
+                this.JKS = new File(config.getJKSFilePath());
+                this.JKSPasswd = config.getJKSSSLPassword().toCharArray();
                 useSSL = true;
                 logger.info("成功载入 JKS 证书与密码，使用 HTTPS 协议。");
             } else {
@@ -54,10 +64,10 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
 
         //将消息转为单一的 FullHttpRequest或者 FullHttpResponse，因为 http 解码器在每个 http 消息中会生成多个消息对象
         pipeline.addLast("http-aggregator",new HttpObjectAggregator(65535));
-        pipeline.addLast("decoder",new DecodeProxy()); //IP 获取
+        pipeline.addLast("decoder",new DecodeProxy(logger)); //反向代理适配器
         pipeline.addLast(new HttpServerCodec());// http 编解码
-        pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024)); // http 消息聚合器 512*1024 为接收的最大 contentlength
+        pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024)); // http 消息聚合器 512*1024 为接收的最大 contentLength
         pipeline.addLast("http-chunked",new ChunkedWriteHandler());
-        pipeline.addLast(new HttpRequestHandler());// 请求处理器
+        pipeline.addLast(new HttpRequestHandler(resJSON, config, logger, requestListPanel));// 请求处理器
     }
 }

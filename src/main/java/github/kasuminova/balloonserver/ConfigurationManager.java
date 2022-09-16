@@ -10,8 +10,13 @@ import java.nio.file.Paths;
 
 public class ConfigurationManager {
 
-    public static LittleServerConfig loadLittleServerConfigFromFile(String path) throws IOException {
-        return JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
+    public static LittleServerConfig loadLittleServerConfigFromFile(String path) {
+        try {
+            return JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new LittleServerConfig();
+        }
     }
 
     public static void saveConfigurationToFile(LittleServerConfig configuration, String path, String name) throws IOException {

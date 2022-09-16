@@ -1,7 +1,6 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import github.kasuminova.balloonserver.BalloonServer;
-import github.kasuminova.balloonserver.Servers.LittleServer;
+import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
 import github.kasuminova.balloonserver.Utils.FileListener;
 import github.kasuminova.balloonserver.Utils.FileListener.FileMonitor;
 import github.kasuminova.balloonserver.Utils.GUILogger;
@@ -15,42 +14,37 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 import javax.swing.*;
-import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static github.kasuminova.balloonserver.BalloonServer.changeListener;
-import static github.kasuminova.balloonserver.BalloonServer.statusProgressBar;
-import static github.kasuminova.balloonserver.Servers.LittleServer.*;
-
 public class HttpServer {
-    public AtomicBoolean isFileChanged = new AtomicBoolean(false);
-    private Timer fileChangeListener;
+    public AtomicBoolean isFileChanged;
+    private final Timer fileChangeListener;
     private GUILogger logger;
     private String resJSON;
+    private final LittleServerConfig config;
+    private final JPanel requestListPanel;
+    private final AtomicBoolean isStarted;
     public void setResJSON(String resJSON) {
         this.resJSON = resJSON;
     }
-    public String getResJSON() {
-        return resJSON;
-    }
     public void setLogger(GUILogger logger) {
         this.logger = logger;
+    }
+    public HttpServer(LittleServerConfig config, JPanel requestListPanel, AtomicBoolean isStarted, AtomicBoolean isFileChanged, Timer fileChangeListener) {
+        this.config = config;
+        this.requestListPanel = requestListPanel;
+        this.isStarted = isStarted;
+        this.isFileChanged = isFileChanged;
+        this.fileChangeListener = fileChangeListener;
     }
     EventLoopGroup boss;
     EventLoopGroup work;
     ChannelFuture f;
     FileMonitor fileMonitor;
-    public void start() {
+    public boolean start() {
         //载入配置
         String IP = config.getIP();
-        File JKS;
-        if (new File(config.getJKSFilePath()).exists()) {
-            JKS = new File(config.getJKSFilePath());
-        } else {
-            JKS = null;
-        }
-        char[] JKSPasswd = config.getJKSSSLPassword().toCharArray();
         int port = config.getPort();
 
         ServerBootstrap bootstrap = new ServerBootstrap();
@@ -59,10 +53,9 @@ public class HttpServer {
         bootstrap.group(boss, work)
                 .handler(new LoggingHandler(LogLevel.INFO))
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new HttpServerInitializer(JKS, JKSPasswd, LittleServer.config.getMainDirPath(),logger));
+                .childHandler(new HttpServerInitializer(config, logger, resJSON, requestListPanel));
         try {
             f = bootstrap.bind(new InetSocketAddress(IP, port)).sync();
-            startOrStop.setText("关闭服务器");
             String addressType = IPAddressUtil.checkAddress(IP);
             assert addressType != null;
             if (addressType.equals("v6")) {
@@ -77,45 +70,42 @@ public class HttpServer {
 
         //文件监听器
         if (config.isFileChangeListener()) {
+            long start = System.currentTimeMillis();
+            logger.info("正在启动实时文件监听器.");
             fileMonitor = new FileMonitor(5000);
-            fileMonitor.monitor("." + config.getMainDirPath(), new FileListener());
-            threadPool.execute(() -> {
+            fileMonitor.monitor("." + config.getMainDirPath(), new FileListener(logger,isFileChanged));
+
+            new Thread(() -> {
                 try {
                     fileMonitor.start();
-                    fileChangeListener = new Timer(2000, e -> {
-                        if (isFileChanged.get() && !isGenerating) {
-                            logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
-                            LittleServer.regenCache();
-                            isFileChanged.set(false);
-                        }
-                    });
                     fileChangeListener.start();
+                    logger.info("实时文件监听器已启动." + String.format(" (%sms)", System.currentTimeMillis() - start));
                 } catch (Exception e) {
                     fileMonitor = null;
                     logger.error("启动文件监听器的时候出现了一些问题...",e);
                 }
-                logger.info("实时文件监听器已启动.");
-            });
+            }).start();
         }
 
-        isStarted.set(true);
-        statusProgressBar.setVisible(false);
-        startOrStop.setEnabled(true);
-        regenDirectoryStructureCache.setEnabled(true);
-        //重置变动监听器
-        BalloonServer.statusProgressBar.removeChangeListener(changeListener);
+        return true;
     }
 
-    public void stop() throws Exception {
+    public void stop() {
         work.shutdownGracefully();
         boss.shutdownGracefully();
         f.channel().close();
         //文件监听器
         if (fileChangeListener.isRunning()) fileChangeListener.stop();
         if (fileMonitor != null) {
-            fileMonitor.stop();
-            fileMonitor = null;
-            logger.info("实时文件监听器已停止.");
+            new Thread(() -> {
+                try {
+                    fileMonitor.stop();
+                    logger.info("实时文件监听器已停止.");
+                } catch (Exception e) {
+                    logger.error("关闭文件监听器的时候出现了一些问题...", e);
+                }
+                fileMonitor = null;
+            });
         }
         logger.info("服务器已停止.");
     }

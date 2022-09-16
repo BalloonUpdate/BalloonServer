@@ -16,24 +16,28 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.CRC32;
 
 /**
  * 一个多线程计算文件缓存差异的工具类
+ * Feature: 使用 AtomicReference 替代 synchronized
  */
-public class FileCacheCalculator {
-    public FileCacheCalculator(GUILogger logger) {
+public class NextFileCacheCalculator {
+    private final GUILogger logger;
+    public NextFileCacheCalculator(GUILogger logger) {
         this.logger = logger;
     }
-    private final GUILogger logger;
-    //全局线程池
+    //文件夹计算线程的线程池
     private static final ExecutorService dirThreadPool = Executors.newCachedThreadPool();
+    //文件计算线程的线程池
     private static final ThreadPoolExecutor fileThreadPool = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
             Runtime.getRuntime().availableProcessors() * 6,
             100,
             TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>());
     public AtomicInteger progress = new AtomicInteger(0);
     public JSONArray scanDir(JSONArray jsonArray, File dir) {
+        AtomicReference<JSONArray> atomicJsonArray = new AtomicReference<>(jsonArray);
         //两个 ArrayList 存储启动的线程，用于读取变量
         ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
         ArrayList<FutureTask<SimpleDirectoryObject>> dirThreadList = new ArrayList<>();
@@ -43,8 +47,8 @@ public class FileCacheCalculator {
         if (resDirFiles != null) {
             for (File resDirFile : resDirFiles) {
                 boolean isExist = false;
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    if (jsonArray.getJSONObject(i).getString("name").equals(resDirFile.getName())) {
+                for (int i = 0; i < atomicJsonArray.get().size(); i++) {
+                    if (atomicJsonArray.get().getJSONObject(i).getString("name").equals(resDirFile.getName())) {
                         isExist = true;
                         break;
                     }
@@ -69,7 +73,7 @@ public class FileCacheCalculator {
                 SimpleDirectoryObject directoryObject = simpleDirectoryObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件夹：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
-                addObjectObjectToJSONArray(jsonArray,directoryObject);
+                atomicJsonArray.get().add(directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -79,7 +83,7 @@ public class FileCacheCalculator {
                 SimpleFileObject fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
-                addObjectObjectToJSONArray(jsonArray,fileObject);
+                atomicJsonArray.get().add(fileObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -90,8 +94,8 @@ public class FileCacheCalculator {
         fileThreadList = new ArrayList<>();
 
         //遍历当前文件夹，并于缓存对比是否有文件变动
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject obj = jsonArray.getJSONObject(i);
+        for (int i = 0; i < atomicJsonArray.get().size(); i++) {
+            JSONObject obj = atomicJsonArray.get().getJSONObject(i);
 
             String childPath = dir.getPath() + File.separator + obj.get("name");
 
@@ -103,7 +107,7 @@ public class FileCacheCalculator {
                 if (obj.getLong("length") == null) {
                     //如果资源文件夹现在是文件，则重新生成文件缓存，否则扫描文件夹内内容变化
                     if (childFile.isFile()) {
-                        removeObjectFromJSONArray(jsonArray,obj);
+                        atomicJsonArray.get().remove(obj);
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
                         fileThreadList.add(fileCounterThread);
@@ -116,7 +120,7 @@ public class FileCacheCalculator {
                 } else if (childFile.isFile()) {
                     //如果文件修改时间变动，则重新生成缓存
                     if (childFile.lastModified() / 1000 != obj.getLong("modified")) {
-                        removeObjectFromJSONArray(jsonArray,obj);
+                        atomicJsonArray.get().remove(obj);
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
                         fileThreadList.add(fileCounterThread);
@@ -126,14 +130,14 @@ public class FileCacheCalculator {
                     }
                     //如果资源文件现在是文件夹，则遍历文件夹内部文件并返回 SimpleDirectoryObject
                 } else if (childFile.isDirectory()) {
-                    removeObjectFromJSONArray(jsonArray,obj);
+                    atomicJsonArray.get().remove(obj);
 
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile));
                     dirThreadList.add(dirCounterThread);
                     dirThreadPool.execute(dirCounterThread);
                 }
             } else {
-                removeObjectFromJSONArray(jsonArray,obj);
+                atomicJsonArray.get().remove(obj);
                 i--;
                 logger.info(childPath + " 不存在, 删除缓存数据.");
             }
@@ -146,7 +150,7 @@ public class FileCacheCalculator {
                 logger.info("检测到文件夹变动：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
                 progress.getAndAdd(directoryObject.getChildren().size());
-                addObjectObjectToJSONArray(jsonArray,directoryObject);
+                atomicJsonArray.get().add(directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -156,22 +160,16 @@ public class FileCacheCalculator {
                 SimpleFileObject fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到文件变动：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
-                addObjectObjectToJSONArray(jsonArray,fileObject);
+                atomicJsonArray.get().add(fileObject);
                 progress.getAndIncrement();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        return jsonArray;
-    }
 
-    private synchronized static void removeObjectFromJSONArray(JSONArray jsonArray, JSONObject object) {
-        jsonArray.remove(object);
-    }
 
-    private synchronized static void addObjectObjectToJSONArray(JSONArray jsonArray, AbstractSimpleFileObject object) {
-        jsonArray.add(object);
+        return atomicJsonArray.get();
     }
 
     /**

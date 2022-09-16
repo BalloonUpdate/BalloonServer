@@ -17,12 +17,20 @@ public class FileUtil {
         // 保证创建一个新文件
         File file = new File(fullPath);
         if (!file.getParentFile().exists()) { // 如果父目录不存在，创建父目录
-            file.getParentFile().mkdirs();
+            if (file.getParentFile().mkdirs()) {
+                throw new IOException("父目录创建失败！");
+            }
         }
         if (file.exists()) { // 如果已存在,删除旧文件
-            file.delete();
+            if (!file.delete()) {
+                throw new IOException("旧文件删除失败！");
+            }
         }
-        file.createNewFile();
+
+        if (!file.createNewFile()) {
+            throw new IOException("创建文件失败！！");
+        }
+
 
         if(jsonString.contains("'")){
             //将单引号转义一下，因为JSON串中的字符串类型可以单引号引起来的

@@ -6,6 +6,9 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.zip.CRC32;
 
+/**
+ * 公用 Hash 计算类
+ */
 public class HashCalculator {
     /**
      * 获取文件 SHA1

@@ -1,9 +1,10 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
 import com.alibaba.fastjson2.JSONObject;
+import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
-import github.kasuminova.balloonserver.Servers.LittleServer;
 import github.kasuminova.balloonserver.Utils.FileUtil;
+import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
@@ -21,11 +22,21 @@ import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-import static github.kasuminova.balloonserver.Servers.LittleServer.*;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
 public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+    String resJSON;
+    LittleServerConfig config;
+    GUILogger logger;
+    JPanel requestListPanel;
+    public HttpRequestHandler(String resJSON, LittleServerConfig config, GUILogger logger, JPanel requestListPanel) {
+        this.resJSON = resJSON;
+        this.config = config;
+        this.logger = logger;
+        this.requestListPanel = requestListPanel;
+    }
+
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
         ctx.flush();
@@ -43,8 +54,6 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         if (decodedURI.contains(config.getMainDirPath() + ".json")) {
             // 检测 100 Continue，是否同意接收将要发送过来的实体
             ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
-            // 获取 resJSON
-            String resJSON = LittleServer.server.getResJSON();
             // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(resJSON, CharsetUtil.UTF_8));
@@ -80,7 +89,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         }
 
         //安全性检查
-        if (!decodedURI.startsWith(LittleServer.config.getMainDirPath())) {
+        if (!decodedURI.startsWith(config.getMainDirPath())) {
             sendError(ctx, HttpResponseStatus.FORBIDDEN, clientIP, decodedURI);
             return;
         }
@@ -151,7 +160,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * 创建一个进度条面板记录单独文件的显示
      * @return Component[] 第一个为面板, 第二个为进度条
      */
-    public synchronized static JComponent[] createUploadPanel(String IP, String fileName) {
+    public synchronized JComponent[] createUploadPanel(String IP, String fileName) {
         //单个线程的面板
         JPanel uploadPanel = new JPanel(new VFlowLayout());
         //单个线程的 Box
@@ -178,7 +187,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * @param clientIP 客户端 IP
      * @param decodedURI 转义后的 URI
      */
-    private static void printLog(String msg, long StartTime, String clientIP, String decodedURI) {
+    private void printLog(String msg, long StartTime, String clientIP, String decodedURI) {
         try {
             logger.info(clientIP + " " + msg + " URI: " + decodedURI + " (" + (System.currentTimeMillis() - StartTime) + "ms)");
         } catch (Exception e) {
@@ -204,7 +213,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         }
     }
 
-    private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, String clientIP, String decodedURI){
+    private void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, String clientIP, String decodedURI){
         long start = System.currentTimeMillis();
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,status,Unpooled.copiedBuffer("Failure: "+status+"\r\n",CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE,HttpHeaderValues.TEXT_PLAIN);

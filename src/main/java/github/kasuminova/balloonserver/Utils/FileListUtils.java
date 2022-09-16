@@ -27,7 +27,7 @@ public class FileListUtils {
     public static AtomicLong completedBytes = new AtomicLong(0);
     public static AtomicInteger completedFiles = new AtomicInteger(0);
     //文件夹计算线程的线程池
-    static ExecutorService dirThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    static ExecutorService dirThreadPool = Executors.newWorkStealingPool();
     //文件计算线程的线程池
     static ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 6);
     /**

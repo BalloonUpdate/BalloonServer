@@ -8,10 +8,10 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public class BalloonServer {
@@ -20,14 +20,14 @@ public class BalloonServer {
         SetupSwing.init();
     }
     //软件图标
-    public static final ImageIcon image = new ImageIcon(BalloonServer.class.getResource("/image/icon_128x128.jpg"));
-    public static final String version = "1.0.9-BETA";
+    public static final ImageIcon image = new ImageIcon(Objects.requireNonNull(BalloonServer.class.getResource("/image/icon_128x128.jpg")));
+    public static final String version = "1.0.10-STABLE";
     public static JFrame premainFrame = new JFrame("加载中");
     public static JFrame frame = new JFrame("BalloonServer " + version);
     public static JProgressBar statusProgressBar = new JProgressBar();
-    public static ChangeListener changeListener;
     //全局 LOGGER
     public static Logger logger = Logger.getLogger("MAIN");
+    public static LittleServer littleServer;
     static JPanel statusPanel = new JPanel(new BorderLayout());
     static JProgressBar preLoadProgressBar = new JProgressBar();
     static long start = System.currentTimeMillis();
@@ -40,7 +40,8 @@ public class BalloonServer {
         //标签页组装
         preLoadProgressBar.setString("载入主面板...");
         JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        tabbedPane.add(LittleServer.createPanel(), "LittleServer");
+        littleServer = new LittleServer("./littleserver.json");
+        tabbedPane.add(littleServer.getPanel(), "LittleServer");
         tabbedPane.add(AboutPanel.createPanel(), "关于本程序");
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
         //状态栏
@@ -115,7 +116,7 @@ public class BalloonServer {
             int selection = JOptionPane.showConfirmDialog(premainFrame,
                             "检测到当前 Java 运行库版本为 JAVA " +
                                     version +
-                                    " 程序要求的运行库版本应为 JAVA 17 及以上, 您要强制使用不安全的版本启动程序吗?\n" +
+                                    " 程序要求的运行库版本应为 JAVA 17 及以上, 您要强制使用不兼容的版本启动程序吗?\n" +
                                     "选择 “是” 启用不安全模式, 选择 “否” 退出程序",
                             "不受支持的 JAVA 版本",
                             JOptionPane.YES_NO_OPTION,
@@ -134,7 +135,7 @@ public class BalloonServer {
      */
     public static JProgressBar addNewStatusProgressBar() {
         statusProgressBar.getParent().remove(statusProgressBar);
-        statusProgressBar = new JProgressBar();
+        statusProgressBar = new JProgressBar(0,1000);
         statusProgressBar.setStringPainted(true);
         statusProgressBar.setBorder(new EmptyBorder(0, 40, 0, 40));
         statusProgressBar.setVisible(false);

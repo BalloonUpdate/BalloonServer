@@ -6,49 +6,53 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 
 import java.io.File;
-
-import static github.kasuminova.balloonserver.Servers.LittleServer.logger;
-import static github.kasuminova.balloonserver.Servers.LittleServer.server;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FileListener extends FileAlterationListenerAdaptor {
+    GUILogger logger;
+    AtomicBoolean isFileChanged;
+    public FileListener(GUILogger logger, AtomicBoolean isFileChanged) {
+        this.logger = logger;
+        this.isFileChanged = isFileChanged;
+    }
     @Override
     public void onDirectoryCreate(File directory) {
         logger.info("新建：" + directory.getPath());
-        server.isFileChanged.set(true);
+        isFileChanged.set(true);
     }
 
     @Override
     public void onDirectoryChange(File directory) {
         logger.info("修改：" + directory.getPath());
-        server.isFileChanged.set(true);
+        isFileChanged.set(true);
     }
 
     @Override
     public void onDirectoryDelete(File directory) {
         logger.info("删除：" + directory.getPath());
-        server.isFileChanged.set(true);
+        isFileChanged.set(true);
     }
 
     @Override
     public void onFileCreate(File file) {
         logger.info("新建：" + file.getPath());
-        server.isFileChanged.set(true);
+        isFileChanged.set(true);
     }
 
     @Override
     public void onFileChange(File file) {
         logger.info("修改：" + file.getPath());
-        server.isFileChanged.set(true);
+        isFileChanged.set(true);
     }
 
     @Override
     public void onFileDelete(File file) {
         logger.info("删除：" + file.getPath());
-        server.isFileChanged.set(true);
+        isFileChanged.set(true);
     }
 
     public static class FileMonitor {
-        private FileAlterationMonitor monitor;
+        private final FileAlterationMonitor monitor;
 
         public FileMonitor(long interval) {
             monitor = new FileAlterationMonitor(interval);
