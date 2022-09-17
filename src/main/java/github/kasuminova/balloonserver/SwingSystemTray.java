@@ -10,6 +10,8 @@ import java.net.URL;
 
 /**
  * 中文系统托盘弹出菜单不乱码。
+ * 网上抄的（）
+ * @author Kasumi_Nova
  */
 public class SwingSystemTray {
     public static void initSystemTray(JFrame frame) {
@@ -50,7 +52,7 @@ public class SwingSystemTray {
         Image image = Toolkit.getDefaultToolkit().createImage(resource);
         // 创建系统托盘图标
         TrayIcon trayIcon = new TrayIcon(image);
-        trayIcon.setToolTip("BalloonServer " + BalloonServer.version);
+        trayIcon.setToolTip("BalloonServer " + BalloonServer.VERSION);
         // 自动调整系统托盘图标大小
         trayIcon.setImageAutoSize(true);
 
@@ -63,7 +65,7 @@ public class SwingSystemTray {
                     //显示窗口
                     frame.setVisible(true);
                     frame.toFront();
-                } else if (e.getButton() == 3 && e.isPopupTrigger()) {
+                } else if (e.getButton() == MouseEvent.BUTTON3 && e.isPopupTrigger()) {
                     // 右键点击弹出JPopupMenu绑定的载体以及JPopupMenu
                     dialog.setLocation(e.getX() + 5, e.getY() - 5 - jPopupMenu.getHeight());
                     // 显示载体

@@ -8,15 +8,28 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class ConfigurationManager {
 
-    public static LittleServerConfig loadLittleServerConfigFromFile(String path) {
-        try {
-            return JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new LittleServerConfig();
+    public static LittleServerConfig loadLittleServerConfigFromFile(String path) throws IOException {
+        LittleServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
+
+        //配置文件版本验证
+        if (config.getConfigVersion() == 0) {
+            LittleServerConfig newConfig = new LittleServerConfig();
+            newConfig.setIp(config.getIp());
+            newConfig.setFileChangeListener(config.fileChangeListener);
+            newConfig.setPort(config.getPort());
+            newConfig.setMainDirPath(config.getMainDirPath());
+            newConfig.setJksFilePath(config.getJksFilePath());
+            newConfig.setJksSslPassword(config.getJksSslPassword());
+
+            return newConfig;
         }
+
+        return config;
     }
 
     public static void saveConfigurationToFile(LittleServerConfig configuration, String path, String name) throws IOException {
@@ -24,16 +37,15 @@ public class ConfigurationManager {
     }
 
     public static class LittleServerConfig {
-        private int configVersion = 0;
-        private String IP = "0.0.0.0";
+        private int configVersion = 1;
+        private String ip = "0.0.0.0";
         private int port = 8080;
         private String mainDirPath = "/res";
-        private boolean miniSizeUpdateMode = true;
         private boolean fileChangeListener = true;
-        private String JKSFilePath = "";
-        private String JKSSSLPassword = "";
-        private String[] common_mode = new String[0];
-        private String[] once_mode = new String[0];
+        private String jksFilePath = "";
+        private String jksSslPassword = "";
+        private String[] commonMode = new String[0];
+        private String[] onceMode = new String[0];
 
         public int getConfigVersion() {
             return configVersion;
@@ -41,8 +53,8 @@ public class ConfigurationManager {
         public void setConfigVersion(int configVersion) {
             this.configVersion = configVersion;
         }
-        public String getIP() {
-            return IP;
+        public String getIp() {
+            return ip;
         }
         public int getPort() {
             return port;
@@ -50,38 +62,32 @@ public class ConfigurationManager {
         public void setPort(int port) {
             this.port = port;
         }
-        public boolean isMiniSizeUpdateMode() {
-            return miniSizeUpdateMode;
+        public String getJksFilePath() {
+            return jksFilePath;
         }
-        public void setMiniSizeUpdateMode(boolean miniSizeUpdateMode) {
-            this.miniSizeUpdateMode = miniSizeUpdateMode;
+        public void setJksFilePath(String jksFilePath) {
+            this.jksFilePath = jksFilePath;
         }
-        public String getJKSFilePath() {
-            return JKSFilePath;
+        public String getJksSslPassword() {
+            return jksSslPassword;
         }
-        public void setJKSFilePath(String JKSFilePath) {
-            this.JKSFilePath = JKSFilePath;
+        public void setJksSslPassword(String jksSslPassword) {
+            this.jksSslPassword = jksSslPassword;
         }
-        public String getJKSSSLPassword() {
-            return JKSSSLPassword;
+        public String[] getCommonMode() {
+            return commonMode;
         }
-        public void setJKSSSLPassword(String JKSSSLPassword) {
-            this.JKSSSLPassword = JKSSSLPassword;
+        public void setCommonMode(String[] commonMode) {
+            this.commonMode = commonMode;
         }
-        public String[] getCommon_mode() {
-            return common_mode;
+        public String[] getOnceMode() {
+            return onceMode;
         }
-        public void setCommon_mode(String[] common_mode) {
-            this.common_mode = common_mode;
+        public void setOnceMode(String[] onceMode) {
+            this.onceMode = onceMode;
         }
-        public String[] getOnce_mode() {
-            return once_mode;
-        }
-        public void setOnce_mode(String[] once_mode) {
-            this.once_mode = once_mode;
-        }
-        public void setIP(String IP) {
-            this.IP = IP;
+        public void setIp(String ip) {
+            this.ip = ip;
         }
         public String getMainDirPath() {
             return mainDirPath;

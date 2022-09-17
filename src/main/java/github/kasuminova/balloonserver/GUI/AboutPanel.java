@@ -21,7 +21,7 @@ import java.util.List;
 import static github.kasuminova.balloonserver.BalloonServer.frame;
 
 public class AboutPanel {
-    static final int globalButtonWidth = 165;
+    static final int GLOBAL_BUTTON_WIDTH = 165;
     public static JPanel createPanel() {
         //主面板
         JPanel aboutPanel = new JPanel(new BorderLayout());
@@ -30,9 +30,9 @@ public class AboutPanel {
         Box titleBox = Box.createHorizontalBox();
         titleBox.setBorder(new EmptyBorder(10,0,0,0));
         //LOGO, 并缩放图标
-        titleBox.add(new JLabel(new ImageIcon(BalloonServer.image.getImage().getScaledInstance(64,64, Image.SCALE_DEFAULT))));
+        titleBox.add(new JLabel(new ImageIcon(BalloonServer.ICON.getImage().getScaledInstance(64,64, Image.SCALE_DEFAULT))));
         //标题
-        JLabel title = new JLabel("BalloonServer " + BalloonServer.version);
+        JLabel title = new JLabel("BalloonServer " + BalloonServer.VERSION);
         title.setBorder(new EmptyBorder(0,30,0,0));
         //设置字体
         try {
@@ -63,7 +63,7 @@ public class AboutPanel {
                 }
             }
         });
-        openProjectLink.setPreferredSize(new Dimension(globalButtonWidth,30));
+        openProjectLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
         linkPanel.add(openProjectLink);
         //项目链接
         JButton openOrganizationLink = new JButton("点击打开项目链接");
@@ -77,7 +77,7 @@ public class AboutPanel {
                 }
             }
         });
-        openOrganizationLink.setPreferredSize(new Dimension(globalButtonWidth,30));
+        openOrganizationLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
         linkPanel.add(openOrganizationLink);
         //Issues 链接
         JButton openIssuesLink = new JButton("戳我提交 Issue!");
@@ -91,7 +91,7 @@ public class AboutPanel {
                 }
             }
         });
-        openIssuesLink.setPreferredSize(new Dimension(globalButtonWidth,30));
+        openIssuesLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
         linkPanel.add(openIssuesLink);
         descPanel.add(linkPanel);
         //协议

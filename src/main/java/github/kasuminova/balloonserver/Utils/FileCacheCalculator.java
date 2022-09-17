@@ -20,15 +20,15 @@ import java.util.zip.CRC32;
 
 /**
  * 一个多线程计算文件缓存差异的工具类
+ * @author Kasumi_Nova
  */
 public class FileCacheCalculator {
     public FileCacheCalculator(GUILogger logger) {
         this.logger = logger;
     }
     private final GUILogger logger;
-    //全局线程池
-    private static final ExecutorService dirThreadPool = Executors.newCachedThreadPool();
-    private static final ThreadPoolExecutor fileThreadPool = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
+    private static final ExecutorService DIR_THREAD_POOL = Executors.newCachedThreadPool();
+    private static final ThreadPoolExecutor FILE_THREAD_POOL = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
             Runtime.getRuntime().availableProcessors() * 6,
             100,
             TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>());
@@ -53,11 +53,11 @@ public class FileCacheCalculator {
                     if (resDirFile.isFile()) {
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(resDirFile));
                         fileThreadList.add(fileCounterThread);
-                        fileThreadPool.execute(fileCounterThread);
+                        FILE_THREAD_POOL.execute(fileCounterThread);
                     } else {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile));
                         dirThreadList.add(dirCounterThread);
-                        dirThreadPool.execute(dirCounterThread);
+                        DIR_THREAD_POOL.execute(dirCounterThread);
                     }
                 }
             }
@@ -69,7 +69,7 @@ public class FileCacheCalculator {
                 SimpleDirectoryObject directoryObject = simpleDirectoryObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件夹：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
-                addObjectObjectToJSONArray(jsonArray,directoryObject);
+                addObjectObjectToJsonArray(jsonArray,directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -79,7 +79,7 @@ public class FileCacheCalculator {
                 SimpleFileObject fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
-                addObjectObjectToJSONArray(jsonArray,fileObject);
+                addObjectObjectToJsonArray(jsonArray,fileObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -103,11 +103,11 @@ public class FileCacheCalculator {
                 if (obj.getLong("length") == null) {
                     //如果资源文件夹现在是文件，则重新生成文件缓存，否则扫描文件夹内内容变化
                     if (childFile.isFile()) {
-                        removeObjectFromJSONArray(jsonArray,obj);
+                        removeObjectFromJsonArray(jsonArray,obj);
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
                         fileThreadList.add(fileCounterThread);
-                        fileThreadPool.execute(fileCounterThread);
+                        FILE_THREAD_POOL.execute(fileCounterThread);
                     } else {
                         JSONArray children = obj.getJSONArray("children");
                         obj.put("children", scanDir(children, childFile));
@@ -116,24 +116,24 @@ public class FileCacheCalculator {
                 } else if (childFile.isFile()) {
                     //如果文件修改时间变动，则重新生成缓存
                     if (childFile.lastModified() / 1000 != obj.getLong("modified")) {
-                        removeObjectFromJSONArray(jsonArray,obj);
+                        removeObjectFromJsonArray(jsonArray,obj);
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
                         fileThreadList.add(fileCounterThread);
-                        fileThreadPool.execute(fileCounterThread);
+                        FILE_THREAD_POOL.execute(fileCounterThread);
                     } else {
                         progress.getAndIncrement();
                     }
                     //如果资源文件现在是文件夹，则遍历文件夹内部文件并返回 SimpleDirectoryObject
                 } else if (childFile.isDirectory()) {
-                    removeObjectFromJSONArray(jsonArray,obj);
+                    removeObjectFromJsonArray(jsonArray,obj);
 
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile));
                     dirThreadList.add(dirCounterThread);
-                    dirThreadPool.execute(dirCounterThread);
+                    DIR_THREAD_POOL.execute(dirCounterThread);
                 }
             } else {
-                removeObjectFromJSONArray(jsonArray,obj);
+                removeObjectFromJsonArray(jsonArray,obj);
                 i--;
                 logger.info(childPath + " 不存在, 删除缓存数据.");
             }
@@ -146,7 +146,7 @@ public class FileCacheCalculator {
                 logger.info("检测到文件夹变动：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
                 progress.getAndAdd(directoryObject.getChildren().size());
-                addObjectObjectToJSONArray(jsonArray,directoryObject);
+                addObjectObjectToJsonArray(jsonArray,directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -156,7 +156,7 @@ public class FileCacheCalculator {
                 SimpleFileObject fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到文件变动：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
-                addObjectObjectToJSONArray(jsonArray,fileObject);
+                addObjectObjectToJsonArray(jsonArray,fileObject);
                 progress.getAndIncrement();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -166,11 +166,11 @@ public class FileCacheCalculator {
         return jsonArray;
     }
 
-    private synchronized static void removeObjectFromJSONArray(JSONArray jsonArray, JSONObject object) {
+    private synchronized static void removeObjectFromJsonArray(JSONArray jsonArray, JSONObject object) {
         jsonArray.remove(object);
     }
 
-    private synchronized static void addObjectObjectToJSONArray(JSONArray jsonArray, AbstractSimpleFileObject object) {
+    private synchronized static void addObjectObjectToJsonArray(JSONArray jsonArray, AbstractSimpleFileObject object) {
         jsonArray.add(object);
     }
 
@@ -194,10 +194,10 @@ public class FileCacheCalculator {
                     if (file.isFile()) {
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(file));
                         fileThreadList.add(fileCounterThread);
-                        fileThreadPool.execute(fileCounterThread);
+                        FILE_THREAD_POOL.execute(fileCounterThread);
                     } else if (file.isDirectory()) {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file));
-                        dirThreadPool.execute(dirCounterThread);
+                        DIR_THREAD_POOL.execute(dirCounterThread);
                         dirThreadList.add(dirCounterThread);
                     }
                 }

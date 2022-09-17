@@ -2,6 +2,9 @@ package github.kasuminova.balloonserver.Utils;
 
 import java.util.List;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class FileObject {
     public static abstract class AbstractSimpleFileObject {
         String name;

@@ -24,33 +24,28 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
-import static github.kasuminova.balloonserver.ConfigurationManager.loadLittleServerConfigFromFile;
 
+/**
+ * LittleServer 面板实例，支持多实例化
+ * @author Kasumi_Nova
+ */
 public class LittleServer {
-    //服务器启动状态
-    public AtomicBoolean isStarted = new AtomicBoolean(false);
-    //服务端是否在生成缓存，防止同一时间多个线程生成缓存导致程序混乱
-    public AtomicBoolean isGenerating = new AtomicBoolean(false);
-    public AtomicBoolean isFileChanged = new AtomicBoolean(false);
-    public LittleServerConfig config = loadLittleServerConfigFromFile("./littleserver.json");
-    public GUILogger logger;
-    Timer fileChangeListener = new Timer(2000, e -> {
-        if (isFileChanged.get() && !isGenerating.get()) {
-            logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
-            regenCache();
-            isFileChanged.set(false);
-        }
-    });
-    public JButton startOrStop = new JButton("重载配置并启动服务器");
-    public JButton regenDirectoryStructureCache = new JButton("重新生成资源文件夹缓存");
-    public JPanel requestListPanel = new JPanel(new VFlowLayout());
-    cacheUtils cacheUtil = new cacheUtils();
-    List<String> common_ModeList = new ArrayList<>();
-    List<String> once_ModeList = new ArrayList<>();
+    private LittleServerConfig config;
+    private List<String> common_ModeList = new ArrayList<>();
+    private List<String> once_ModeList = new ArrayList<>();
+    private HttpServer server;
     //线程池
-    public ExecutorService threadPool = Executors.newCachedThreadPool();
-    JPanel littleServerPanel = new JPanel(new BorderLayout());
-    public HttpServer server = new HttpServer(config, requestListPanel, isStarted, isFileChanged, fileChangeListener);
+    private final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
+    //服务器启动状态
+    private final AtomicBoolean isStarted = new AtomicBoolean(false);
+    //服务端是否在生成缓存，防止同一时间多个线程生成缓存导致程序混乱
+    private final AtomicBoolean isGenerating = new AtomicBoolean(false);
+    private final GUILogger logger;
+    private final JButton startOrStop = new JButton("重载配置并启动服务器");
+    private final JButton regenDirectoryStructureCache = new JButton("重新生成资源文件夹缓存");
+    private final JPanel requestListPanel = new JPanel(new VFlowLayout());
+    private final cacheUtils cacheUtil = new cacheUtils();
+    private final JPanel littleServerPanel = new JPanel(new BorderLayout());
 
     /**
      * 返回当前实例的面板
@@ -61,9 +56,10 @@ public class LittleServer {
     }
     /**
      * 创建一个服务器面板，并绑定一个新的服务器实例
-     * @param configFilePath 配置文件路径
+     * @param configFilePath LittleServerConfig 配置文件路径
      */
     public LittleServer(String configFilePath) {
+        long start = System.currentTimeMillis();
         //设置 Logger，主体为 logPanel
         JPanel logPanel = new JPanel(new BorderLayout());
         logPanel.setBorder(BorderFactory.createTitledBorder("程序日志"));
@@ -73,7 +69,6 @@ public class LittleServer {
         logPanel.add(logScrollPane, BorderLayout.CENTER);
 
         logger = new GUILogger("", logPane);
-        server.setLogger(logger);
 
         //控制面板
         JPanel controlPanel = new JPanel(new BorderLayout());
@@ -123,10 +118,10 @@ public class LittleServer {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"jks"}, "JKS 证书 (*.jks)"));
 
-            if (JFileChooser.APPROVE_OPTION == fileChooser.showDialog(littleServerPanel, "载入证书")) {
+            if (fileChooser.showDialog(littleServerPanel, "载入证书") == JFileChooser.APPROVE_OPTION) {
                 File JKS = fileChooser.getSelectedFile();
                 if (JKS != null && JKS.exists()) {
-                    config.setJKSFilePath(JKS.getPath());
+                    config.setJksFilePath(JKS.getPath());
                     JksSslTextField.setText(JKS.getName());
                     logger.info("已载入证书 " + JKS.getName());
                 }
@@ -145,24 +140,14 @@ public class LittleServer {
 
         //额外功能
         JPanel extraFeaturesPanel = new JPanel(new BorderLayout());
-        //最小化更新模式
-        JCheckBox miniSizeUpdateMode = new JCheckBox("启用最小化更新模式");
-        miniSizeUpdateMode.setToolTipText("""
-                        开启后，程序如果在生成缓存后变动文件，则不需要重新生成缓存文件.
-                        程序将会最小化检查差异更新，适合服务器 IO 性能较弱的情况下使用.
-                        关闭后，程序每次更新缓存文件都会完整计算一次资源文件夹.
-                        Feature: 此功能已加入多线程全家桶，预计会在下个版本并入程序~""");
-        miniSizeUpdateMode.setSelected(true);
-        extraFeaturesPanel.add(miniSizeUpdateMode,BorderLayout.WEST);
         //实时文件监听
         JCheckBox fileChangeListener = new JCheckBox("启用实时文件监听");
         fileChangeListener.setToolTipText("""
                         开启后，启动服务器的同时会启动文件监听服务.
                         文件监听服务会每隔 5 - 7 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.
-                        此功能使用最小化更新模式的方法生成缓存.
-                        注意：不推荐在超大文件夹(15000 文件/文件夹 以上)上使用此功能，可能会造成 CPU 卡顿.""");
+                        注意：不推荐在超大文件夹(10000 文件/文件夹 以上)上使用此功能，可能会造成 I/O 卡顿.""");
         fileChangeListener.setSelected(true);
-        extraFeaturesPanel.add(fileChangeListener,BorderLayout.EAST);
+        extraFeaturesPanel.add(fileChangeListener,BorderLayout.WEST);
         configPanel.add(extraFeaturesPanel);
 
         /*
@@ -173,7 +158,10 @@ public class LittleServer {
         common_ModePanel.setBorder(BorderFactory.createTitledBorder("普通更新模式"));
         JList<String> common_Mode = new JList<>();
         common_Mode.setVisibleRowCount(4);
-        JScrollPane common_ModeScrollPane = new JScrollPane(common_Mode,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane common_ModeScrollPane = new JScrollPane(
+                common_Mode,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         common_ModePanel.add(common_ModeScrollPane);
         configPanel.add(common_ModePanel);
@@ -182,7 +170,9 @@ public class LittleServer {
         JPopupMenu common_ModeMenu = new JPopupMenu();
         JMenuItem addNewCommonRule = new JMenuItem("添加更新规则");
         addNewCommonRule.addActionListener(e -> {
-            String newRule = JOptionPane.showInputDialog(frame, "请输入更新规则：", "提示", JOptionPane.INFORMATION_MESSAGE);
+            String newRule = JOptionPane.showInputDialog(frame,
+                    "请输入更新规则：", "提示",
+                    JOptionPane.INFORMATION_MESSAGE);
             if (newRule != null && !newRule.isEmpty()) {
                 common_ModeList.add(newRule);
                 //去重
@@ -205,7 +195,9 @@ public class LittleServer {
                 common_ModeList = listTmp1;
                 common_Mode.setListData(listTmp1.toArray(new String[0]));
             } else {
-                JOptionPane.showMessageDialog(frame,"请选择一个规则后再删除.", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame,
+                        "请选择一个规则后再删除.", "错误",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
         common_ModeMenu.add(deleteCommonRule);
@@ -224,7 +216,10 @@ public class LittleServer {
         once_ModePanel.setBorder(BorderFactory.createTitledBorder("补全更新模式"));
         JList<String> once_Mode = new JList<>();
         once_Mode.setVisibleRowCount(4);
-        JScrollPane once_ModeScrollPane = new JScrollPane(once_Mode,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane once_ModeScrollPane = new JScrollPane(
+                once_Mode,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         once_ModePanel.add(once_ModeScrollPane);
 
@@ -232,7 +227,9 @@ public class LittleServer {
         JPopupMenu once_ModeMenu = new JPopupMenu();
         JMenuItem addNewOnceRule = new JMenuItem("添加更新规则");
         addNewOnceRule.addActionListener(e -> {
-            String newRule = JOptionPane.showInputDialog(frame, "请输入更新规则：", "提示", JOptionPane.INFORMATION_MESSAGE);
+            String newRule = JOptionPane.showInputDialog(frame,
+                    "请输入更新规则：", "提示",
+                    JOptionPane.INFORMATION_MESSAGE);
             if (newRule != null && !newRule.isEmpty()) {
                 once_ModeList.add(newRule);
                 //去重
@@ -255,7 +252,9 @@ public class LittleServer {
                 once_ModeList = listTmp1;
                 once_Mode.setListData(listTmp1.toArray(new String[0]));
             } else {
-                JOptionPane.showMessageDialog(frame,"请选择一个规则后再删除.", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(frame,
+                        "请选择一个规则后再删除.", "错误",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
         //鼠标监听
@@ -270,8 +269,18 @@ public class LittleServer {
         once_ModeMenu.add(deleteOnceRule);
         configPanel.add(once_ModePanel);
 
-        //载入配置文件
-        loadConfigurationFromFile(configFilePath,IPTextField,portSpinner,miniSizeUpdateMode,JksSslTextField,JksSslPassField,mainDirTextField,common_Mode,once_Mode,fileChangeListener);
+        //载入配置文件并初始化 HTTP 服务端
+        loadConfigurationFromFile(
+                configFilePath,
+                IPTextField,
+                portSpinner,
+                JksSslTextField,
+                JksSslPassField,
+                mainDirTextField,
+                common_Mode,
+                once_Mode,
+                fileChangeListener);
+        loadHttpServer();
 
         JPanel southControlPanel = new JPanel(new VFlowLayout());
         southControlPanel.add(new JLabel("上方配置修改后，请点击保存配置按钮来载入配置."));
@@ -281,7 +290,12 @@ public class LittleServer {
         saveConfigButton.setToolTipText("以控制面板当前的配置应用到服务器，并保存配置到磁盘.");
         southControlPanel.add(saveConfigButton);
         saveConfigButton.addActionListener(e -> {
-            reloadConfigurationFromGUI(IPTextField,portSpinner,miniSizeUpdateMode,JksSslPassField,mainDirTextField,fileChangeListener);
+            reloadConfigurationFromGUI(
+                    IPTextField,
+                    portSpinner,
+                    JksSslPassField,
+                    mainDirTextField,
+                    fileChangeListener);
             try {
                 ConfigurationManager.saveConfigurationToFile(config,"./","littleserver");
                 logger.info("已保存配置至磁盘.");
@@ -294,7 +308,7 @@ public class LittleServer {
         southControlPanel.add(regenDirectoryStructureCache);
         regenDirectoryStructureCache.addActionListener(e -> {
             File jsonCache = new File("./res-cache.json");
-            if (jsonCache.exists() && miniSizeUpdateMode.isSelected()) {
+            if (jsonCache.exists()) {
                 try {
                     String jsonString = FileUtil.readStringFromFile(jsonCache);
                     JSONArray jsonArray = JSONArray.parseArray(jsonString);
@@ -313,9 +327,14 @@ public class LittleServer {
         startOrStop.addActionListener(e -> {
             //如果启动则关闭服务器
             if (!isStarted.get()) {
-                reloadConfigurationFromGUI(IPTextField,portSpinner,miniSizeUpdateMode,JksSslPassField,mainDirTextField,fileChangeListener);
+                reloadConfigurationFromGUI(
+                        IPTextField,
+                        portSpinner,
+                        JksSslPassField,
+                        mainDirTextField,
+                        fileChangeListener);
                 File jsonCache = new File("./res-cache.json");
-                if (jsonCache.exists() && miniSizeUpdateMode.isSelected()) {
+                if (jsonCache.exists()) {
                     try {
                         String jsonString = FileUtil.readStringFromFile(jsonCache);
                         JSONArray jsonArray = JSONArray.parseArray(jsonString);
@@ -341,7 +360,10 @@ public class LittleServer {
         southControlPanel.add(startOrStop);
 
         //上传列表
-        JScrollPane requestListScrollPane = new JScrollPane(requestListPanel,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane requestListScrollPane = new JScrollPane(
+                requestListPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         requestListScrollPane.getVerticalScrollBar().setUnitIncrement(50);
         requestListScrollPane.setBorder(new TitledBorder("上传列表"));
         requestListScrollPane.setPreferredSize(new Dimension((int) (frame.getWidth() * 0.19), frame.getHeight()));
@@ -358,12 +380,47 @@ public class LittleServer {
 
         //组装控制面板和上传列表
         littleServerPanel.add(controlPanelBox, BorderLayout.EAST);
+
+        logger.debug(String.format("载入服务器耗时 %sms", System.currentTimeMillis() - start));
+    }
+    private void loadHttpServer() {
+        server = new HttpServer(new LittleServerInterface() {
+            @Override
+            public GUILogger getLogger() {
+                return logger;
+            }
+
+            @Override
+            public LittleServerConfig getConfig() {
+                return config;
+            }
+
+            @Override
+            public JPanel getRequestListPanel() {
+                return requestListPanel;
+            }
+
+            @Override
+            public AtomicBoolean isGenerating() {
+                return isGenerating;
+            }
+
+            @Override
+            public AtomicBoolean isStarted() {
+                return isStarted;
+            }
+
+            @Override
+            public void regenCache() {
+                regenResCache();
+            }
+        });
     }
 
     /**
      * 重新生成缓存
      */
-    public void regenCache() {
+    private void regenResCache() {
         File jsonCache = new File("./res-cache.json");
         if (jsonCache.exists()) {
             try {
@@ -382,7 +439,9 @@ public class LittleServer {
 
     /**
      * 一个内部类, 用于 生成/更新/检查 资源文件夹的缓存
+     * <p>
      * 本端含金量最高的类（雾）
+     * </p>
      */
     private class cacheUtils {
         //公用定时器
@@ -400,57 +459,50 @@ public class LittleServer {
          */
         private void updateDirCache(JSONArray jsonCache) {
             if (jsonCache != null) {
-                if (genDirCache(jsonCache)) {
-                    threadPool.execute(new Thread(() -> {
-                        try {
-                            //等待线程结束
-                            counterThread.join();
-
-                            timer.stop();
-                            logger.info("资源变化计算完毕, 正在向磁盘生成 JSON 缓存.");
-                            //输出 JSON
-                            String resJSONStr = jsonArray.toJSONString();
-                            server.setResJSON(resJSONStr);
-                            try {
-                                FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
-                                logger.info("JSON 缓存生成完毕.");
-                            } catch (IOException ex) {
-                                logger.error("生成 JSON 缓存的时候出现了问题...", ex);
-                            }
-                            //隐藏状态栏进度条
-                            statusProgressBar.setVisible(false);
-                            regenDirectoryStructureCache.setEnabled(true);
-                            startOrStop.setEnabled(true);
-                            //重置变量
-                            jsonArray = null;
-                            isGenerating.set(false);
-                        } catch (InterruptedException e) {
-                            logger.error("计算资源缓存的时候出现了问题...", e);
-                        }
-                    }));
-                } else {
+                if (!genDirCache(jsonCache)) {
                     regenDirectoryStructureCache.setEnabled(true);
                     startOrStop.setEnabled(true);
+                    return;
                 }
-            } else if (genDirCache(null)) {
-                threadPool.execute(new Thread(() -> {
+                GLOBAL_THREAD_POOL.execute(new Thread(() -> {
                     try {
                         //等待线程结束
                         counterThread.join();
+                        System.gc();
+                        logger.info("内存已完成回收.");
+
+                        timer.stop();
+                        logger.info("资源变化计算完毕, 正在向磁盘生成 JSON 缓存.");
+
+                        //输出并向服务器设置 JSON
+                        generateJsonToDiskAndSetServerJson(jsonArray);
+
+                        //隐藏状态栏进度条
+                        statusProgressBar.setVisible(false);
+                        regenDirectoryStructureCache.setEnabled(true);
+                        startOrStop.setEnabled(true);
+                        //重置变量
+                        jsonArray = null;
+                        isGenerating.set(false);
+                    } catch (InterruptedException e) {
+                        logger.error("计算资源缓存的时候出现了问题...", e);
+                    }
+                }));
+            } else if (genDirCache(null)) {
+                GLOBAL_THREAD_POOL.execute(new Thread(() -> {
+                    try {
+                        //等待线程结束
+                        counterThread.join();
+                        System.gc();
+                        logger.info("内存已完成回收.");
 
                         timer.stop();
                         logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
-                        //输出 JSON
+
+                        //输出并向服务器设置 JSON
                         jsonArray = new JSONArray();
                         jsonArray.addAll(fileObjList);
-                        String resJSONStr = jsonArray.toJSONString();
-                        server.setResJSON(resJSONStr);
-                        try {
-                            FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
-                            logger.info("JSON 缓存生成完毕.");
-                        } catch (IOException ex) {
-                            logger.error("生成 JSON 缓存的时候出现了问题...", ex);
-                        }
+                        generateJsonToDiskAndSetServerJson(jsonArray);
 
                         //隐藏状态栏进度条
                         statusProgressBar.setVisible(false);
@@ -475,64 +527,56 @@ public class LittleServer {
          */
         private void genResDirCacheAndStartServer(JSONArray jsonCache) {
             if (jsonCache != null) {
-                if (genDirCache(jsonCache)) {
-                    threadPool.execute(new Thread(() -> {
-                        try {
-                            //等待线程结束
-                            counterThread.join();
-
-                            timer.stop();
-                            logger.info("资源变化计算完毕, 正在向磁盘生成 JSON 缓存.");
-                            //输出 JSON
-                            String resJSONStr = jsonArray.toJSONString();
-                            server.setResJSON(resJSONStr);
-                            try {
-                                FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
-                                logger.info("JSON 缓存生成完毕.");
-                            } catch (IOException ex) {
-                                logger.error("生成 JSON 缓存的时候出现了问题...", ex);
-                            }
-                            //启动服务器
-                            if (server.start()) {
-                                isStarted.set(true);
-                                startOrStop.setText("关闭服务器");
-                            }
-
-                            //隐藏状态栏进度条
-                            statusProgressBar.setVisible(false);
-                            regenDirectoryStructureCache.setEnabled(true);
-                            startOrStop.setEnabled(true);
-
-                            //重置变量
-                            jsonArray = null;
-                            isGenerating.set(false);
-                        } catch (InterruptedException e) {
-                            logger.error("计算资源缓存的时候出现了问题...", e);
-                        }
-                    }));
-                } else {
+                if (!genDirCache(jsonCache)) {
                     regenDirectoryStructureCache.setEnabled(true);
                     startOrStop.setEnabled(true);
+                    return;
                 }
-            } else if (genDirCache(null)) {
-                threadPool.execute(new Thread(() -> {
+                GLOBAL_THREAD_POOL.execute(new Thread(() -> {
                     try {
                         //等待线程结束
                         counterThread.join();
+                        System.gc();
+                        logger.info("内存已完成回收.");
+
+                        timer.stop();
+                        logger.info("资源变化计算完毕, 正在向磁盘生成 JSON 缓存.");
+                        //输出并向服务器设置 JSON
+                        generateJsonToDiskAndSetServerJson(jsonArray);
+
+                        //启动服务器
+                        if (server.start()) {
+                            isStarted.set(true);
+                            startOrStop.setText("关闭服务器");
+                        }
+
+                        //隐藏状态栏进度条
+                        statusProgressBar.setVisible(false);
+                        regenDirectoryStructureCache.setEnabled(true);
+                        startOrStop.setEnabled(true);
+
+                        //重置变量
+                        jsonArray = null;
+                        isGenerating.set(false);
+                    } catch (InterruptedException e) {
+                        logger.error("计算资源缓存的时候出现了问题...", e);
+                    }
+                }));
+            } else if (!genDirCache(null)) {
+                GLOBAL_THREAD_POOL.execute(new Thread(() -> {
+                    try {
+                        //等待线程结束
+                        counterThread.join();
+                        System.gc();
+                        logger.info("内存已完成回收.");
 
                         timer.stop();
                         logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
-                        //输出 JSON
+                        //输出并向服务器设置 JSON
                         jsonArray = new JSONArray();
                         jsonArray.addAll(fileObjList);
-                        String resJSONStr = jsonArray.toJSONString();
-                        server.setResJSON(resJSONStr);
-                        try {
-                            FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
-                            logger.info("JSON 缓存生成完毕.");
-                        } catch (IOException ex) {
-                            logger.error("生成 JSON 缓存的时候出现了问题...", ex);
-                        }
+                        generateJsonToDiskAndSetServerJson(jsonArray);
+
                         //启动服务器
                         if (server.start()) {
                             isStarted.set(true);
@@ -563,11 +607,29 @@ public class LittleServer {
         }
 
         /**
+         * 向磁盘生成 JSON 缓存，并设置服务端 JSON
+         * @param jsonArray JSON 缓存
+         */
+        private void generateJsonToDiskAndSetServerJson(JSONArray jsonArray) {
+            String resJSONStr = jsonArray.toJSONString();
+            server.setResJson(resJSONStr);
+            GLOBAL_THREAD_POOL.execute(new Thread(() -> {
+                try {
+                    FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
+                    logger.info("JSON 缓存生成完毕.");
+                } catch (IOException ex) {
+                    logger.error("生成 JSON 缓存的时候出现了问题...", ex);
+                }
+            }));
+        }
+
+        /**
          * 以多线程方式生成资源缓存结构
-         * 如果资源文件夹为空返回 false, 否则返回 true
+         * <p>
          * 使用配置文件中的资源文件夹路径
+         * </p>
          * WARN: 这段代码稍微有点屎山，慎改
-         * @return 文件夹是否为空
+         * @return 如果资源文件夹为空返回 false, 否则返回 true
          */
         private boolean genDirCache(JSONArray jsonCache) {
             isGenerating.set(true);
@@ -583,7 +645,9 @@ public class LittleServer {
                 dir = new File("./res");
                 if (!dir.exists()) {
                     logger.warn("默认资源目录不存在：" + dir.getPath() + " 正在创建文件夹.");
-                    dir.mkdir();
+                    if (dir.mkdir()) {
+                        logger.error("默认资源目录创建失败！请检查你的资源目录文件夹是否被占用或非文件夹。");
+                    }
                     logger.warn("资源目录为空, 跳过缓存生成.");
                     return false;
                 }
@@ -654,7 +718,6 @@ public class LittleServer {
      * 从文件加载配置文件
      * @param IPTextField IP 输入框
      * @param portSpinner 端口输入框
-     * @param miniSizeUpdateMode 最小化差异更新
      * @param JksSslTextField JKS 证书
      * @param JksSslPassField JKS 证书密码
      * @param mainDirTextField 资源文件夹路径
@@ -666,7 +729,6 @@ public class LittleServer {
             String configFilePath,
             JTextField IPTextField,
             JSpinner portSpinner,
-            JCheckBox miniSizeUpdateMode,
             JTextField JksSslTextField,
             JPasswordField JksSslPassField,
             JTextField mainDirTextField,
@@ -675,19 +737,18 @@ public class LittleServer {
             JCheckBox fileChangeListener) {
         if (new File(configFilePath).exists()) {
             try {
+                config = ConfigurationManager.loadLittleServerConfigFromFile("./littleserver.json");
                 //IP
-                IPTextField.setText(config.getIP());
+                IPTextField.setText(config.getIp());
                 //端口
                 portSpinner.setValue(config.getPort());
                 //资源文件夹
                 mainDirTextField.setText(config.getMainDirPath());
-                //最小化更新模式
-                miniSizeUpdateMode.setSelected(config.isMiniSizeUpdateMode());
                 //实时文件监听器
-                fileChangeListener.setSelected(config.isMiniSizeUpdateMode());
+                fileChangeListener.setSelected(config.isFileChangeListener());
                 //Jks 证书
-                if (!config.getJKSFilePath().isEmpty()) {
-                    File JksSsl = new File(config.getJKSFilePath());
+                if (!config.getJksFilePath().isEmpty()) {
+                    File JksSsl = new File(config.getJksFilePath());
                     if (JksSsl.exists()) {
                         JksSslTextField.setText(JksSsl.getName());
                     } else {
@@ -695,13 +756,13 @@ public class LittleServer {
                     }
                 }
                 //Jks 证书密码
-                JksSslPassField.setText(config.getJKSSSLPassword());
+                JksSslPassField.setText(config.getJksSslPassword());
                 //普通模式
-                common_ModeList = new ArrayList<>(Arrays.asList(config.getCommon_mode()));
-                common_Mode.setListData(config.getCommon_mode());
+                common_ModeList = new ArrayList<>(Arrays.asList(config.getCommonMode()));
+                common_Mode.setListData(config.getCommonMode());
                 //补全模式
-                once_ModeList = new ArrayList<>(Arrays.asList(config.getOnce_mode()));
-                once_Mode.setListData(config.getOnce_mode());
+                once_ModeList = new ArrayList<>(Arrays.asList(config.getOnceMode()));
+                once_Mode.setListData(config.getOnceMode());
 
                 logger.info("已载入配置文件.");
             } catch (Exception e) {
@@ -726,7 +787,6 @@ public class LittleServer {
      * 以 GUI 当前的配置重载配置文件
      * @param IPTextField IP 输入框
      * @param portSpinner 端口输入框
-     * @param miniSizeUpdateMode 最小化差异更新
      * @param JksSslPassField JKS 证书密码
      * @param mainDirTextField 资源文件夹路径
      * @param fileChangeListener 实时文件监听
@@ -734,7 +794,6 @@ public class LittleServer {
     private void reloadConfigurationFromGUI(
             JTextField IPTextField,
             JSpinner portSpinner,
-            JCheckBox miniSizeUpdateMode,
             JPasswordField JksSslPassField,
             JTextField mainDirTextField,
             JCheckBox fileChangeListener) {
@@ -745,26 +804,24 @@ public class LittleServer {
         String IPType = IPAddressUtil.checkAddress(IP);
         if (IPType != null) {
             if (IP.contains("0.0.0.0")) {
-                config.setIP("0.0.0.0");
-            } else if (IPType.equals("v4") || IPType.equals("v6")) {
-                config.setIP(IP);
+                config.setIp("0.0.0.0");
+            } else if ("v4".equals(IPType) || "v6".equals(IPType)) {
+                config.setIp(IP);
             }
         } else {
-            config.setIP("0.0.0.0");
+            config.setIp("0.0.0.0");
             logger.warn("配置中的 IP 格式错误，使用默认 IP 地址 0.0.0.0");
         }
         //设置资源目录
         config.setMainDirPath(mainDirTextField.getText());
-        //设置高性能模式
-        config.setMiniSizeUpdateMode(miniSizeUpdateMode.isSelected());
         //设置实时文件监听器
         config.setFileChangeListener(fileChangeListener.isSelected());
         //设置 Jks 证书密码
-        config.setJKSSSLPassword(String.valueOf(JksSslPassField.getPassword()));
+        config.setJksSslPassword(String.valueOf(JksSslPassField.getPassword()));
         //设置普通模式
-        config.setCommon_mode(common_ModeList.toArray(new String[0]));
+        config.setCommonMode(common_ModeList.toArray(new String[0]));
         //设置补全模式
-        config.setOnce_mode(once_ModeList.toArray(new String[0]));
+        config.setOnceMode(once_ModeList.toArray(new String[0]));
         logger.info("已加载配置.");
     }
 }

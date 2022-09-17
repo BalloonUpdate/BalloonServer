@@ -3,6 +3,7 @@ package github.kasuminova.balloonserver.HTTPServer;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
+import github.kasuminova.balloonserver.Servers.LittleServerInterface;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.buffer.Unpooled;
@@ -26,15 +27,15 @@ import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
 public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
-    String resJSON;
+    String resJson;
     LittleServerConfig config;
     GUILogger logger;
     JPanel requestListPanel;
-    public HttpRequestHandler(String resJSON, LittleServerConfig config, GUILogger logger, JPanel requestListPanel) {
-        this.resJSON = resJSON;
-        this.config = config;
-        this.logger = logger;
-        this.requestListPanel = requestListPanel;
+    public HttpRequestHandler(LittleServerInterface serverInterface, String resJson) {
+        this.resJson = resJson;
+        this.config = serverInterface.getConfig();
+        this.logger = serverInterface.getLogger();
+        this.requestListPanel = serverInterface.getRequestListPanel();
     }
 
     @Override
@@ -56,7 +57,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
             // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象
-            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(resJSON, CharsetUtil.UTF_8));
+            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(resJson, CharsetUtil.UTF_8));
             // 设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
             // 响应写回给客户端,并在协会后断开这个连接
@@ -72,8 +73,8 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
             // 构建 index
             JSONObject index = new JSONObject();
-            index.put("common_mode", config.getCommon_mode());
-            index.put("once_mode", config.getOnce_mode());
+            index.put("common_mode", config.getCommonMode());
+            index.put("once_mode", config.getOnceMode());
             index.put("update", config.getMainDirPath().replace("/", ""));
             // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象

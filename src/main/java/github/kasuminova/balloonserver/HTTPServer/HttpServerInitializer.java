@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
 import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
+import github.kasuminova.balloonserver.Servers.LittleServerInterface;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -16,33 +17,40 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
-    File JKS;
+    File jks;
     String resPath;
-    String resJSON;
-    char[] JKSPasswd;
-    boolean useSSL;
+    String resJson;
+    char[] jksPasswd;
+    boolean useSsl;
     GUILogger logger;
     LittleServerConfig config;
+    LittleServerInterface serverInterface;
     JPanel requestListPanel;
-    public HttpServerInitializer(LittleServerConfig config, GUILogger logger, String resJSON, JPanel requestListPanel) {
+    public HttpServerInitializer(LittleServerInterface serverInterface, String resJson) {
+        this.serverInterface = serverInterface;
+
+        this.config = serverInterface.getConfig();
         this.resPath = config.getMainDirPath();
-        this.config = config;
-        this.logger = logger;
-        this.resJSON = resJSON;
-        this.requestListPanel = requestListPanel;
-        if (JKS != null) {
-            if (JKSPasswd != null && JKSPasswd.length != 0) {
-                this.JKS = new File(config.getJKSFilePath());
-                this.JKSPasswd = config.getJKSSSLPassword().toCharArray();
-                useSSL = true;
+        this.logger = serverInterface.getLogger();
+        this.resJson = resJson;
+        this.requestListPanel = serverInterface.getRequestListPanel();
+
+        if (jks != null) {
+            if (jksPasswd != null && jksPasswd.length != 0) {
+                this.jks = new File(config.getJksFilePath());
+                this.jksPasswd = config.getJksSslPassword().toCharArray();
+                useSsl = true;
                 logger.info("成功载入 JKS 证书与密码，使用 HTTPS 协议。");
             } else {
-                useSSL = false;
+                useSsl = false;
                 logger.warn("检测到 JKS 证书，但未检测到 JKS 证书密码，使用 HTTP 协议。");
             }
         } else {
-            useSSL = false;
+            useSsl = false;
             logger.info("未检测到 JKS 证书，使用 HTTP 协议。");
         }
     }
@@ -52,9 +60,9 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         ChannelPipeline pipeline = channel.pipeline();
 
         //SSL, 使用 JKS 格式证书
-        if (useSSL) {
-            InputStream JKSInputStream = Files.newInputStream(JKS.toPath());
-            SSLEngine engine = SslContextFactoryOne.getServerContext(JKSInputStream, JKSPasswd).createSSLEngine();
+        if (useSsl) {
+            InputStream jksInputStream = Files.newInputStream(jks.toPath());
+            SSLEngine engine = SslContextFactoryOne.getServerContext(jksInputStream, jksPasswd).createSSLEngine();
             //设置服务端模式
             engine.setUseClientMode(false);
             //单向认证
@@ -64,10 +72,12 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
 
         //将消息转为单一的 FullHttpRequest或者 FullHttpResponse，因为 http 解码器在每个 http 消息中会生成多个消息对象
         pipeline.addLast("http-aggregator",new HttpObjectAggregator(65535));
-        pipeline.addLast("decoder",new DecodeProxy(logger)); //反向代理适配器
-        pipeline.addLast(new HttpServerCodec());// http 编解码
-        pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024)); // http 消息聚合器 512*1024 为接收的最大 contentLength
+        //反向代理适配器
+        pipeline.addLast("decoder",new DecodeProxy(logger));
+        pipeline.addLast(new HttpServerCodec());
+        pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024));
         pipeline.addLast("http-chunked",new ChunkedWriteHandler());
-        pipeline.addLast(new HttpRequestHandler(resJSON, config, logger, requestListPanel));// 请求处理器
+        //请求处理器
+        pipeline.addLast(new HttpRequestHandler(serverInterface, resJson));
     }
 }

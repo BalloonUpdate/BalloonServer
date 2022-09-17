@@ -19,13 +19,11 @@ public class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    //软件图标
-    public static final ImageIcon image = new ImageIcon(Objects.requireNonNull(BalloonServer.class.getResource("/image/icon_128x128.jpg")));
-    public static final String version = "1.0.10-STABLE";
+    public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(BalloonServer.class.getResource("/image/icon_128x128.jpg")));
+    public static final String VERSION = "1.0.11-BETA";
     public static JFrame premainFrame = new JFrame("加载中");
-    public static JFrame frame = new JFrame("BalloonServer " + version);
+    public static JFrame frame = new JFrame("BalloonServer " + VERSION);
     public static JProgressBar statusProgressBar = new JProgressBar();
-    //全局 LOGGER
     public static Logger logger = Logger.getLogger("MAIN");
     public static LittleServer littleServer;
     static JPanel statusPanel = new JPanel(new BorderLayout());
@@ -44,51 +42,55 @@ public class BalloonServer {
         tabbedPane.add(littleServer.getPanel(), "LittleServer");
         tabbedPane.add(AboutPanel.createPanel(), "关于本程序");
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        //状态栏
-        statusPanel.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(4, 4, 4, 4)));
-        JLabel threadCount = new JLabel("当前运行的线程数量：0");
-        statusPanel.add(threadCount, BorderLayout.WEST);
-        //线程数监控 + 内存监控
-        Box memBarBox = Box.createHorizontalBox();
-        JProgressBar memBar = new JProgressBar(0,100);
-        memBar.setPreferredSize(new Dimension(225,memBar.getHeight()));
-        memBar.setStringPainted(true);
-        memBarBox.add(new JLabel("内存使用情况："));
-        memBarBox.add(memBar);
-        statusPanel.add(memBarBox, BorderLayout.EAST);
-        statusProgressBar.setVisible(false);
-        statusProgressBar.setStringPainted(true);
-        statusProgressBar.setBorder(new EmptyBorder(0, 40, 0, 40));
-        statusProgressBar.setVisible(false);
-        statusPanel.add(statusProgressBar);
-        mainPanel.add(statusPanel, BorderLayout.SOUTH);
-        //定时器, 查询内存和线程信息
-        Timer timer = new Timer(500, e -> {
-            MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-            long memoryUsed = memoryMXBean.getHeapMemoryUsage().getUsed();
-            long memoryTotal = memoryMXBean.getHeapMemoryUsage().getInit();
+        new Thread(() -> {
+            //状态栏
+            statusPanel.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(4, 4, 4, 4)));
+            JLabel threadCount = new JLabel("当前运行的线程数量：0");
+            statusPanel.add(threadCount, BorderLayout.WEST);
+            //线程数监控 + 内存监控
+            Box memBarBox = Box.createHorizontalBox();
+            JProgressBar memBar = new JProgressBar(0,100);
+            memBar.setPreferredSize(new Dimension(225,memBar.getHeight()));
+            memBar.setStringPainted(true);
+            memBarBox.add(new JLabel("内存使用情况："));
+            memBarBox.add(memBar);
+            statusPanel.add(memBarBox, BorderLayout.EAST);
+            statusProgressBar.setVisible(false);
+            statusProgressBar.setStringPainted(true);
+            statusProgressBar.setBorder(new EmptyBorder(0, 40, 0, 40));
+            statusProgressBar.setVisible(false);
+            statusPanel.add(statusProgressBar);
+            mainPanel.add(statusPanel, BorderLayout.SOUTH);
+            //定时器, 查询内存和线程信息
+            Timer timer = new Timer(500, e -> {
+                MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+                long memoryUsed = memoryMXBean.getHeapMemoryUsage().getUsed();
+                long memoryTotal = memoryMXBean.getHeapMemoryUsage().getInit();
 
-            threadCount.setText("当前运行的线程数量：" + Thread.activeCount());
+                threadCount.setText("当前运行的线程数量：" + Thread.activeCount());
 
-            memBar.setValue((int) ((double) memoryUsed * 100 / memoryTotal));
-            memBar.setString(memoryUsed/(1024 * 1024) + " M / " + memoryTotal/(1024 * 1024) + " M");
-        });
-        timer.start();
-        //托盘窗口
-        preLoadProgressBar.setString("载入托盘...");
-        if (SystemTray.isSupported()) {
-            SwingSystemTray.initSystemTray(frame);
-        } else {
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        }
+                memBar.setValue((int) ((double) memoryUsed * 100 / memoryTotal));
+                memBar.setString(memoryUsed/(1024 * 1024) + " M / " + memoryTotal/(1024 * 1024) + " M");
+            });
+            timer.start();
+            //托盘窗口
+            if (SystemTray.isSupported()) {
+                SwingSystemTray.initSystemTray(frame);
+            } else {
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            }
+        }).start();
         //主窗口
-        preLoadProgressBar.setString("完成中...");
         frame.add(mainPanel);
-        frame.setIconImage(image.getImage());
+        frame.setIconImage(ICON.getImage());
         frame.setLocationRelativeTo(null);
+
+        //清理预加载窗口
         premainFrame.dispose();
+        preLoadProgressBar = null;
+
         frame.setVisible(true);
-        logger.info("程序已启动, 耗时 " + (System.currentTimeMillis() - start) + "ms");
+        logger.info(String.format("程序已启动, 耗时 %sms", System.currentTimeMillis() - start));
     }
 
     /**
@@ -96,7 +98,7 @@ public class BalloonServer {
      */
     private static void preInit() {
         JPanel panel = new JPanel(new VFlowLayout());
-        panel.add(new JLabel(new ImageIcon(image.getImage().getScaledInstance(96,96,Image.SCALE_DEFAULT))));
+        panel.add(new JLabel(new ImageIcon(ICON.getImage().getScaledInstance(96,96,Image.SCALE_DEFAULT))));
         panel.add(new JLabel("程序启动中，请稍等..."));
         preLoadProgressBar.setStringPainted(true);
         preLoadProgressBar.setIndeterminate(true);

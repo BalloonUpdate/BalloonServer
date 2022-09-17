@@ -22,6 +22,7 @@ import java.util.zip.CRC32;
 /**
  * 一个多线程计算文件缓存差异的工具类
  * Feature: 使用 AtomicReference 替代 synchronized
+ * @author Kasumi_Nova
  */
 public class NextFileCacheCalculator {
     private final GUILogger logger;

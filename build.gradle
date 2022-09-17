@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'github.kasuminova'
-version '1.0.10-STABLE'
+version '1.0.11-BETA'
 
 
 repositories {

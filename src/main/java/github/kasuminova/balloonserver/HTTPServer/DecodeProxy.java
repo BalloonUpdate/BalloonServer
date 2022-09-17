@@ -32,19 +32,14 @@ public class DecodeProxy extends ByteToMessageDecoder {
      */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) {
-
-        /*消息打印--------------------------*/
         byte[] bytes = printSz(byteBuf);
         String message = new String(bytes, StandardCharsets.UTF_8);
-        //logger.info("从客户端收到的字符串:" + message);
-        /*消息打印--------------------------*/
 
         if (bytes.length > 0){
             //判断是否有代理
             if (message.contains("PROXY")){
-                //PROXY TCP4 101.106.236.66 192.168.0.150 12646 5683\r\n
                 logger.info("PROXY MSG: " + message.substring(0,message.length()-2));
-                if(message.contains("\n")){
+                if (message.contains("\n")){
                     String[] str =  message.split("\n")[0].split(" ");
                     logger.info("Real Client IP: " + str[2]);
                     Attribute<String> channelAttr = ctx.channel().attr(key);
@@ -59,7 +54,6 @@ public class DecodeProxy extends ByteToMessageDecoder {
             }
 
             if (byteBuf.readableBytes() > 0){
-                //logger.info("out add!!!");
                 out.add(byteBuf.readBytes(byteBuf.readableBytes()));
             }
         }
@@ -72,7 +66,6 @@ public class DecodeProxy extends ByteToMessageDecoder {
         ByteBuf copy = newBuf.copy();
         byte[] bytes = new byte[copy.readableBytes()];
         copy.readBytes(bytes);
-        //logger.info("字节数组打印:" + Arrays.toString(bytes));
         return bytes;
     }
 }

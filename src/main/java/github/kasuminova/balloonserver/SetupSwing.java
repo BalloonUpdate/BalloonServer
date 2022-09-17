@@ -8,6 +8,9 @@ import java.awt.*;
 import java.io.InputStream;
 import java.util.Enumeration;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class SetupSwing {
     public static void init() {
         System.setProperty("awt.useSystemAAFontSettings", "lcd");

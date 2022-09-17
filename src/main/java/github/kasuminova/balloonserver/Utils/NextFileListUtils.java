@@ -19,7 +19,6 @@ import github.kasuminova.balloonserver.Utils.FileObject.*;
 public class NextFileListUtils {
     public AtomicLong completedBytes = new AtomicLong(0);
     public AtomicInteger completedFiles = new AtomicInteger(0);
-    //全局线程池
     ExecutorService dirThreadPool = Executors.newCachedThreadPool();
     ThreadPoolExecutor fileThreadPool = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
         Runtime.getRuntime().availableProcessors() * 6,

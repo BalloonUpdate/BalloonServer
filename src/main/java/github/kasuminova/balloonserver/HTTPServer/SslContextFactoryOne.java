@@ -8,16 +8,19 @@ import java.security.KeyStore;
 
 /**
  * 用于加载 SSL 证书的类（网上抄的）
+ * @author Kasumi_Nova
  */
 public class SslContextFactoryOne {
     private static final String PROTOCOL = "TLS";
 
-    // 服务器安全套接字协议
+    /**
+     * 服务器安全套接字协议
+     */
     private static SSLContext SERVER_CONTEXT;
 
     // 使用KeyTool生成密钥库和密钥时配置的密码
 
-    public static SSLContext getServerContext(InputStream JKS,char[] pass) {
+    public static SSLContext getServerContext(InputStream jks,char[] pass) {
         if (SERVER_CONTEXT != null) {
             return SERVER_CONTEXT;
         }
@@ -26,7 +29,7 @@ public class SslContextFactoryOne {
             KeyStore ks = KeyStore.getInstance("JKS");
             //加载服务端证书
             //加载服务端的 KeyStore, KeyStore 是生成仓库时设置的密码，用于检查密钥库完整性的密码
-            ks.load(JKS, pass);
+            ks.load(jks, pass);
 
             //密钥管理器
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
@@ -41,7 +44,7 @@ public class SslContextFactoryOne {
             throw new Error("Failed to initialize the server-side SSLContext", e);
         } finally {
             try {
-                JKS.close();
+                jks.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

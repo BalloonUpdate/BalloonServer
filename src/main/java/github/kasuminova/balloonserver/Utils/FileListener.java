@@ -8,6 +8,9 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class FileListener extends FileAlterationListenerAdaptor {
     GUILogger logger;
     AtomicBoolean isFileChanged;

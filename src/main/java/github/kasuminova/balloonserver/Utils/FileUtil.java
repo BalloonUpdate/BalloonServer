@@ -16,17 +16,16 @@ public class FileUtil {
         // 生成json格式文件
         // 保证创建一个新文件
         File file = new File(fullPath);
-        if (!file.getParentFile().exists()) { // 如果父目录不存在，创建父目录
+        if (!file.getParentFile().exists()) {
             if (file.getParentFile().mkdirs()) {
                 throw new IOException("父目录创建失败！");
             }
         }
-        if (file.exists()) { // 如果已存在,删除旧文件
+        if (file.exists()) {
             if (!file.delete()) {
                 throw new IOException("旧文件删除失败！");
             }
         }
-
         if (!file.createNewFile()) {
             throw new IOException("创建文件失败！！");
         }
