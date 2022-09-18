@@ -27,12 +27,12 @@ import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
 public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
-    String resJson;
-    LittleServerConfig config;
-    GUILogger logger;
-    JPanel requestListPanel;
-    public HttpRequestHandler(LittleServerInterface serverInterface, String resJson) {
-        this.resJson = resJson;
+    private final String resJson;
+    private final LittleServerConfig config;
+    private final GUILogger logger;
+    private final JPanel requestListPanel;
+    public HttpRequestHandler(LittleServerInterface serverInterface) {
+        this.resJson = serverInterface.getResJson();
         this.config = serverInterface.getConfig();
         this.logger = serverInterface.getLogger();
         this.requestListPanel = serverInterface.getRequestListPanel();
@@ -121,17 +121,14 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
         //发送文件
         ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
-        JComponent[] uploadPanelComponents = createUploadPanel(getClientIP(ctx,req), file.getName());
-        JPanel uploadPanel = (JPanel) uploadPanelComponents[0];
-        JProgressBar uploadProgressBar = (JProgressBar) uploadPanelComponents[1];
+        JProgressBar progressBar = createUploadPanel(getClientIP(ctx,req), file.getName());
 
         final long[] fileProgress = {0};
 
-        Timer timer = new Timer(250, e -> {
-            uploadProgressBar.setString(FileUtil.formatFileSizeToStr(fileProgress[0]) + " / " + FileUtil.formatFileSizeToStr(fileLength));
-            uploadProgressBar.setValue((int) (fileProgress[0] * 100 / fileLength) );
+        Timer timer = new Timer(100, e -> {
+            progressBar.setString(String.format("%s / %s", FileUtil.formatFileSizeToStr(fileProgress[0]), FileUtil.formatFileSizeToStr(fileLength)));
+            progressBar.setValue((int) (fileProgress[0] * 100 / fileLength) );
         });
-
         timer.start();
 
         sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
@@ -143,10 +140,9 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             @Override
             public void operationComplete(ChannelProgressiveFuture channelProgressiveFuture) {
                 timer.stop();
-                requestListPanel.remove(uploadPanel);
+                //移除进度条的容器面板
+                requestListPanel.remove(progressBar.getParent());
                 requestListPanel.updateUI();
-                //重置变量
-                fileProgress[0] = 0;
                 printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI);
             }
         });
@@ -161,7 +157,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * 创建一个进度条面板记录单独文件的显示
      * @return Component[] 第一个为面板, 第二个为进度条
      */
-    public synchronized JComponent[] createUploadPanel(String IP, String fileName) {
+    public synchronized JProgressBar createUploadPanel(String IP, String fileName) {
         //单个线程的面板
         JPanel uploadPanel = new JPanel(new VFlowLayout());
         //单个线程的 Box
@@ -178,7 +174,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         box.add(progressBar, BorderLayout.EAST);
         uploadPanel.add(box);
         requestListPanel.add(uploadPanel);
-        return new JComponent[]{uploadPanel, progressBar};
+        return progressBar;
     }
 
     /**
@@ -189,11 +185,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * @param decodedURI 转义后的 URI
      */
     private void printLog(String msg, long StartTime, String clientIP, String decodedURI) {
-        try {
-            logger.info(clientIP + " " + msg + " URI: " + decodedURI + " (" + (System.currentTimeMillis() - StartTime) + "ms)");
-        } catch (Exception e) {
-            logger.error(e);
-        }
+        logger.info(clientIP + " " + msg + " URI: " + decodedURI + " (" + (System.currentTimeMillis() - StartTime) + "ms)");
     }
 
     /**

@@ -12,7 +12,6 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
 import javax.net.ssl.SSLEngine;
-import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -22,22 +21,15 @@ import java.nio.file.Files;
  */
 public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
     File jks;
-    String resPath;
-    String resJson;
     char[] jksPasswd;
-    boolean useSsl;
-    GUILogger logger;
-    LittleServerConfig config;
-    LittleServerInterface serverInterface;
-    JPanel requestListPanel;
-    public HttpServerInitializer(LittleServerInterface serverInterface, String resJson) {
+    private final boolean useSsl;
+    private final GUILogger logger;
+    private final LittleServerInterface serverInterface;
+    public HttpServerInitializer(LittleServerInterface serverInterface) {
         this.serverInterface = serverInterface;
 
-        this.config = serverInterface.getConfig();
-        this.resPath = config.getMainDirPath();
+        LittleServerConfig config = serverInterface.getConfig();
         this.logger = serverInterface.getLogger();
-        this.resJson = resJson;
-        this.requestListPanel = serverInterface.getRequestListPanel();
 
         if (jks != null) {
             if (jksPasswd != null && jksPasswd.length != 0) {
@@ -78,6 +70,6 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024));
         pipeline.addLast("http-chunked",new ChunkedWriteHandler());
         //请求处理器
-        pipeline.addLast(new HttpRequestHandler(serverInterface, resJson));
+        pipeline.addLast(new HttpRequestHandler(serverInterface));
     }
 }

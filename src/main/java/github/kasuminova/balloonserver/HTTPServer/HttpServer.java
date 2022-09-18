@@ -24,16 +24,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class HttpServer {
     private Timer fileChangeListener;
-    private String resJson;
     private final GUILogger logger;
     private final AtomicBoolean isGenerating;
     private final AtomicBoolean isFileChanged = new AtomicBoolean(false);
     private final LittleServerConfig config;
     private final AtomicBoolean isStarted;
     private final LittleServerInterface serverInterface;
-    public void setResJson(String resJson) {
-        this.resJson = resJson;
-    }
 
     /**
      * 新建一个 HTTP 服务器实例
@@ -62,7 +58,7 @@ public class HttpServer {
         bootstrap.group(boss, work)
                 .handler(new LoggingHandler(LogLevel.INFO))
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new HttpServerInitializer(serverInterface, resJson));
+                .childHandler(new HttpServerInitializer(serverInterface));
         try {
             future = bootstrap.bind(new InetSocketAddress(ip, port)).sync();
             String addressType = IPAddressUtil.checkAddress(ip);
@@ -75,6 +71,7 @@ public class HttpServer {
         } catch (Exception e) {
             isStarted.set(false);
             logger.error("无法启动服务器", e);
+            return false;
         }
 
         //文件监听器
@@ -101,7 +98,6 @@ public class HttpServer {
                 }
             }).start();
         }
-
         return true;
     }
 

@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'github.kasuminova'
-version '1.0.11-BETA'
+version '1.0.12-BETA'
 
 
 repositories {
@@ -39,7 +39,7 @@ dependencies {
     testImplementation 'org.projectlombok:lombok:1.18.24'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
-    implementation 'com.alibaba.fastjson2:fastjson2:2.0.13'
+    implementation 'com.alibaba.fastjson2:fastjson2:2.0.14'
     implementation 'io.netty:netty-all:4.1.81.Final'
     implementation 'com.formdev:flatlaf:2.4'
     implementation 'com.formdev:flatlaf-intellij-themes:2.4'

@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Kasumi_Nova
  */
 public class FileListener extends FileAlterationListenerAdaptor {
-    GUILogger logger;
-    AtomicBoolean isFileChanged;
+    private final GUILogger logger;
+    private final AtomicBoolean isFileChanged;
     public FileListener(GUILogger logger, AtomicBoolean isFileChanged) {
         this.logger = logger;
         this.isFileChanged = isFileChanged;

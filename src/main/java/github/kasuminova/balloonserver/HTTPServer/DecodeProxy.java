@@ -17,8 +17,8 @@ public class DecodeProxy extends ByteToMessageDecoder {
     /**
      * 保存客户端IP
      */
-    public static AttributeKey<String> key = AttributeKey.valueOf("IP");
-    GUILogger logger;
+    public static final AttributeKey<String> key = AttributeKey.valueOf("IP");
+    final GUILogger logger;
     public DecodeProxy(GUILogger logger) {
         this.logger = logger;
     }

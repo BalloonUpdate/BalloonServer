@@ -14,21 +14,28 @@ import java.lang.management.MemoryMXBean;
 import java.util.Objects;
 import java.util.logging.Logger;
 
+/**
+ * 主 窗口/程序。
+ * <p>
+ *     TODO:计划添加多实例化
+ * </p>
+ */
 public class BalloonServer {
     static {
         //设置全局主题，字体等
         SetupSwing.init();
     }
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(BalloonServer.class.getResource("/image/icon_128x128.jpg")));
-    public static final String VERSION = "1.0.11-BETA";
-    public static JFrame premainFrame = new JFrame("加载中");
-    public static JFrame frame = new JFrame("BalloonServer " + VERSION);
+    public static final String VERSION = "1.0.12-BETA";
+    //主窗口
+    public static final JFrame frame = new JFrame("BalloonServer " + VERSION);
+    //主窗口 Logger
+    public static final Logger logger = Logger.getLogger("MAIN");
     public static JProgressBar statusProgressBar = new JProgressBar();
-    public static Logger logger = Logger.getLogger("MAIN");
-    public static LittleServer littleServer;
-    static JPanel statusPanel = new JPanel(new BorderLayout());
-    static JProgressBar preLoadProgressBar = new JProgressBar();
-    static long start = System.currentTimeMillis();
+    private static JFrame premainFrame = new JFrame("加载中");
+    private static final JPanel statusPanel = new JPanel(new BorderLayout());
+    private static final JProgressBar preLoadProgressBar = new JProgressBar();
+    private static final long start = System.currentTimeMillis();
     private static void init(){
         //大小设置
         frame.setSize(1300,695);
@@ -38,7 +45,7 @@ public class BalloonServer {
         //标签页组装
         preLoadProgressBar.setString("载入主面板...");
         JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-        littleServer = new LittleServer("./littleserver.json");
+        LittleServer littleServer = new LittleServer("./littleserver.json");
         tabbedPane.add(littleServer.getPanel(), "LittleServer");
         tabbedPane.add(AboutPanel.createPanel(), "关于本程序");
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
@@ -61,7 +68,7 @@ public class BalloonServer {
             statusProgressBar.setVisible(false);
             statusPanel.add(statusProgressBar);
             mainPanel.add(statusPanel, BorderLayout.SOUTH);
-            //定时器, 查询内存和线程信息
+            //定时器, 更新内存和线程信息
             Timer timer = new Timer(500, e -> {
                 MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
                 long memoryUsed = memoryMXBean.getHeapMemoryUsage().getUsed();
@@ -87,7 +94,7 @@ public class BalloonServer {
 
         //清理预加载窗口
         premainFrame.dispose();
-        preLoadProgressBar = null;
+        premainFrame = null;
 
         frame.setVisible(true);
         logger.info(String.format("程序已启动, 耗时 %sms", System.currentTimeMillis() - start));
@@ -132,7 +139,7 @@ public class BalloonServer {
     }
 
     /**
-     * 添加一个状态面板进度条, 并删除原先存在的进度条
+     * 向主窗口添加一个状态栏进度条, 并删除原先存在的进度条
      * @return 进度条
      */
     public static JProgressBar addNewStatusProgressBar() {

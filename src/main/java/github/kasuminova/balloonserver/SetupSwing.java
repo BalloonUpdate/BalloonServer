@@ -21,9 +21,8 @@ public class SetupSwing {
         try {
             InputStream ttfFile = BalloonServer.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf");
             if (ttfFile != null) {
-                Font font = Font.createFont(Font.TRUETYPE_FONT, ttfFile);
-                Font newFont = font.deriveFont(14f);
-                initGlobalFont(newFont);
+                Font font = Font.createFont(Font.TRUETYPE_FONT, ttfFile).deriveFont(14f);
+                initGlobalFont(font);
             }
         } catch (Exception e) {
             e.printStackTrace();

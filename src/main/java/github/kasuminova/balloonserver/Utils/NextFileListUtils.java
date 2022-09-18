@@ -13,23 +13,44 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.CRC32;
 
-import github.kasuminova.balloonserver.Utils.FileObject.*;
+import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
+import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 
+import javax.swing.*;
 
+/**
+ * 计算资源缓存的公用类
+ */
 public class NextFileListUtils {
-    public AtomicLong completedBytes = new AtomicLong(0);
-    public AtomicInteger completedFiles = new AtomicInteger(0);
-    ExecutorService dirThreadPool = Executors.newCachedThreadPool();
-    ThreadPoolExecutor fileThreadPool = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
-        Runtime.getRuntime().availableProcessors() * 6,
-            100,
-            TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>());
+    private final AtomicLong completedBytes = new AtomicLong(0);
+    private final AtomicInteger completedFiles = new AtomicInteger(0);
+    private final ExecutorService dirThreadPool = Executors.newCachedThreadPool();
+    private final ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+
+    public long getCompletedBytes() {
+        return completedBytes.get();
+    }
+    public int getCompletedFiles() {
+        return completedFiles.get();
+    }
 
     /**
-     * 扫描目标文件夹内的文件与文件夹，如果文件夹内容为空则返回 null
+     * 统计目标文件夹内包含的 文件/文件夹 大小,
+     * 并将其大小整合在一起至一个变量, 用于轮询线程的查询
+     * size[0] 为总大小
+     * size[1] 为总文件数量
+     */
+    public static long[] getDirSize(File dir) {
+        return new FileCounter().getFiles(dir);
+    }
+
+    /**
+     * 扫描目标文件夹内的文件与文件夹
      * @param directory 目标文件夹
      * @param logger 日志输出器
-     * @return ArrayList<AbstractSimpleFileObject> 或 null
+     * @return ArrayList<AbstractSimpleFileObject>, 如果文件夹内容为空则返回空 ArrayList
      */
     public ArrayList<AbstractSimpleFileObject> scanDir(File directory, GUILogger logger) {
         File[] fileList = directory.listFiles();
@@ -55,8 +76,7 @@ public class NextFileListUtils {
         for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
             try {
                 abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : direCounterTaskList) {
@@ -76,7 +96,7 @@ public class NextFileListUtils {
     }
 
     private class DirCounterTask implements Callable<SimpleDirectoryObject> {
-        File directory;
+        private final File directory;
         public DirCounterTask(File directory) {
             this.directory = directory;
         }
@@ -106,8 +126,7 @@ public class NextFileListUtils {
             for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
                 try {
                     abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
             }
 
             for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : direCounterTaskList) {
@@ -121,7 +140,7 @@ public class NextFileListUtils {
     }
 
     private class FileCounterTask implements Callable<SimpleFileObject> {
-        File file;
+        private final File file;
         public FileCounterTask(File file) {
             this.file = file;
         }
@@ -137,7 +156,7 @@ public class NextFileListUtils {
         }
     }
 
-    public String getMD5(File file) {
+    private String getMD5(File file) {
         try {
             FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
             ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
@@ -162,7 +181,7 @@ public class NextFileListUtils {
         return "ERROR";
     }
 
-    public String getSHA1(File file) {
+    private String getSHA1(File file) {
         try {
             FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
             ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
@@ -187,7 +206,7 @@ public class NextFileListUtils {
         return "ERROR";
     }
 
-    public String getCRC32(File file) {
+    private String getCRC32(File file) {
         try {
             FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
             ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
@@ -208,26 +227,31 @@ public class NextFileListUtils {
     }
 
     /**
-     * 统计目标文件夹内包含的 文件/文件夹 大小,
-     * 并将其大小整合在一起至一个变量, 用于轮询线程的查询
-     * size[0] 为总大小
-     * size[1] 为总文件数量
-     */
-    public static long[] getDirSize(File dir) {
-        return new FileCounter().getFiles(dir);
-    }
-
-    /**
      * 计算文件夹内容大小
      */
-    public static class FileCounter {
-        AtomicLong totalSize = new AtomicLong(0);
-        AtomicLong totalFiles = new AtomicLong();
-        public long[] getFiles(File dir) {
+    private static class FileCounter {
+        private final AtomicLong totalSize = new AtomicLong(0);
+        private final AtomicLong totalFiles = new AtomicLong();
+        private long[] getFiles(File dir) {
             Thread thread = new Thread(new DirCalculatorThread(dir));
             thread.start();
+            JProgressBar statusProgressBar = BalloonServer.addNewStatusProgressBar();
+
+            statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");
+            Timer timer = new Timer(250, e -> {
+                statusProgressBar.setString(
+                        String.format("扫描文件夹内容... (%s, %s文件)",
+                                FileUtil.formatFileSizeToStr(totalSize.get()),
+                                totalFiles.get()));
+            });
+
+            statusProgressBar.setVisible(true);
+            statusProgressBar.setIndeterminate(true);
+            timer.start();
+
             try {
                 thread.join();
+                timer.stop();
             } catch (Exception e) {
                 e.printStackTrace();
                 return new long[]{0, 0};
@@ -236,7 +260,7 @@ public class NextFileListUtils {
         }
 
         private class DirCalculatorThread implements Runnable {
-            File dir;
+            private final File dir;
             public DirCalculatorThread(File dir) {
                 this.dir = dir;
             }

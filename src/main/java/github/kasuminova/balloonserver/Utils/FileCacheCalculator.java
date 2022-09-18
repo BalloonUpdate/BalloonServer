@@ -28,11 +28,8 @@ public class FileCacheCalculator {
     }
     private final GUILogger logger;
     private static final ExecutorService DIR_THREAD_POOL = Executors.newCachedThreadPool();
-    private static final ThreadPoolExecutor FILE_THREAD_POOL = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2,
-            Runtime.getRuntime().availableProcessors() * 6,
-            100,
-            TimeUnit.MILLISECONDS,new LinkedBlockingQueue<>());
-    public AtomicInteger progress = new AtomicInteger(0);
+    private static final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    public final AtomicInteger progress = new AtomicInteger(0);
     public JSONArray scanDir(JSONArray jsonArray, File dir) {
         //两个 ArrayList 存储启动的线程，用于读取变量
         ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
@@ -63,10 +60,14 @@ public class FileCacheCalculator {
             }
         }
 
+        //变量复用
+        SimpleDirectoryObject directoryObject;
+        SimpleFileObject fileObject;
+
         //读取上方所创建的线程的返回值
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : dirThreadList) {
             try {
-                SimpleDirectoryObject directoryObject = simpleDirectoryObjectFutureTask.get();
+                directoryObject = simpleDirectoryObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件夹：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
                 addObjectObjectToJsonArray(jsonArray,directoryObject);
@@ -74,9 +75,10 @@ public class FileCacheCalculator {
                 e.printStackTrace();
             }
         }
+
         for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileThreadList) {
             try {
-                SimpleFileObject fileObject = simpleFileObjectFutureTask.get();
+                fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
                 addObjectObjectToJsonArray(jsonArray,fileObject);
@@ -89,13 +91,17 @@ public class FileCacheCalculator {
         dirThreadList = new ArrayList<>();
         fileThreadList = new ArrayList<>();
 
+        //变量复用
+        JSONObject obj;
+        String childPath;
+        File childFile;
         //遍历当前文件夹，并于缓存对比是否有文件变动
         for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject obj = jsonArray.getJSONObject(i);
+            obj = jsonArray.getJSONObject(i);
 
-            String childPath = dir.getPath() + File.separator + obj.get("name");
+            childPath = dir.getPath() + File.separator + obj.get("name");
 
-            File childFile = new File(childPath);
+            childFile = new File(childPath);
 
             //如果文件或文件夹不存在，直接删除 JSONObject
             if (childFile.exists()) {
@@ -142,7 +148,7 @@ public class FileCacheCalculator {
         //读取上方的线程的返回值
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : dirThreadList) {
             try {
-                SimpleDirectoryObject directoryObject = simpleDirectoryObjectFutureTask.get();
+                directoryObject = simpleDirectoryObjectFutureTask.get();
                 logger.info("检测到文件夹变动：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
                 progress.getAndAdd(directoryObject.getChildren().size());
@@ -153,7 +159,7 @@ public class FileCacheCalculator {
         }
         for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileThreadList) {
             try {
-                SimpleFileObject fileObject = simpleFileObjectFutureTask.get();
+                fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到文件变动：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
                 addObjectObjectToJsonArray(jsonArray,fileObject);
@@ -179,9 +185,9 @@ public class FileCacheCalculator {
      * 以 Callable 实现，返回对应的类型
      */
     public static class DirCounterThread implements Callable<SimpleDirectoryObject> {
-        ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
-        ArrayList<FutureTask<SimpleDirectoryObject>> dirThreadList = new ArrayList<>();
-        File dir;
+        private final ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
+        private final ArrayList<FutureTask<SimpleDirectoryObject>> dirThreadList = new ArrayList<>();
+        private final File dir;
         public DirCounterThread(File dir) {
             this.dir = dir;
         }
@@ -229,7 +235,7 @@ public class FileCacheCalculator {
      * 计算完毕后, 返回 SimpleFileObject
      */
     public static class FileCounterThread implements Callable<SimpleFileObject> {
-        File file;
+        private final File file;
         public FileCounterThread(File file) {
             this.file = file;
         }

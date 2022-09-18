@@ -127,8 +127,8 @@ public class FileUtil {
     }
 
     public static class SimpleFileFilter extends FileFilter {
-        String[] ext;
-        String des;
+        private final String[] ext;
+        private final String des;
 
         /**
          * 一个简易的多文件扩展名过滤器

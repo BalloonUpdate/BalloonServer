@@ -8,8 +8,8 @@ import java.awt.*;
 
 public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
 {
-    protected JCheckBox check;
-    protected CheckBoxTreeLabel label;
+    protected final JCheckBox check;
+    protected final CheckBoxTreeLabel label;
 
     public CheckBoxTreeCellRenderer()
     {

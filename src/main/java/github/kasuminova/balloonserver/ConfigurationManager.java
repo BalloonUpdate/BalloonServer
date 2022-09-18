@@ -12,10 +12,8 @@ import java.nio.file.Paths;
  * @author Kasumi_Nova
  */
 public class ConfigurationManager {
-
     public static LittleServerConfig loadLittleServerConfigFromFile(String path) throws IOException {
         LittleServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
-
         //配置文件版本验证
         if (config.getConfigVersion() == 0) {
             LittleServerConfig newConfig = new LittleServerConfig();
@@ -28,7 +26,6 @@ public class ConfigurationManager {
 
             return newConfig;
         }
-
         return config;
     }
 
