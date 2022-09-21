@@ -64,9 +64,9 @@ public class HttpServer {
             String addressType = IPAddressUtil.checkAddress(ip);
             assert addressType != null;
             if ("v6".equals(addressType)) {
-                logger.info("服务器已启动，地址：[" + ip + "]:" + port);
+                logger.info("服务器已启动，API 地址：http://[" + ip + "]:" + port + "/index.json");
             } else {
-                logger.info("服务器已启动，地址：" + ip + ":" + port);
+                logger.info("服务器已启动，API 地址：http://" + ip + ":" + port + "/index.json");
             }
         } catch (Exception e) {
             isStarted.set(false);

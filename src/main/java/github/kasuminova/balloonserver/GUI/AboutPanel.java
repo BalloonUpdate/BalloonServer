@@ -48,6 +48,7 @@ public class AboutPanel {
         JPanel descPanel = new JPanel(new VFlowLayout(0, VFlowLayout.MIDDLE, 5, 5, 5, 5, false, false));
         descPanel.setBorder(new EmptyBorder(10,0,0,0));
         descPanel.add(new JLabel("BalloonServer 是 LittleServer 的完全图形化版本, 基于 Netty-IO 的增强实现.", JLabel.CENTER));
+        descPanel.add(new JLabel("提示：BalloonServer 内嵌了可视化更新规则编辑器, 你可以通过右键更新模式列表打开.", JLabel.CENTER));
         descPanel.add(new JLabel("提示：关闭程序窗口并不会关闭程序, 而是会最小化到托盘.", JLabel.CENTER));
         //链接
         JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10,5));

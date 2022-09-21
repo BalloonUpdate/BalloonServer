@@ -37,12 +37,13 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
         label.setText(stringValue);
         label.setSelected(selected);
         label.setFocus(hasFocus);
-        if(leaf)
-            label.setIcon(UIManager.getIcon("Tree.leafIcon"));
-        else if(expanded)
-            label.setIcon(UIManager.getIcon("Tree.openIcon"));
-        else
+        if (((CheckBoxTreeNode) value).getAllowsChildren()) {
             label.setIcon(UIManager.getIcon("Tree.closedIcon"));
+        } else if (expanded) {
+            label.setIcon(UIManager.getIcon("Tree.openIcon"));
+        } else {
+            label.setIcon(UIManager.getIcon("Tree.leafIcon"));
+        }
 
         return this;
     }

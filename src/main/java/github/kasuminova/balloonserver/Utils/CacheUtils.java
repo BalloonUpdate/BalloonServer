@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static github.kasuminova.balloonserver.BalloonServer.addNewStatusProgressBar;
+import static github.kasuminova.balloonserver.BalloonServer.resetStatusProgressBar;
 import static github.kasuminova.balloonserver.BalloonServer.statusProgressBar;
 
 /**
@@ -70,8 +70,9 @@ public class CacheUtils {
                 //隐藏状态栏进度条
                 statusProgressBar.setVisible(false);
                 //重置变量
-                jsonArray = null;
                 isGenerating.set(false);
+
+                return;
             } catch (InterruptedException e) {
                 logger.error("计算资源缓存的时候出现了问题...", e);
             }
@@ -94,7 +95,6 @@ public class CacheUtils {
                 statusProgressBar.setVisible(false);
                 //重置变量
                 isGenerating.set(false);
-                jsonArray = null;
             } catch (InterruptedException e) {
                 logger.error("计算资源缓存的时候出现了问题...", e);
             }
@@ -137,7 +137,6 @@ public class CacheUtils {
                 }
 
                 //重置变量
-                jsonArray = null;
                 isGenerating.set(false);
             } catch (InterruptedException e) {
                 logger.error("计算资源缓存的时候出现了问题...", e);
@@ -168,7 +167,6 @@ public class CacheUtils {
 
                 //重置变量
                 isGenerating.set(false);
-                jsonArray = null;
             } catch (InterruptedException e) {
                 logger.error("计算资源缓存的时候出现了问题...", e);
             }
@@ -188,14 +186,12 @@ public class CacheUtils {
     private void generateJsonToDiskAndSetServerJson(JSONArray jsonArray) {
         String resJSONStr = jsonArray.toJSONString();
         serverInterface.setResJson(resJSONStr);
-        GLOBAL_THREAD_POOL.execute(() -> {
-            try {
-                FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
-                logger.info("JSON 缓存生成完毕.");
-            } catch (IOException ex) {
-                logger.error("生成 JSON 缓存的时候出现了问题...", ex);
-            }
-        });
+        try {
+            FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
+            logger.info("JSON 缓存生成完毕.");
+        } catch (IOException ex) {
+            logger.error("生成 JSON 缓存的时候出现了问题...", ex);
+        }
     }
 
     /**
@@ -245,7 +241,7 @@ public class CacheUtils {
                 counterThread = new Thread(() -> jsonArray = fileCacheCalculator.scanDir(jsonCache, finalDir));
                 counterThread.start();
 
-                statusProgressBar = addNewStatusProgressBar();
+                statusProgressBar = resetStatusProgressBar();
                 statusProgressBar.setString("检查变化中：" + 0 + " 文件 / " + dirSize[1] + " 文件");
                 timer = new Timer(25, e -> {
                     int progress = fileCacheCalculator.progress.get();
@@ -261,7 +257,7 @@ public class CacheUtils {
                 counterThread = new Thread(() -> fileObjList = fileListUtils.scanDir(finalDir, logger));
                 counterThread.start();
 
-                statusProgressBar = addNewStatusProgressBar();
+                statusProgressBar = resetStatusProgressBar();
                 //轮询线程, 读取进度
                 timer = new Timer(25, e -> {
                     long completedBytes = fileListUtils.getCompletedBytes();

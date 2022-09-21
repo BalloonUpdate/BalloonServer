@@ -235,12 +235,12 @@ public class NextFileListUtils {
         private long[] getFiles(File dir) {
             Thread thread = new Thread(new DirCalculatorThread(dir));
             thread.start();
-            JProgressBar statusProgressBar = BalloonServer.addNewStatusProgressBar();
+            JProgressBar statusProgressBar = BalloonServer.resetStatusProgressBar();
 
             statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");
             Timer timer = new Timer(250, e -> {
                 statusProgressBar.setString(
-                        String.format("扫描文件夹内容... (%s, %s文件)",
+                        String.format("扫描文件夹内容... (%s, %s 文件)",
                                 FileUtil.formatFileSizeToStr(totalSize.get()),
                                 totalFiles.get()));
             });

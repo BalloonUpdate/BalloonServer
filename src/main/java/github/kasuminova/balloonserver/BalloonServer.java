@@ -26,19 +26,19 @@ public class BalloonServer {
         SetupSwing.init();
     }
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(BalloonServer.class.getResource("/image/icon_128x128.jpg")));
-    public static final String VERSION = "1.0.12-BETA";
+    public static final String VERSION = "1.1.0-BETA";
     //主窗口
     public static final JFrame frame = new JFrame("BalloonServer " + VERSION);
     //主窗口 Logger
     public static final Logger logger = Logger.getLogger("MAIN");
-    public static JProgressBar statusProgressBar = new JProgressBar();
-    private static JFrame premainFrame = new JFrame("加载中");
+    public static JProgressBar statusProgressBar = new JProgressBar(0,1000);
+    private static final JFrame premainFrame = new JFrame("加载中");
     private static final JPanel statusPanel = new JPanel(new BorderLayout());
     private static final JProgressBar preLoadProgressBar = new JProgressBar();
     private static final long start = System.currentTimeMillis();
-    private static void init(){
+    private static void init() {
         //大小设置
-        frame.setSize(1300,695);
+        frame.setSize(1400,775);
         frame.setMinimumSize(new Dimension((int) (frame.getWidth() * 0.8), frame.getHeight()));
         //主面板
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -56,11 +56,17 @@ public class BalloonServer {
             statusPanel.add(threadCount, BorderLayout.WEST);
             //线程数监控 + 内存监控
             Box memBarBox = Box.createHorizontalBox();
-            JProgressBar memBar = new JProgressBar(0,100);
+            JProgressBar memBar = new JProgressBar(0,200);
             memBar.setPreferredSize(new Dimension(225,memBar.getHeight()));
+            memBar.setBorder(new EmptyBorder(0,0,0,5));
             memBar.setStringPainted(true);
             memBarBox.add(new JLabel("内存使用情况："));
             memBarBox.add(memBar);
+            //内存清理
+            JButton GC = new JButton("清理");
+            GC.setPreferredSize(new Dimension(65,22));
+            GC.addActionListener(e -> System.gc());
+            memBarBox.add(GC);
             statusPanel.add(memBarBox, BorderLayout.EAST);
             statusProgressBar.setVisible(false);
             statusProgressBar.setStringPainted(true);
@@ -76,7 +82,7 @@ public class BalloonServer {
 
                 threadCount.setText("当前运行的线程数量：" + Thread.activeCount());
 
-                memBar.setValue((int) ((double) memoryUsed * 100 / memoryTotal));
+                memBar.setValue((int) ((double) memoryUsed * 200 / memoryTotal));
                 memBar.setString(memoryUsed/(1024 * 1024) + " M / " + memoryTotal/(1024 * 1024) + " M");
             });
             timer.start();
@@ -92,9 +98,7 @@ public class BalloonServer {
         frame.setIconImage(ICON.getImage());
         frame.setLocationRelativeTo(null);
 
-        //清理预加载窗口
         premainFrame.dispose();
-        premainFrame = null;
 
         frame.setVisible(true);
         logger.info(String.format("程序已启动, 耗时 %sms", System.currentTimeMillis() - start));
@@ -142,13 +146,10 @@ public class BalloonServer {
      * 向主窗口添加一个状态栏进度条, 并删除原先存在的进度条
      * @return 进度条
      */
-    public static JProgressBar addNewStatusProgressBar() {
-        statusProgressBar.getParent().remove(statusProgressBar);
-        statusProgressBar = new JProgressBar(0,1000);
-        statusProgressBar.setStringPainted(true);
-        statusProgressBar.setBorder(new EmptyBorder(0, 40, 0, 40));
+    public static JProgressBar resetStatusProgressBar() {
         statusProgressBar.setVisible(false);
-        statusPanel.add(statusProgressBar);
+        statusProgressBar.setIndeterminate(false);
+        statusProgressBar.setValue(0);
         return statusProgressBar;
     }
     public static void main(String[] args) {
