@@ -31,18 +31,18 @@ public class SetupSwing {
         //设置圆角弧度
         UIManager.put("Button.arc", 7);
         UIManager.put("Component.arc", 7);
-        UIManager.put("CheckBox.arc", 3);
         UIManager.put("ProgressBar.arc", 7);
         UIManager.put("TextComponent.arc", 5);
+        UIManager.put("CheckBox.arc", 3);
 
         //设置滚动条
-        UIManager.put("ScrollBar.showButtons", true);
-        UIManager.put("ScrollBar.trackArc", 999);
-        UIManager.put("ScrollBar.thumbArc", 999);
-        UIManager.put("ScrollBar.width", 14);
-        UIManager.put("ScrollBar.trackInsets", new Insets(2,5,2,5));
-        UIManager.put("ScrollBar.thumbInsets", new Insets(2,4,2,4));
-        UIManager.put("ScrollBar.track", new Color(0xC1C1C1));
+        UIManager.put("ScrollBar.showButtons", false);
+//        UIManager.put("ScrollBar.trackArc", 3);
+        UIManager.put("ScrollBar.thumbArc", 7);
+        UIManager.put("ScrollBar.width", 12);
+//        UIManager.put("ScrollBar.trackInsets", new Insets(5,5,5,5));
+        UIManager.put("ScrollBar.thumbInsets", new Insets(2,2,2,2));
+        UIManager.put("ScrollBar.track", new Color(0,0,0,0));
 
         //选项卡分隔线/背景
         UIManager.put("TabbedPane.showTabSeparators", true);

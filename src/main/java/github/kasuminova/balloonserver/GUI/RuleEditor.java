@@ -31,7 +31,7 @@ public class RuleEditor extends JDialog {
     public RuleEditor(JSONArray jsonArray, String resDirPath) {
         setTitle("RuleEditor " + VERSION);
         setIconImage(BalloonServer.ICON.getImage());
-        setSize(750,830);
+        setSize(800,855);
         setResizable(false);
         setLocationRelativeTo(null);
 
