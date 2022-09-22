@@ -12,7 +12,7 @@ import java.nio.file.Paths;
  * @author Kasumi_Nova
  */
 public class ConfigurationManager {
-    public static LittleServerConfig loadLittleServerConfigFromFile(String path) throws IOException {
+    public static void loadLittleServerConfigFromFile(String path, LittleServerConfig oldConfig) throws IOException {
         LittleServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
         //配置文件版本验证
         if (config.getConfigVersion() == 0) {
@@ -23,12 +23,37 @@ public class ConfigurationManager {
             newConfig.setMainDirPath(config.getMainDirPath());
             newConfig.setJksFilePath(config.getJksFilePath());
             newConfig.setJksSslPassword(config.getJksSslPassword());
-
-            return newConfig;
+            return;
         }
-        return config;
+
+        oldConfig.configVersion = config.configVersion;
+        oldConfig.ip = config.ip;
+        oldConfig.port = config.port;
+        oldConfig.mainDirPath = config.mainDirPath;
+        oldConfig.fileChangeListener = config.fileChangeListener;
+        oldConfig.jksFilePath = config.jksFilePath;
+        oldConfig.jksSslPassword = config.jksSslPassword;
+        oldConfig.commonMode = config.commonMode;
+        oldConfig.onceMode = config.onceMode;
     }
 
+    /**
+     * 重置配置文件
+     * @param config 配置文件对象
+     */
+    public static void resetLittleServerConfig(LittleServerConfig config) {
+        LittleServerConfig defaultConfig = new LittleServerConfig();
+
+        config.configVersion = defaultConfig.configVersion;
+        config.ip = defaultConfig.ip;
+        config.port = defaultConfig.port;
+        config.mainDirPath = defaultConfig.mainDirPath;
+        config.fileChangeListener = defaultConfig.fileChangeListener;
+        config.jksFilePath = defaultConfig.jksFilePath;
+        config.jksSslPassword = defaultConfig.jksSslPassword;
+        config.commonMode = defaultConfig.commonMode;
+        config.onceMode = defaultConfig.onceMode;
+    }
     public static void saveConfigurationToFile(LittleServerConfig configuration, String path, String name) throws IOException {
         FileUtil.createJsonFile(JSONObject.toJSONString(configuration), path, name);
     }

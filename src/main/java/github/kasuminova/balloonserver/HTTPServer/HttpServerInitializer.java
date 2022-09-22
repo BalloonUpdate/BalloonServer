@@ -35,10 +35,17 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         LittleServerConfig config = serverInterface.getConfig();
         this.logger = serverInterface.getLogger();
 
-        if (jks != null) {
+        if (config.getJksFilePath().isEmpty() || config.getJksSslPassword().isEmpty()) {
+            useSsl = false;
+            logger.info("未检测到 JKS 证书，使用 HTTP 协议。");
+            return;
+        }
+
+        this.jks = new File(config.getJksFilePath());
+        this.jksPasswd = config.getJksSslPassword().toCharArray();
+
+        if (jks.exists()) {
             if (jksPasswd != null && jksPasswd.length != 0) {
-                this.jks = new File(config.getJksFilePath());
-                this.jksPasswd = config.getJksSslPassword().toCharArray();
                 useSsl = true;
                 logger.info("成功载入 JKS 证书与密码，使用 HTTPS 协议。");
             } else {

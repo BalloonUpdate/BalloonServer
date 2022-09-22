@@ -31,9 +31,9 @@ import static github.kasuminova.balloonserver.BalloonServer.*;
  * @author Kasumi_Nova
  */
 public class LittleServer {
-    private LittleServerConfig config;
     private HttpServer server;
     private String resJson;
+    private final LittleServerConfig config = new LittleServerConfig();
     private final List<String> commonModeList = new ArrayList<>();
     private final List<String> onceModeList = new ArrayList<>();
     //服务器启动状态
@@ -61,6 +61,8 @@ public class LittleServer {
         long start = System.currentTimeMillis();
         //设置 Logger，主体为 logPanel
         JPanel logPanel = new JPanel(new BorderLayout());
+        logPanel.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.525), 0));
+
         logPanel.setBorder(new TitledBorder("程序日志"));
         JTextPane logPane = new JTextPane();
         logPane.setEditable(false);
@@ -73,7 +75,7 @@ public class LittleServer {
         //控制面板
         JPanel controlPanel = new JPanel(new BorderLayout());
         controlPanel.setBorder(new TitledBorder("控制面板"));
-        controlPanel.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.27), MAIN_FRAME.getHeight()));
+        controlPanel.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.24), 0));
 
         //配置窗口
         JPanel configPanel = new JPanel(new VFlowLayout());
@@ -352,20 +354,24 @@ public class LittleServer {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         requestListScrollPane.getVerticalScrollBar().setUnitIncrement(50);
         requestListScrollPane.setBorder(new TitledBorder("上传列表"));
-        requestListScrollPane.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.19), MAIN_FRAME.getHeight()));
+        requestListScrollPane.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.19), littleServerPanel.getHeight()));
 
         //组装控制面板
         controlPanel.add(configPanel);
         controlPanel.add(southControlPanel, BorderLayout.SOUTH);
         //服务器窗口组装
-        littleServerPanel.add(logPanel, BorderLayout.CENTER);
-        //将控制面板和上传列表以水平方向组装
-        Box controlPanelBox = Box.createHorizontalBox();
-        controlPanelBox.add(controlPanel);
-        controlPanelBox.add(requestListScrollPane);
-
+        //日志面板和控制面板的组件
+        JSplitPane logAndControlSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        logAndControlSplitPane.setLeftComponent(logPanel);
+        //控制面板和上传列表的组件
+        JSplitPane controlSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        controlSplitPane.setOneTouchExpandable(true);
+        controlSplitPane.setDividerSize(8);
+        controlSplitPane.setLeftComponent(controlPanel);
+        controlSplitPane.setRightComponent(requestListScrollPane);
         //组装控制面板和上传列表
-        littleServerPanel.add(controlPanelBox, BorderLayout.EAST);
+        logAndControlSplitPane.setRightComponent(controlSplitPane);
+        littleServerPanel.add(logAndControlSplitPane, BorderLayout.CENTER);
 
         logger.debug(String.format("载入服务器耗时 %sms.", System.currentTimeMillis() - start));
     }
@@ -578,7 +584,8 @@ public class LittleServer {
             JTextField mainDirTextField,
             JList<String> commonMode,
             JList<String> onceMode,
-            JCheckBox fileChangeListener) {
+            JCheckBox fileChangeListener
+            ) {
         if (!new File(configFilePath).exists()) {
             try {
                 logger.warn("未找到配置文件，正在尝试在程序当前目录生成配置文件...");
@@ -587,13 +594,17 @@ public class LittleServer {
                 logger.info("目前正在使用程序默认配置.");
             } catch (Exception e) {
                 logger.error("生成配置文件的时候出现了问题...", e);
-                config = new LittleServerConfig();
                 logger.info("目前正在使用程序默认配置.");
             }
             return;
         }
         try {
-            config = ConfigurationManager.loadLittleServerConfigFromFile(configFilePath);
+            ConfigurationManager.loadLittleServerConfigFromFile(configFilePath, config);
+        } catch (IOException e) {
+            logger.error("加载配置文件的时候出现了问题...", e);
+            logger.info("目前正在使用程序默认配置.");
+            return;
+        }
             //IP
             IPTextField.setText(config.getIp());
             //端口
@@ -623,11 +634,7 @@ public class LittleServer {
             onceMode.setListData(config.getOnceMode());
 
             logger.info("已载入配置文件.");
-        } catch (Exception e) {
-            logger.error("加载配置文件的时候出现了问题...", e);
-            config = new LittleServerConfig();
-            logger.info("目前正在使用程序默认配置.");
-        }
+
     }
 
     /**

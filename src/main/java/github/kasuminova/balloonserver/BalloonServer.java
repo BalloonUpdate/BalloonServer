@@ -43,7 +43,7 @@ public class BalloonServer {
     public static final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
     private static void init() {
         //大小设置
-        MAIN_FRAME.setSize(1400,775);
+        MAIN_FRAME.setSize(1350,775);
         MAIN_FRAME.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.8), MAIN_FRAME.getHeight()));
         //主面板
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -64,11 +64,11 @@ public class BalloonServer {
         STATUS_PANEL.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
-        JProgressBar memBar = new JProgressBar(0,200);
-        memBar.setPreferredSize(new Dimension(225,memBar.getHeight()));
+        JProgressBar memBar = new JProgressBar(0,250);
+        memBar.setPreferredSize(new Dimension(memBar.getMaximum(),memBar.getHeight()));
         memBar.setBorder(new EmptyBorder(0,0,0,5));
         memBar.setStringPainted(true);
-        memBarBox.add(new JLabel("内存使用情况："));
+        memBarBox.add(new JLabel("JVM 内存使用情况："));
         memBarBox.add(memBar);
         //内存清理
         JButton GC = new JButton("清理");
@@ -83,17 +83,21 @@ public class BalloonServer {
         STATUS_PANEL.add(GLOBAL_STATUS_PROGRESSBAR);
         mainPanel.add(STATUS_PANEL, BorderLayout.SOUTH);
         //定时器, 更新内存和线程信息
-        Timer timer = new Timer(500, e -> {
+        Timer statusTimer = new Timer(500, e -> {
             MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
             long memoryUsed = memoryMXBean.getHeapMemoryUsage().getUsed();
-            long memoryTotal = memoryMXBean.getHeapMemoryUsage().getInit();
+            long memoryTotal = memoryMXBean.getHeapMemoryUsage().getCommitted();
 
             threadCount.setText(String.format("当前运行的线程数量：%s", Thread.activeCount()));
 
-            memBar.setValue((int) ((double) memoryUsed * 200 / memoryTotal));
-            memBar.setString(memoryUsed/(1024 * 1024) + " M / " + memoryTotal/(1024 * 1024) + " M");
+            memBar.setValue((int) ((double) memoryUsed * 250 / memoryTotal));
+            memBar.setString(String.format("%s M / %s M - Max: %s M",
+                    memoryUsed / (1024 * 1024),
+                    memoryTotal / (1024 * 1024),
+                    memoryMXBean.getHeapMemoryUsage().getMax() / (1024 * 1024)
+            ));
         });
-        timer.start();
+        statusTimer.start();
 
         GLOBAL_THREAD_POOL.execute(() -> {
             long start = System.currentTimeMillis();

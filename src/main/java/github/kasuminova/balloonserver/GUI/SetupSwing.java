@@ -11,6 +11,7 @@ import java.util.Enumeration;
 
 /**
  * @author Kasumi_Nova
+ * 一个工具类，用于初始化 Swing（即美化）
  */
 public class SetupSwing {
     public static void init() {
@@ -21,7 +22,7 @@ public class SetupSwing {
 //        System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
 
         //UI 配置线程
-        Thread UIThread = new Thread(() -> {
+        Thread uiThread = new Thread(() -> {
             long start = System.currentTimeMillis();
             //设置圆角弧度
             UIManager.put("Button.arc", 7);
@@ -41,7 +42,7 @@ public class SetupSwing {
             UIManager.put("TabbedPane.showTabSeparators", true);
             System.out.printf("UIThread Completed, Used %sms%n", System.currentTimeMillis() - start);
         });
-        UIThread.start();
+        uiThread.start();
 
         //字体更换线程
         Thread fontThread = new Thread(() -> {
@@ -73,7 +74,7 @@ public class SetupSwing {
         themeThread.start();
 
         try {
-            UIThread.join();
+            uiThread.join();
             fontThread.join();
             themeThread.join();
         } catch (InterruptedException ignored) {}
@@ -85,7 +86,7 @@ public class SetupSwing {
      * 载入全局字体
      * @param font 字体
      */
-    public static void initGlobalFont(Font font) {
+    private static void initGlobalFont(Font font) {
         FontUIResource fontResource = new FontUIResource(font);
         for (Enumeration<Object> keys = UIManager.getDefaults().keys(); keys.hasMoreElements();) {
             Object key = keys.nextElement();
