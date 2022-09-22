@@ -66,7 +66,7 @@ public class HttpServer {
             if ("v6".equals(addressType)) {
                 if (httpServerInitializer.isUseSsl()) {
                     logger.info(String.format("服务器已启动，API 地址：http://%s:%s/index.json", httpServerInitializer.jks.getName().replace(".jks",""),port));
-                    logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址。");
+                    logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址，如果上方输出的域名不正确，请自行将 IP 更换为域名。");
                 } else {
                     logger.info(String.format("服务器已启动，API 地址：https://[%s]:%s/index.json", ip,port));
                 }

@@ -327,14 +327,14 @@ public class LittleServer {
                     try {
                         String jsonString = FileUtil.readStringFromFile(jsonCache);
                         JSONArray jsonArray = JSONArray.parseArray(jsonString);
-                        GLOBAL_THREAD_POOL.execute(() -> cacheUtil.genResDirCacheAndStartServer(jsonArray));
+                        GLOBAL_THREAD_POOL.execute(() -> cacheUtil.updateDirCacheAndStartServer(jsonArray));
                     } catch (Exception ex) {
                         logger.error("读取缓存文件的时候出现了一些问题...", ex);
                         logger.warn("缓存文件读取失败, 重新生成缓存...");
-                        GLOBAL_THREAD_POOL.execute(() -> cacheUtil.genResDirCacheAndStartServer(null));
+                        GLOBAL_THREAD_POOL.execute(() -> cacheUtil.updateDirCacheAndStartServer(null));
                     }
                 } else {
-                    GLOBAL_THREAD_POOL.execute(() -> cacheUtil.genResDirCacheAndStartServer(null));
+                    GLOBAL_THREAD_POOL.execute(() -> cacheUtil.updateDirCacheAndStartServer(null));
                 }
             } else {
                 try {
@@ -477,14 +477,16 @@ public class LittleServer {
                 if (selection == JOptionPane.YES_OPTION) {
                     GLOBAL_THREAD_POOL.execute(() -> {
                         new CacheUtils(serverInterface,httpServerInterface,startOrStop).updateDirCache(null);
-                        try {
-                            String json = FileUtil.readStringFromFile(new File("./res-cache.json"));
-                            showRuleEditorDialog(JSONArray.parseArray(json));
+                        if (new File("./res-cache.json").exists()) {
+                            try {
+                                String json = FileUtil.readStringFromFile(new File("./res-cache.json"));
+                                showRuleEditorDialog(JSONArray.parseArray(json));
 
-                        } catch (IOException ex) {
-                            JOptionPane.showMessageDialog(frame,
-                                    "无法读取本地 JSON 缓存" + ex,"错误",
-                                    JOptionPane.ERROR_MESSAGE);
+                            } catch (IOException ex) {
+                                JOptionPane.showMessageDialog(frame,
+                                        "无法读取本地 JSON 缓存" + ex, "错误",
+                                        JOptionPane.ERROR_MESSAGE);
+                            }
                         }
                     });
                 }
