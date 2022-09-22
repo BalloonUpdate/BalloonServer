@@ -162,8 +162,9 @@ public class NextFileListUtils {
         try {
             FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
             ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-            int len;
             MessageDigest md = MessageDigest.getInstance("MD5");
+
+            int len;
             while ((len = fc.read(byteBuffer)) > 0) {
                 md.update(byteBuffer.array(), 0, len);
                 completedBytes.getAndAdd(len);
@@ -187,8 +188,9 @@ public class NextFileListUtils {
         try {
             FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
             ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-            int len;
             MessageDigest md = MessageDigest.getInstance("SHA1");
+
+            int len;
             while ((len = fc.read(byteBuffer)) > 0) {
                 md.update(byteBuffer.array(), 0, len);
                 completedBytes.getAndAdd(len);
@@ -212,8 +214,9 @@ public class NextFileListUtils {
         try {
             FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
             ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-            int len;
             CRC32 crc32 = new CRC32();
+
+            int len;
             while ((len = fc.read(byteBuffer)) > 0) {
                 crc32.update(byteBuffer.array(), 0, len);
                 completedBytes.getAndAdd(len);
@@ -235,8 +238,6 @@ public class NextFileListUtils {
         private final AtomicLong totalSize = new AtomicLong(0);
         private final AtomicLong totalFiles = new AtomicLong();
         private long[] getFiles(File dir) {
-            Thread thread = new Thread(new DirCalculatorThread(dir));
-            thread.start();
             resetStatusProgressBar();
 
             statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");
@@ -250,7 +251,7 @@ public class NextFileListUtils {
             timer.start();
 
             try {
-                thread.join();
+                new DirCalculatorThread(dir).run();
                 timer.stop();
             } catch (Exception e) {
                 e.printStackTrace();

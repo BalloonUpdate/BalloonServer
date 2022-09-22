@@ -1,9 +1,11 @@
-package github.kasuminova.balloonserver.GUI.CheckBoxTree;
+package github.kasuminova.balloonserver.GUI;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.BalloonServer;
-import github.kasuminova.balloonserver.GUI.VFlowLayout;
+import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeCellRenderer;
+import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNode;
+import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNodeSelectionListener;
 import github.kasuminova.balloonserver.Servers.LittleServer;
 
 import javax.swing.*;
@@ -19,11 +21,9 @@ import java.util.List;
  * 可视化更新规则编辑器
  */
 public class RuleEditor extends JDialog {
-    public static final String VERSION = "1.1-STABLE";
-
-    List<String> result = new ArrayList<>();
-    ArrayList<String> rules = new ArrayList<>();
-
+    public static final String VERSION = "1.2-STABLE";
+    private final List<String> result = new ArrayList<>();
+    private final ArrayList<String> rules = new ArrayList<>();
     public List<String> getResult() {
         return result;
     }
@@ -111,6 +111,10 @@ public class RuleEditor extends JDialog {
     }
 
     /**
+     * 可复用变量（降低内存使用率）
+     */
+    private static final StringBuilder childPath = new StringBuilder();
+    /**
      * 获取选中的文件，自动获取父节点
      * @param root 节点
      * @return 选中的文件
@@ -118,12 +122,10 @@ public class RuleEditor extends JDialog {
     private static ArrayList<String> getSelectedFiles(CheckBoxTreeNode root) {
         ArrayList<String> abstractSimpleFileObjects = new ArrayList<>();
 
-        if (root.isRoot() && root.isSelected) {
+        if (root.isRoot() && root.isSelected()) {
             abstractSimpleFileObjects.add("**");
             return abstractSimpleFileObjects;
         }
-
-        StringBuilder childPath;
 
         if (!root.isSelected()) {
             if (!root.isLeaf()) {
@@ -132,15 +134,15 @@ public class RuleEditor extends JDialog {
                 }
             }
         } else if (root.getAllowsChildren()) {
-            childPath = new StringBuilder();
+            childPath.setLength(0);
             for (TreeNode treeNode : root.getPath()) {
-                childPath.append(treeNode).append("/");
+                childPath.append(treeNode.toString().intern()).append("/");
             }
             abstractSimpleFileObjects.add(childPath + "**");
         } else {
-            childPath = new StringBuilder();
+            childPath.setLength(0);
             for (TreeNode treeNode : root.getPath()) {
-                childPath.append(treeNode).append("/");
+                childPath.append(treeNode.toString().intern()).append("/");
             }
             //去除最后一个斜杠
             childPath.delete(childPath.length() - 1, childPath.length());
@@ -150,6 +152,7 @@ public class RuleEditor extends JDialog {
         return abstractSimpleFileObjects;
     }
 
+    private static final JSONObject jsonObject = new JSONObject();
     /**
      * 根据传入的 JSONArray 构建 JTree 的子节点
      * @param jsonArray JSONArray
@@ -159,17 +162,17 @@ public class RuleEditor extends JDialog {
         ArrayList<CheckBoxTreeNode> treeNodes = new ArrayList<>();
 
         for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            jsonObject.clear();
+            jsonObject.putAll(jsonArray.getJSONObject(i));
+
             if (jsonObject.getString("children") != null) {
                 CheckBoxTreeNode directory = new CheckBoxTreeNode(jsonObject.getString("name"));
-                directory.setAllowsChildren(true);
 
-                treeNodes.add(directory);
-
-                ArrayList<CheckBoxTreeNode> fileList = scanDirAndBuildTree(jsonObject.getJSONArray("children"));
-                for (CheckBoxTreeNode checkBoxTreeNode : fileList) {
+                for (CheckBoxTreeNode checkBoxTreeNode : scanDirAndBuildTree(jsonObject.getJSONArray("children"))) {
                     directory.add(checkBoxTreeNode);
                 }
+
+                treeNodes.add(directory);
             } else {
                 CheckBoxTreeNode file = new CheckBoxTreeNode(jsonObject.getString("name"));
                 file.setAllowsChildren(false);

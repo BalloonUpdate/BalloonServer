@@ -3,7 +3,7 @@ package github.kasuminova.balloonserver.Servers;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.ConfigurationManager;
 import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
-import github.kasuminova.balloonserver.GUI.CheckBoxTree.RuleEditor;
+import github.kasuminova.balloonserver.GUI.RuleEditor;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
@@ -424,7 +424,6 @@ public class LittleServer {
             }
         }
     }
-
     //更新规则编辑器类
     private class RuleEditorActionListener implements ActionListener {
         private final JList<String> ruleList;

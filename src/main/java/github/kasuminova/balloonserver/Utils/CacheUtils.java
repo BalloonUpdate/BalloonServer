@@ -201,10 +201,10 @@ public class CacheUtils {
 
         File dir = new File("." + config.getMainDirPath());
         if (!dir.exists()) {
-            logger.warn("设定中的资源目录：" + dir.getPath() + " 不存在, 使用默认路径.");
+            logger.warn(String.format("设定中的资源目录：%s 不存在, 使用默认路径", dir.getPath()));
             dir = new File("./res");
             if (!dir.exists()) {
-                logger.warn("默认资源目录不存在：" + dir.getPath() + " 正在创建文件夹.");
+                logger.warn(String.format("默认资源目录不存在：%s, 正在创建文件夹", dir.getPath()));
                 if (dir.mkdir()) {
                     logger.error("默认资源目录创建失败！请检查你的资源目录文件夹是否被占用或非文件夹。");
                 }
@@ -227,7 +227,7 @@ public class CacheUtils {
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
         if (dirSize[0] != 0) {
             FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger);
-            logger.info("文件夹大小：" + totalSize + ", 文件数量：" + dirSize[1]);
+            logger.info(String.format("文件夹大小：%s, 文件数量：%s", totalSize,dirSize[1]));
             if (jsonCache != null) {
                 logger.info("检测到已缓存的 JSON, 正在检查变化...");
 
@@ -237,11 +237,11 @@ public class CacheUtils {
                 counterThread.start();
 
                 resetStatusProgressBar();
-                statusProgressBar.setString("检查变化中：" + 0 + " 文件 / " + dirSize[1] + " 文件");
+                statusProgressBar.setString(String.format("检查变化中：0 文件 / %s 文件", dirSize[1]));
                 timer = new Timer(25, e -> {
-                    int progress = fileCacheCalculator.progress.get();
-                    statusProgressBar.setValue((int) ((double) progress * 1000 / dirSize[1]));
-                    statusProgressBar.setString("检查变化中：" + progress + " 文件 / " + dirSize[1] + " 文件");
+                    int completedFiles = fileCacheCalculator.completedFiles.get();
+                    statusProgressBar.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
+                    statusProgressBar.setString(String.format("检查变化中：%s 文件 / %s 文件", completedFiles, dirSize[1]));
                 });
             } else {
                 logger.info("正在生成资源目录缓存...");
@@ -259,11 +259,11 @@ public class CacheUtils {
                     long completedFiles = fileListUtils.getCompletedFiles();
                     String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
                     statusProgressBar.setValue((int) ((double) completedBytes * 1000 / dirSize[0]));
-                    statusProgressBar.setString("生成缓存中：" +
-                            completedSize + " / " + totalSize +
-                            " - " +
-                            completedFiles + " 文件 / " + dirSize[1] +
-                            " 文件");
+                    statusProgressBar.setString(String.format("生成缓存中：%s / %s - %s 文件 / %s 文件",
+                            completedSize,
+                            totalSize,
+                            completedFiles,
+                            dirSize[1]));
                 });
             }
             //启动轮询

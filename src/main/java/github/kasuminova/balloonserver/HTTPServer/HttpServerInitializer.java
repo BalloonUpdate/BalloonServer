@@ -73,6 +73,8 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         pipeline.addLast(new HttpServerCodec());
         pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024));
         pipeline.addLast("http-chunked",new ChunkedWriteHandler());
+        //gzip 压缩
+//        pipeline.addLast("compressor",new HttpContentCompressor());
         //请求处理器
         pipeline.addLast(new HttpRequestHandler(serverInterface));
     }

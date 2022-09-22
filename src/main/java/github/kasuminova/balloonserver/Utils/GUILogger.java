@@ -5,6 +5,8 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,10 +22,17 @@ public class GUILogger {
     private final Logger logger;
     private static final SimpleAttributeSet attrSet = new SimpleAttributeSet();
     //logger 线程池
-    private static final ExecutorService loggerThreadPool = Executors.newSingleThreadExecutor();
+    private static final ExecutorService LOGGER_THREAD_POOL = Executors.newSingleThreadExecutor();
     //日期格式
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
-
+    private static final Color INFO_COLOR  = new Color(30,170,255);
+    private static final Color WARN_COLOR  = new Color(255,215,0);
+    private static final Color ERROR_COLOR = new Color(255,75,75);
+    private static final Color DEBUG_COLOR = new Color(180,70,255);
+    private static final String INFO  = "INFO";
+    private static final String WARN  = "WARN";
+    private static final String ERROR = "ERROR";
+    private static final String DEBUG = "DEBUG";
     /**
      * 创建一个 Logger
      * @param name 前缀
@@ -41,112 +50,108 @@ public class GUILogger {
     }
 
     public synchronized void info(String msg) {
-        loggerThreadPool.execute(new Thread(() -> {
+        LOGGER_THREAD_POOL.execute(() -> {
             logger.info(msg);
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(30,170,255));//设置颜色
+            StyleConstants.setForeground(attrSet, INFO_COLOR);//设置颜色
 
             try {
-                document.insertString(document.getLength(), buildNormalLogMessage("INFO", msg, name), attrSet);
+                document.insertString(document.getLength(), buildNormalLogMessage(INFO, msg, name), attrSet);
                 logPane.setCaretPosition(document.getLength());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }));
+        });
     }
 
     public synchronized void debug(String msg) {
-        loggerThreadPool.execute(new Thread(() -> {
+        LOGGER_THREAD_POOL.execute(() -> {
             logger.info(msg);
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(180,70,255));//设置颜色
+            StyleConstants.setForeground(attrSet, DEBUG_COLOR);//设置颜色
 
             try {
-                document.insertString(document.getLength(), buildNormalLogMessage("DEBUG", msg, name), attrSet);
+                document.insertString(document.getLength(), buildNormalLogMessage(DEBUG, msg, name), attrSet);
                 logPane.setCaretPosition(document.getLength());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }));
+        });
     }
 
     public synchronized void warn(String msg) {
-        loggerThreadPool.execute(new Thread(() -> {
+        LOGGER_THREAD_POOL.execute(() -> {
             logger.warning(msg);
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(255,215,0));//设置颜色
+            StyleConstants.setForeground(attrSet, WARN_COLOR);//设置颜色
 
             try {
-                document.insertString(document.getLength(), buildNormalLogMessage("WARN", msg, name), attrSet);
+                document.insertString(document.getLength(), buildNormalLogMessage(WARN, msg, name), attrSet);
                 logPane.setCaretPosition(document.getLength());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }));
+        });
     }
 
     public synchronized void error(String msg) {
-        loggerThreadPool.execute(new Thread(() -> {
+        LOGGER_THREAD_POOL.execute(() -> {
             logger.warning(msg);
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(255,75,75));//设置颜色
-
+            StyleConstants.setForeground(attrSet, ERROR_COLOR);//设置颜色
             try {
-                document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg, name), attrSet);
-                logPane.setCaretPosition(document.getLength());
-            } catch (Exception e) {
-                e.printStackTrace();
+                document.insertString(document.getLength(), buildNormalLogMessage(ERROR, msg, name), attrSet);
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-        }));
+        });
     }
 
     public synchronized void error(String msg, Exception e) {
-        loggerThreadPool.execute(new Thread(() -> {
+        LOGGER_THREAD_POOL.execute(() -> {
             logger.warning(msg);
-            if (e.getCause() != null) {
-                logger.warning(e.getCause().toString());
-            }
+            logger.warning(stackTraceToString(e));
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(255,64,64));//设置颜色
+            StyleConstants.setForeground(attrSet, ERROR_COLOR);//设置颜色
             try {
-                if (e.getCause() != null) {
-                    document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg + ": " + e.getCause(), name), attrSet);
-                } else {
-                    document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg, name), attrSet);
-                }
-                logPane.setCaretPosition(document.getLength());
-                for (StackTraceElement stackTraceElement : e.getStackTrace()) {
-                    document.insertString(document.getLength(), "        at " + stackTraceElement + "\n", attrSet);
-                }
+                document.insertString(document.getLength(),
+                        buildNormalLogMessage(ERROR,
+                                String.format("%s\n%s", msg, stackTraceToString(e)), name),
+                        attrSet);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-        }));
+        });
     }
 
     public synchronized void error(Exception e) {
-        loggerThreadPool.execute(new Thread(() -> {
-            if (e.getCause() != null) {
-                logger.warning(e.getCause().toString());
-            }
+        LOGGER_THREAD_POOL.execute(() -> {
+            logger.warning(stackTraceToString(e));
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(255,64,64));//设置颜色
+            StyleConstants.setForeground(attrSet, ERROR_COLOR);//设置颜色
             try {
-                if (e.getCause() != null) {
-                    document.insertString(document.getLength(), buildNormalLogMessage("ERROR", e.getCause().toString(), name), attrSet);
-                }
-                logPane.setCaretPosition(document.getLength());
-                for (StackTraceElement stackTraceElement : e.getStackTrace()) {
-                    document.insertString(document.getLength(), "        at " + stackTraceElement + "\n", attrSet);
-                    logger.warning("        at " + stackTraceElement.toString());
-                }
+                document.insertString(document.getLength(), buildNormalLogMessage(ERROR, stackTraceToString(e), name), attrSet);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-        }));
+        });
     }
 
-    public static String buildNormalLogMessage(String level, String msg, String name){
+    /**
+     * 将错误打印成字符串
+     * 输出类似 printStackTrace() 的内容
+     * @param e Exception
+     * @return 字符串
+     */
+    private static String stackTraceToString(Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        pw.flush();
+        return sw.toString();
+    }
+
+    private static String buildNormalLogMessage(String level, String msg, String name) {
         //占位符分别为 日期，日志等级，线程名，名称，消息本体
         return String.format("[%s][%s][%s]%s: %s\n", simpleDateFormat.format(System.currentTimeMillis()), level, Thread.currentThread().getName(), name, msg);
     }

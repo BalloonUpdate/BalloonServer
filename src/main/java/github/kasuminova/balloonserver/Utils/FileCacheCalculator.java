@@ -26,10 +26,17 @@ public class FileCacheCalculator {
     public FileCacheCalculator(GUILogger logger) {
         this.logger = logger;
     }
-    private final GUILogger logger;
     private static final ExecutorService DIR_THREAD_POOL = Executors.newCachedThreadPool();
     private static final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-    public final AtomicInteger progress = new AtomicInteger(0);
+    private final GUILogger logger;
+    public final AtomicInteger completedFiles = new AtomicInteger(0);
+
+    /**
+     * 可复用变量（降低内存使用率）
+     */
+    private final StringBuilder childPath = new StringBuilder();
+    private final JSONObject obj = new JSONObject();
+
     public JSONArray scanDir(JSONArray jsonArray, File dir) {
         //两个 ArrayList 存储启动的线程，用于读取变量
         ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
@@ -88,20 +95,18 @@ public class FileCacheCalculator {
         }
 
         //重置线程列表
-        dirThreadList = new ArrayList<>();
-        fileThreadList = new ArrayList<>();
+        dirThreadList.clear();
+        fileThreadList.clear();
 
-        //变量复用
-        JSONObject obj;
-        String childPath;
-        File childFile;
         //遍历当前文件夹，并于缓存对比是否有文件变动
         for (int i = 0; i < jsonArray.size(); i++) {
-            obj = jsonArray.getJSONObject(i);
+            obj.clear();
+            obj.putAll(jsonArray.getJSONObject(i));
 
-            childPath = dir.getPath() + File.separator + obj.get("name");
+            childPath.setLength(0);
+            childPath.append(dir.getPath()).append(File.separator).append(obj.get("name"));
 
-            childFile = new File(childPath);
+            File childFile = new File(childPath.toString());
 
             //如果文件或文件夹不存在，直接删除 JSONObject
             if (childFile.exists()) {
@@ -128,7 +133,7 @@ public class FileCacheCalculator {
                         fileThreadList.add(fileCounterThread);
                         FILE_THREAD_POOL.execute(fileCounterThread);
                     } else {
-                        progress.getAndIncrement();
+                        completedFiles.getAndIncrement();
                     }
                     //如果资源文件现在是文件夹，则遍历文件夹内部文件并返回 SimpleDirectoryObject
                 } else if (childFile.isDirectory()) {
@@ -151,7 +156,7 @@ public class FileCacheCalculator {
                 directoryObject = simpleDirectoryObjectFutureTask.get();
                 logger.info("检测到文件夹变动：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
-                progress.getAndAdd(directoryObject.getChildren().size());
+                completedFiles.getAndAdd(directoryObject.getChildren().size());
                 addObjectObjectToJsonArray(jsonArray,directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -163,7 +168,7 @@ public class FileCacheCalculator {
                 logger.info("检测到文件变动：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
                 addObjectObjectToJsonArray(jsonArray,fileObject);
-                progress.getAndIncrement();
+                completedFiles.getAndIncrement();
             } catch (Exception e) {
                 e.printStackTrace();
             }
