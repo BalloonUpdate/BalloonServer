@@ -3,7 +3,7 @@ package github.kasuminova.balloonserver.Servers;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.ConfigurationManager;
 import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
-import github.kasuminova.balloonserver.GUI.CheckBoxTree.RuleEditorDialog;
+import github.kasuminova.balloonserver.GUI.CheckBoxTree.RuleEditor;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
 
@@ -431,7 +430,7 @@ public class LittleServer {
         private void showRuleEditorDialog(JSONArray jsonArray) {
             //锁定窗口，防止用户误操作
             frame.setEnabled(false);
-            RuleEditorDialog editorDialog = new RuleEditorDialog(jsonArray, config.getMainDirPath().replace("/",""));
+            RuleEditor editorDialog = new RuleEditor(jsonArray, config.getMainDirPath().replace("/",""));
             editorDialog.setModal(true);
 
             frame.setEnabled(true);
