@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static github.kasuminova.balloonserver.BalloonServer.resetStatusProgressBar;
-import static github.kasuminova.balloonserver.BalloonServer.statusProgressBar;
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_STATUS_PROGRESSBAR;
 
 /**
  * 从 LittleServer 的 cacheUtils 的内部类独立出来的一个工具，用于计算文件缓存并输出 JSON
@@ -65,7 +65,7 @@ public class CacheUtils {
                 generateJsonToDiskAndSetServerJson(jsonArray);
 
                 //隐藏状态栏进度条
-                statusProgressBar.setVisible(false);
+                GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
                 //重置变量
                 isGenerating.set(false);
             } catch (InterruptedException e) {
@@ -87,7 +87,7 @@ public class CacheUtils {
                 generateJsonToDiskAndSetServerJson(jsonArray);
 
                 //隐藏状态栏进度条
-                statusProgressBar.setVisible(false);
+                GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
                 //重置变量
                 isGenerating.set(false);
             } catch (InterruptedException e) {
@@ -123,7 +123,7 @@ public class CacheUtils {
                 generateJsonToDiskAndSetServerJson(jsonArray);
 
                 //隐藏状态栏进度条
-                statusProgressBar.setVisible(false);
+                GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
 
                 //启动服务器
                 if (httpServerInterface.startServer()) {
@@ -152,7 +152,7 @@ public class CacheUtils {
                 generateJsonToDiskAndSetServerJson(jsonArray);
 
                 //隐藏状态栏进度条
-                statusProgressBar.setVisible(false);
+                GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
 
                 //启动服务器
                 if (httpServerInterface.startServer()) {
@@ -241,11 +241,11 @@ public class CacheUtils {
             counterThread.start();
 
             resetStatusProgressBar();
-            statusProgressBar.setString(String.format("检查变化中：0 文件 / %s 文件", dirSize[1]));
+            GLOBAL_STATUS_PROGRESSBAR.setString(String.format("检查变化中：0 文件 / %s 文件", dirSize[1]));
             timer = new Timer(25, e -> {
                 int completedFiles = fileCacheCalculator.completedFiles.get();
-                statusProgressBar.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
-                statusProgressBar.setString(String.format("检查变化中：%s 文件 / %s 文件", completedFiles, dirSize[1]));
+                GLOBAL_STATUS_PROGRESSBAR.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
+                GLOBAL_STATUS_PROGRESSBAR.setString(String.format("检查变化中：%s 文件 / %s 文件", completedFiles, dirSize[1]));
             });
         } else {
             logger.info("正在生成资源目录缓存...");
@@ -265,8 +265,8 @@ public class CacheUtils {
                 long completedBytes = fileListUtils.getCompletedBytes();
                 long completedFiles = fileListUtils.getCompletedFiles();
                 String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
-                statusProgressBar.setValue((int) ((double) completedBytes * 1000 / dirSize[0]));
-                statusProgressBar.setString(String.format("生成缓存中：%s / %s - %s 文件 / %s 文件",
+                GLOBAL_STATUS_PROGRESSBAR.setValue((int) ((double) completedBytes * 1000 / dirSize[0]));
+                GLOBAL_STATUS_PROGRESSBAR.setString(String.format("生成缓存中：%s / %s - %s 文件 / %s 文件",
                         completedSize,
                         totalSize,
                         completedFiles,
@@ -275,7 +275,7 @@ public class CacheUtils {
         }
         //启动轮询
         timer.start();
-        statusProgressBar.setVisible(true);
+        GLOBAL_STATUS_PROGRESSBAR.setVisible(true);
 
         return true;
     }

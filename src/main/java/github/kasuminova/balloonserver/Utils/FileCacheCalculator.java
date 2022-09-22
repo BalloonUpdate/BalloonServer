@@ -18,6 +18,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
+
 /**
  * 一个多线程计算文件缓存差异的工具类
  * @author Kasumi_Nova
@@ -26,8 +28,7 @@ public class FileCacheCalculator {
     public FileCacheCalculator(GUILogger logger) {
         this.logger = logger;
     }
-    private static final ExecutorService DIR_THREAD_POOL = Executors.newCachedThreadPool();
-    private static final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     private final GUILogger logger;
     public final AtomicInteger completedFiles = new AtomicInteger(0);
 
@@ -61,7 +62,7 @@ public class FileCacheCalculator {
                     } else {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile));
                         dirThreadList.add(dirCounterThread);
-                        DIR_THREAD_POOL.execute(dirCounterThread);
+                        GLOBAL_THREAD_POOL.execute(dirCounterThread);
                     }
                 }
             }
@@ -141,7 +142,7 @@ public class FileCacheCalculator {
 
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile));
                     dirThreadList.add(dirCounterThread);
-                    DIR_THREAD_POOL.execute(dirCounterThread);
+                    GLOBAL_THREAD_POOL.execute(dirCounterThread);
                 }
             } else {
                 removeObjectFromJsonArray(jsonArray,obj);
@@ -189,7 +190,7 @@ public class FileCacheCalculator {
      * 计算一个文件夹的 MD5 类/线程
      * 以 Callable 实现，返回对应的类型
      */
-    public static class DirCounterThread implements Callable<SimpleDirectoryObject> {
+    public class DirCounterThread implements Callable<SimpleDirectoryObject> {
         private final ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
         private final ArrayList<FutureTask<SimpleDirectoryObject>> dirThreadList = new ArrayList<>();
         private final File dir;
@@ -208,7 +209,7 @@ public class FileCacheCalculator {
                         FILE_THREAD_POOL.execute(fileCounterThread);
                     } else if (file.isDirectory()) {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file));
-                        DIR_THREAD_POOL.execute(dirCounterThread);
+                        GLOBAL_THREAD_POOL.execute(dirCounterThread);
                         dirThreadList.add(dirCounterThread);
                     }
                 }

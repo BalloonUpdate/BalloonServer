@@ -18,6 +18,8 @@ import javax.swing.*;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
+
 /**
  * @author Kasumi_Nova
  * LittleServer 所绑定的服务器
@@ -47,6 +49,7 @@ public class HttpServer {
     ChannelFuture future;
     FileMonitor fileMonitor;
     public boolean start() {
+        long start = System.currentTimeMillis();
         //载入配置
         String ip = config.getIp();
         int port = config.getPort();
@@ -65,18 +68,29 @@ public class HttpServer {
             assert addressType != null;
             if ("v6".equals(addressType)) {
                 if (httpServerInitializer.isUseSsl()) {
-                    logger.info(String.format("服务器已启动，API 地址：http://%s:%s/index.json", httpServerInitializer.jks.getName().replace(".jks",""),port));
+                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",
+                            System.currentTimeMillis() - start,
+                            httpServerInitializer.jks.getName().replace(".jks",""),
+                            port));
                     logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址，如果上方输出的域名不正确，请自行将 IP 更换为域名。");
                 } else {
-                    logger.info(String.format("服务器已启动，API 地址：https://[%s]:%s/index.json", ip,port));
+                    logger.info(String.format("服务器已启动 (%sms)，API 地址：https://[%s]:%s/index.json",
+                            System.currentTimeMillis() - start,
+                            ip,
+                            port));
                 }
-                logger.info(String.format("服务器已启动，API 地址：http://[%s]:%s/index.json", ip,port));
             } else {
                 if (httpServerInitializer.isUseSsl()) {
-                    logger.info(String.format("服务器已启动，API 地址：http://%s:%s/index.json", httpServerInitializer.jks.getName().replace(".jks",""),port));
+                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",
+                            System.currentTimeMillis() - start,
+                            httpServerInitializer.jks.getName().replace(".jks",""),
+                            port));
                     logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址。");
                 } else {
-                    logger.info(String.format("服务器已启动，API 地址：http://%s:%s/index.json", ip,port));
+                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",
+                            System.currentTimeMillis() - start,
+                            ip,
+                            port));
                 }
             }
         } catch (Exception e) {
@@ -87,12 +101,12 @@ public class HttpServer {
 
         //文件监听器
         if (config.isFileChangeListener()) {
-            long start = System.currentTimeMillis();
+            long start1 = System.currentTimeMillis();
             logger.info("正在启动实时文件监听器.");
             fileMonitor = new FileMonitor(5000);
             fileMonitor.monitor("." + config.getMainDirPath(), new FileListener(logger,isFileChanged));
 
-            new Thread(() -> {
+            GLOBAL_THREAD_POOL.execute(() -> {
                 try {
                     fileMonitor.start();
                     fileChangeListener = new Timer(2000, e -> {
@@ -103,12 +117,12 @@ public class HttpServer {
                         }
                     });
                     fileChangeListener.start();
-                    logger.info("实时文件监听器已启动." + String.format(" (%sms)", System.currentTimeMillis() - start));
+                    logger.info("实时文件监听器已启动." + String.format(" (%sms)", System.currentTimeMillis() - start1));
                 } catch (Exception e) {
                     fileMonitor = null;
                     logger.error("启动文件监听器的时候出现了一些问题...",e);
                 }
-            }).start();
+            });
         }
         return true;
     }
@@ -124,7 +138,7 @@ public class HttpServer {
         }
 
         if (fileMonitor != null) {
-            new Thread(() -> {
+            GLOBAL_THREAD_POOL.execute(() -> {
                 try {
                     fileMonitor.stop();
                     logger.info("实时文件监听器已停止.");
@@ -132,7 +146,7 @@ public class HttpServer {
                     logger.error("关闭文件监听器的时候出现了一些问题...", e);
                 }
                 fileMonitor = null;
-            }).start();
+            });
         }
 
         System.gc();

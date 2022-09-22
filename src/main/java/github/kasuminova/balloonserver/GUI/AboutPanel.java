@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.intellijthemes.FlatMaterialDesignDarkIJTheme;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatArcDarkContrastIJTheme;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme;
@@ -18,7 +19,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static github.kasuminova.balloonserver.BalloonServer.frame;
+import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 
 public class AboutPanel {
     static final int GLOBAL_BUTTON_WIDTH = 165;
@@ -108,6 +109,7 @@ public class AboutPanel {
         themes.add("Atom One Dark");
         themes.add("Atom One Dark Contrast");
         themes.add("Arc Dark Contrast");
+        themes.add("Material Design Dark");
 
         JPanel themeListPanel = new JPanel();
         themeListPanel.setBorder(new TitledBorder("选择界面主题"));
@@ -126,8 +128,9 @@ public class AboutPanel {
                     case "Atom One Dark" -> UIManager.setLookAndFeel(new FlatAtomOneDarkIJTheme());
                     case "Atom One Dark Contrast" -> UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
                     case "Arc Dark Contrast" -> UIManager.setLookAndFeel(new FlatArcDarkContrastIJTheme());
+                    case "Material Design Dark" -> UIManager.setLookAndFeel(new FlatMaterialDesignDarkIJTheme());
                 }
-                SwingUtilities.updateComponentTreeUI(frame);
+                SwingUtilities.updateComponentTreeUI(MAIN_FRAME);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }

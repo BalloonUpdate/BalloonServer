@@ -19,8 +19,7 @@ import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 
 import javax.swing.*;
 
-import static github.kasuminova.balloonserver.BalloonServer.resetStatusProgressBar;
-import static github.kasuminova.balloonserver.BalloonServer.statusProgressBar;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 
 /**
  * 计算资源缓存的公用类
@@ -28,8 +27,7 @@ import static github.kasuminova.balloonserver.BalloonServer.statusProgressBar;
 public class NextFileListUtils {
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
-    private final ExecutorService dirThreadPool = Executors.newCachedThreadPool();
-    private final ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
     public long getCompletedBytes() {
         return completedBytes.get();
@@ -67,11 +65,11 @@ public class NextFileListUtils {
             if (file.isFile()) {
                 FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(new FileCounterTask(file));
                 fileCounterTaskList.add(fileCounterTask);
-                fileThreadPool.execute(fileCounterTask);
+                FILE_THREAD_POOL.execute(fileCounterTask);
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirCounterTask(file));
                 direCounterTaskList.add(dirCounterTask);
-                dirThreadPool.execute(dirCounterTask);
+                GLOBAL_THREAD_POOL.execute(dirCounterTask);
             }
         }
 
@@ -88,11 +86,10 @@ public class NextFileListUtils {
         }
 
         //回收线程池
-        new Thread(() -> {
-            dirThreadPool.shutdown();
-            fileThreadPool.shutdown();
+        GLOBAL_THREAD_POOL.execute(() -> {
+            FILE_THREAD_POOL.shutdown();
             logger.info("已回收所有闲置线程.");
-        }).start();
+        });
 
         return abstractSimpleFileObjectList;
     }
@@ -117,11 +114,11 @@ public class NextFileListUtils {
                 if (file.isFile()) {
                     FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(new FileCounterTask(file));
                     fileCounterTaskList.add(fileCounterTask);
-                    fileThreadPool.execute(fileCounterTask);
+                    FILE_THREAD_POOL.execute(fileCounterTask);
                 } else {
                     FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirCounterTask(file));
                     direCounterTaskList.add(dirCounterTask);
-                    dirThreadPool.execute(dirCounterTask);
+                    GLOBAL_THREAD_POOL.execute(dirCounterTask);
                 }
             }
 
@@ -240,14 +237,14 @@ public class NextFileListUtils {
         private long[] getFiles(File dir) {
             resetStatusProgressBar();
 
-            statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");
-            Timer timer = new Timer(250, e -> statusProgressBar.setString(
+            GLOBAL_STATUS_PROGRESSBAR.setString("扫描文件夹内容... (0 Byte, 0 文件)");
+            Timer timer = new Timer(250, e -> GLOBAL_STATUS_PROGRESSBAR.setString(
                     String.format("扫描文件夹内容... (%s, %s 文件)",
                             FileUtil.formatFileSizeToStr(totalSize.get()),
                             totalFiles.get())));
 
-            statusProgressBar.setVisible(true);
-            statusProgressBar.setIndeterminate(true);
+            GLOBAL_STATUS_PROGRESSBAR.setVisible(true);
+            GLOBAL_STATUS_PROGRESSBAR.setIndeterminate(true);
             timer.start();
 
             try {

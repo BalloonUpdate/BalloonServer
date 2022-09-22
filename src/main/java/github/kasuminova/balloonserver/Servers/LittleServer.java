@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
@@ -36,7 +34,6 @@ public class LittleServer {
     private LittleServerConfig config;
     private HttpServer server;
     private String resJson;
-    private static final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
     private final List<String> commonModeList = new ArrayList<>();
     private final List<String> onceModeList = new ArrayList<>();
     //服务器启动状态
@@ -64,7 +61,7 @@ public class LittleServer {
         long start = System.currentTimeMillis();
         //设置 Logger，主体为 logPanel
         JPanel logPanel = new JPanel(new BorderLayout());
-        logPanel.setBorder(BorderFactory.createTitledBorder("程序日志"));
+        logPanel.setBorder(new TitledBorder("程序日志"));
         JTextPane logPane = new JTextPane();
         logPane.setEditable(false);
         JScrollPane logScrollPane = new JScrollPane(logPane);
@@ -75,8 +72,8 @@ public class LittleServer {
 
         //控制面板
         JPanel controlPanel = new JPanel(new BorderLayout());
-        controlPanel.setBorder(BorderFactory.createTitledBorder("控制面板"));
-        controlPanel.setPreferredSize(new Dimension((int) (frame.getWidth() * 0.27), frame.getHeight()));
+        controlPanel.setBorder(new TitledBorder("控制面板"));
+        controlPanel.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.27), MAIN_FRAME.getHeight()));
 
         //配置窗口
         JPanel configPanel = new JPanel(new VFlowLayout());
@@ -101,9 +98,9 @@ public class LittleServer {
         Box mainDirBox = Box.createHorizontalBox();
         JLabel mainDirLabel = new JLabel("资源文件夹：");
         JTextField mainDirTextField = new JTextField("/res");
-        mainDirTextField.setToolTipText(
-                "仅支持程序当前目录下的文件夹或子文件夹，请勿输入其他文件夹。\n" +
-                        "默认为 /res , 也可输入其他文件夹, 如 /resource、/content/res 等.");
+        mainDirTextField.setToolTipText("""
+                        仅支持程序当前目录下的文件夹或子文件夹，请勿输入其他文件夹。
+                        默认为 /res , 也可输入其他文件夹, 如 /resources、/content、/.minecraft 等.""");
         mainDirBox.add(mainDirLabel);
         mainDirBox.add(mainDirTextField);
         configPanel.add(mainDirBox);
@@ -158,7 +155,7 @@ public class LittleServer {
          */
         //普通更新模式
         JPanel commonModePanel = new JPanel(new VFlowLayout());
-        commonModePanel.setBorder(BorderFactory.createTitledBorder("普通更新模式"));
+        commonModePanel.setBorder(new TitledBorder("普通更新模式"));
         JList<String> commonMode = new JList<>();
         commonMode.setVisibleRowCount(6);
         JScrollPane common_ModeScrollPane = new JScrollPane(
@@ -178,11 +175,11 @@ public class LittleServer {
         commonModeMenu.addSeparator();
         //添加更新规则
         JMenuItem addNewCommonRule = new JMenuItem("添加更新规则");
-        addNewCommonRule.addActionListener(new AddUpdateRule(commonMode,commonModeList,frame));
+        addNewCommonRule.addActionListener(new AddUpdateRule(commonMode,commonModeList, MAIN_FRAME));
         commonModeMenu.add(addNewCommonRule);
         JMenuItem deleteCommonRule = new JMenuItem("删除选定的规则");
         //删除指定规则
-        deleteCommonRule.addActionListener(new DeleteUpdateRule(commonMode,commonModeList,frame));
+        deleteCommonRule.addActionListener(new DeleteUpdateRule(commonMode,commonModeList, MAIN_FRAME));
         commonModeMenu.add(deleteCommonRule);
         //鼠标监听
         commonMode.addMouseListener(new MouseAdapter() {
@@ -196,7 +193,7 @@ public class LittleServer {
 
         //补全更新模式
         JPanel onceModePanel = new JPanel(new VFlowLayout());
-        onceModePanel.setBorder(BorderFactory.createTitledBorder("补全更新模式"));
+        onceModePanel.setBorder(new TitledBorder("补全更新模式"));
         JList<String> onceMode = new JList<>();
         onceMode.setVisibleRowCount(6);
         JScrollPane once_ModeScrollPane = new JScrollPane(
@@ -215,11 +212,11 @@ public class LittleServer {
         onceModeMenu.addSeparator();
         //添加更新规则
         JMenuItem addNewOnceRule = new JMenuItem("添加更新规则");
-        addNewOnceRule.addActionListener(new AddUpdateRule(onceMode,onceModeList,frame));
+        addNewOnceRule.addActionListener(new AddUpdateRule(onceMode,onceModeList, MAIN_FRAME));
         onceModeMenu.add(addNewOnceRule);
         JMenuItem deleteOnceRule = new JMenuItem("删除选定的规则");
         //删除指定规则
-        deleteOnceRule.addActionListener(new DeleteUpdateRule(onceMode,onceModeList,frame));
+        deleteOnceRule.addActionListener(new DeleteUpdateRule(onceMode,onceModeList, MAIN_FRAME));
         //鼠标监听
         onceMode.addMouseListener(new MouseAdapter() {
             @Override
@@ -278,7 +275,7 @@ public class LittleServer {
         southControlPanel.add(regenDirectoryStructureCache);
         regenDirectoryStructureCache.addActionListener(e -> {
             if (isGenerating.get()) {
-                JOptionPane.showMessageDialog(frame,
+                JOptionPane.showMessageDialog(MAIN_FRAME,
                         "当前正在生成资源缓存，请稍后再试。","注意",
                         JOptionPane.WARNING_MESSAGE);
                 return;
@@ -303,7 +300,7 @@ public class LittleServer {
         //启动服务器
         startOrStop.addActionListener(e -> {
             if (isGenerating.get()) {
-                JOptionPane.showMessageDialog(frame,
+                JOptionPane.showMessageDialog(MAIN_FRAME,
                         "当前正在生成资源缓存，请稍后再试。","注意",
                         JOptionPane.WARNING_MESSAGE);
                 return;
@@ -355,7 +352,7 @@ public class LittleServer {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         requestListScrollPane.getVerticalScrollBar().setUnitIncrement(50);
         requestListScrollPane.setBorder(new TitledBorder("上传列表"));
-        requestListScrollPane.setPreferredSize(new Dimension((int) (frame.getWidth() * 0.19), frame.getHeight()));
+        requestListScrollPane.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.19), MAIN_FRAME.getHeight()));
 
         //组装控制面板
         controlPanel.add(configPanel);
@@ -434,11 +431,11 @@ public class LittleServer {
         }
         private void showRuleEditorDialog(JSONArray jsonArray) {
             //锁定窗口，防止用户误操作
-            frame.setEnabled(false);
+            MAIN_FRAME.setEnabled(false);
             RuleEditor editorDialog = new RuleEditor(jsonArray, config.getMainDirPath().replace("/",""));
             editorDialog.setModal(true);
 
-            frame.setEnabled(true);
+            MAIN_FRAME.setEnabled(true);
             editorDialog.setVisible(true);
 
             if (!editorDialog.getResult().isEmpty()) {
@@ -450,13 +447,13 @@ public class LittleServer {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (isGenerating.get()) {
-                JOptionPane.showMessageDialog(frame,
+                JOptionPane.showMessageDialog(MAIN_FRAME,
                         "当前正在生成资源缓存，请稍后再试。","注意",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
             if (new File("./res-cache.json").exists()) {
-                int selection = JOptionPane.showConfirmDialog(frame,
+                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
                         "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
                         "已检测到本地 JSON 缓存", JOptionPane.YES_NO_OPTION);
                 if (selection == JOptionPane.YES_OPTION) {
@@ -465,13 +462,13 @@ public class LittleServer {
                         showRuleEditorDialog(JSONArray.parseArray(json));
 
                     } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(frame,
+                        JOptionPane.showMessageDialog(MAIN_FRAME,
                                 "无法读取本地 JSON 缓存" + ex,"错误",
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 }
             } else {
-                int selection = JOptionPane.showConfirmDialog(frame,
+                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
                         "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
                         "未检测到 JSON 缓存", JOptionPane.YES_NO_OPTION);
                 if (selection == JOptionPane.YES_OPTION) {
@@ -483,7 +480,7 @@ public class LittleServer {
                                 showRuleEditorDialog(JSONArray.parseArray(json));
 
                             } catch (IOException ex) {
-                                JOptionPane.showMessageDialog(frame,
+                                JOptionPane.showMessageDialog(MAIN_FRAME,
                                         "无法读取本地 JSON 缓存" + ex, "错误",
                                         JOptionPane.ERROR_MESSAGE);
                             }
@@ -582,44 +579,7 @@ public class LittleServer {
             JList<String> commonMode,
             JList<String> onceMode,
             JCheckBox fileChangeListener) {
-        if (new File(configFilePath).exists()) {
-            try {
-                config = ConfigurationManager.loadLittleServerConfigFromFile(configFilePath);
-                //IP
-                IPTextField.setText(config.getIp());
-                //端口
-                portSpinner.setValue(config.getPort());
-                //资源文件夹
-                mainDirTextField.setText(config.getMainDirPath());
-                //实时文件监听器
-                fileChangeListener.setSelected(config.isFileChangeListener());
-                //Jks 证书
-                if (!config.getJksFilePath().isEmpty()) {
-                    File JksSsl = new File(config.getJksFilePath());
-                    if (JksSsl.exists()) {
-                        JksSslTextField.setText(JksSsl.getName());
-                    } else {
-                        logger.warn("JKS 证书文件不存在.");
-                    }
-                }
-                //Jks 证书密码
-                JksSslPassField.setText(config.getJksSslPassword());
-                //普通模式
-                commonModeList.clear();
-                commonModeList.addAll(Arrays.asList(config.getCommonMode()));
-                commonMode.setListData(config.getCommonMode());
-                //补全模式
-                onceModeList.clear();
-                onceModeList.addAll(Arrays.asList(config.getOnceMode()));
-                onceMode.setListData(config.getOnceMode());
-
-                logger.info("已载入配置文件.");
-            } catch (Exception e) {
-                logger.error("加载配置文件的时候出现了问题...", e);
-                config = new LittleServerConfig();
-                logger.info("目前正在使用程序默认配置.");
-            }
-        } else {
+        if (!new File(configFilePath).exists()) {
             try {
                 logger.warn("未找到配置文件，正在尝试在程序当前目录生成配置文件...");
                 ConfigurationManager.saveConfigurationToFile(new LittleServerConfig(), "./", "littleserver");
@@ -630,6 +590,43 @@ public class LittleServer {
                 config = new LittleServerConfig();
                 logger.info("目前正在使用程序默认配置.");
             }
+            return;
+        }
+        try {
+            config = ConfigurationManager.loadLittleServerConfigFromFile(configFilePath);
+            //IP
+            IPTextField.setText(config.getIp());
+            //端口
+            portSpinner.setValue(config.getPort());
+            //资源文件夹
+            mainDirTextField.setText(config.getMainDirPath());
+            //实时文件监听器
+            fileChangeListener.setSelected(config.isFileChangeListener());
+            //Jks 证书
+            if (!config.getJksFilePath().isEmpty()) {
+                File JksSsl = new File(config.getJksFilePath());
+                if (JksSsl.exists()) {
+                    JksSslTextField.setText(JksSsl.getName());
+                } else {
+                    logger.warn("JKS 证书文件不存在.");
+                }
+            }
+            //Jks 证书密码
+            JksSslPassField.setText(config.getJksSslPassword());
+            //普通模式
+            commonModeList.clear();
+            commonModeList.addAll(Arrays.asList(config.getCommonMode()));
+            commonMode.setListData(config.getCommonMode());
+            //补全模式
+            onceModeList.clear();
+            onceModeList.addAll(Arrays.asList(config.getOnceMode()));
+            onceMode.setListData(config.getOnceMode());
+
+            logger.info("已载入配置文件.");
+        } catch (Exception e) {
+            logger.error("加载配置文件的时候出现了问题...", e);
+            config = new LittleServerConfig();
+            logger.info("目前正在使用程序默认配置.");
         }
     }
 
