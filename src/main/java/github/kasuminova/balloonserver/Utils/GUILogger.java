@@ -44,7 +44,7 @@ public class GUILogger {
         loggerThreadPool.execute(new Thread(() -> {
             logger.info(msg);
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(30,144,255));//设置颜色
+            StyleConstants.setForeground(attrSet, new Color(30,170,255));//设置颜色
 
             try {
                 document.insertString(document.getLength(), buildNormalLogMessage("INFO", msg, name), attrSet);
@@ -59,7 +59,7 @@ public class GUILogger {
         loggerThreadPool.execute(new Thread(() -> {
             logger.info(msg);
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(160,32,240));//设置颜色
+            StyleConstants.setForeground(attrSet, new Color(180,70,255));//设置颜色
 
             try {
                 document.insertString(document.getLength(), buildNormalLogMessage("DEBUG", msg, name), attrSet);
@@ -89,7 +89,7 @@ public class GUILogger {
         loggerThreadPool.execute(new Thread(() -> {
             logger.warning(msg);
             Document document = logPane.getDocument();
-            StyleConstants.setForeground(attrSet, new Color(255,64,64));//设置颜色
+            StyleConstants.setForeground(attrSet, new Color(255,75,75));//设置颜色
 
             try {
                 document.insertString(document.getLength(), buildNormalLogMessage("ERROR", msg, name), attrSet);

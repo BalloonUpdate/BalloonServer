@@ -157,8 +157,8 @@ public class LittleServer {
           普通更新模式和补全更新模式的 List 变动是实时监听的，无需重载配置文件。
          */
         //普通更新模式
-        JPanel common_ModePanel = new JPanel(new VFlowLayout());
-        common_ModePanel.setBorder(BorderFactory.createTitledBorder("普通更新模式"));
+        JPanel commonModePanel = new JPanel(new VFlowLayout());
+        commonModePanel.setBorder(BorderFactory.createTitledBorder("普通更新模式"));
         JList<String> commonMode = new JList<>();
         commonMode.setVisibleRowCount(6);
         JScrollPane common_ModeScrollPane = new JScrollPane(
@@ -166,8 +166,8 @@ public class LittleServer {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-        common_ModePanel.add(common_ModeScrollPane);
-        configPanel.add(common_ModePanel);
+        commonModePanel.add(common_ModeScrollPane);
+        configPanel.add(commonModePanel);
 
         //菜单
         JPopupMenu commonModeMenu = new JPopupMenu();
@@ -175,13 +175,14 @@ public class LittleServer {
         //普通更新规则编辑器
         openCommonModeRuleEditor.addActionListener(new RuleEditorActionListener(commonMode, commonModeList));
         commonModeMenu.add(openCommonModeRuleEditor);
+        commonModeMenu.addSeparator();
         //添加更新规则
         JMenuItem addNewCommonRule = new JMenuItem("添加更新规则");
-        addNewCommonRule.addActionListener(new AddUpdateRule(commonMode,commonModeList));
+        addNewCommonRule.addActionListener(new AddUpdateRule(commonMode,commonModeList,frame));
         commonModeMenu.add(addNewCommonRule);
         JMenuItem deleteCommonRule = new JMenuItem("删除选定的规则");
         //删除指定规则
-        deleteCommonRule.addActionListener(new DeleteUpdateRule(commonMode,commonModeList));
+        deleteCommonRule.addActionListener(new DeleteUpdateRule(commonMode,commonModeList,frame));
         commonModeMenu.add(deleteCommonRule);
         //鼠标监听
         commonMode.addMouseListener(new MouseAdapter() {
@@ -194,8 +195,8 @@ public class LittleServer {
         });
 
         //补全更新模式
-        JPanel once_ModePanel = new JPanel(new VFlowLayout());
-        once_ModePanel.setBorder(BorderFactory.createTitledBorder("补全更新模式"));
+        JPanel onceModePanel = new JPanel(new VFlowLayout());
+        onceModePanel.setBorder(BorderFactory.createTitledBorder("补全更新模式"));
         JList<String> onceMode = new JList<>();
         onceMode.setVisibleRowCount(6);
         JScrollPane once_ModeScrollPane = new JScrollPane(
@@ -203,7 +204,7 @@ public class LittleServer {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-        once_ModePanel.add(once_ModeScrollPane);
+        onceModePanel.add(once_ModeScrollPane);
 
         //菜单
         JPopupMenu onceModeMenu = new JPopupMenu();
@@ -211,13 +212,14 @@ public class LittleServer {
         //补全更新规则编辑器
         openOnceModeRuleEditor.addActionListener(new RuleEditorActionListener(onceMode, onceModeList));
         onceModeMenu.add(openOnceModeRuleEditor);
+        onceModeMenu.addSeparator();
         //添加更新规则
         JMenuItem addNewOnceRule = new JMenuItem("添加更新规则");
-        addNewOnceRule.addActionListener(new AddUpdateRule(onceMode,onceModeList));
+        addNewOnceRule.addActionListener(new AddUpdateRule(onceMode,onceModeList,frame));
         onceModeMenu.add(addNewOnceRule);
         JMenuItem deleteOnceRule = new JMenuItem("删除选定的规则");
         //删除指定规则
-        deleteOnceRule.addActionListener(new DeleteUpdateRule(onceMode,onceModeList));
+        deleteOnceRule.addActionListener(new DeleteUpdateRule(onceMode,onceModeList,frame));
         //鼠标监听
         onceMode.addMouseListener(new MouseAdapter() {
             @Override
@@ -228,7 +230,7 @@ public class LittleServer {
             }
         });
         onceModeMenu.add(deleteOnceRule);
-        configPanel.add(once_ModePanel);
+        configPanel.add(onceModePanel);
 
         //载入配置文件并初始化 HTTP 服务端
         loadConfigurationFromFile(
@@ -370,24 +372,26 @@ public class LittleServer {
 
         logger.debug(String.format("载入服务器耗时 %sms.", System.currentTimeMillis() - start));
     }
-    private static class AddUpdateRule implements ActionListener {
-        JList<String> modeList;
-        List<String> rules;
+    public static class AddUpdateRule implements ActionListener {
+        private final JList<String> modeList;
+        private final List<String> rules;
+        private final Container container;
 
-        public AddUpdateRule(JList<String> modeList, List<String> rules) {
+        public AddUpdateRule(JList<String> modeList, List<String> rules, Container container) {
             this.modeList = modeList;
             this.rules = rules;
+            this.container = container;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            String newRule = JOptionPane.showInputDialog(frame,
+            String newRule = JOptionPane.showInputDialog(container,
                     "请输入更新规则：", "提示",
                     JOptionPane.INFORMATION_MESSAGE);
             if (newRule != null && !newRule.isEmpty()) {
                 //防止插入相同内容
                 if (rules.contains(newRule)) {
-                    JOptionPane.showMessageDialog(frame,
+                    JOptionPane.showMessageDialog(container,
                             "重复的更新规则","错误",
                             JOptionPane.ERROR_MESSAGE);
                 } else {
@@ -397,12 +401,14 @@ public class LittleServer {
             }
         }
     }
-    private static class DeleteUpdateRule implements ActionListener {
-        JList<String> modeList;
-        List<String> rules;
-        public DeleteUpdateRule(JList<String> modeList, List<String> rules) {
+    public static class DeleteUpdateRule implements ActionListener {
+        private final JList<String> modeList;
+        private final List<String> rules;
+        private final Container container;
+        public DeleteUpdateRule(JList<String> modeList, List<String> rules, Container container) {
             this.modeList = modeList;
             this.rules = rules;
+            this.container = container;
         }
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -412,7 +418,7 @@ public class LittleServer {
                 rules.removeAll(selected);
                 modeList.setListData(rules.toArray(new String[0]));
             } else {
-                JOptionPane.showMessageDialog(frame,
+                JOptionPane.showMessageDialog(container,
                         "请选择一个规则后再删除.", "错误",
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -421,8 +427,8 @@ public class LittleServer {
 
     //更新规则编辑器类
     private class RuleEditorActionListener implements ActionListener {
-        JList<String> ruleList;
-        List<String> rules;
+        private final JList<String> ruleList;
+        private final List<String> rules;
         public RuleEditorActionListener(JList<String> ruleList, List<String> rules) {
             this.ruleList = ruleList;
             this.rules = rules;

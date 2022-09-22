@@ -30,7 +30,6 @@ public class HttpServer {
     private final LittleServerConfig config;
     private final AtomicBoolean isStarted;
     private final LittleServerInterface serverInterface;
-
     /**
      * 新建一个 HTTP 服务器实例
      * @param serverInterface 服务器实例接口
@@ -55,18 +54,30 @@ public class HttpServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
         boss = new NioEventLoopGroup();
         work = new NioEventLoopGroup();
+        HttpServerInitializer httpServerInitializer = new HttpServerInitializer(serverInterface);
         bootstrap.group(boss, work)
                 .handler(new LoggingHandler(LogLevel.INFO))
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new HttpServerInitializer(serverInterface));
+                .childHandler(httpServerInitializer);
         try {
             future = bootstrap.bind(new InetSocketAddress(ip, port)).sync();
             String addressType = IPAddressUtil.checkAddress(ip);
             assert addressType != null;
             if ("v6".equals(addressType)) {
-                logger.info("服务器已启动，API 地址：http://[" + ip + "]:" + port + "/index.json");
+                if (httpServerInitializer.isUseSsl()) {
+                    logger.info(String.format("服务器已启动，API 地址：http://%s:%s/index.json", httpServerInitializer.jks.getName().replace(".jks",""),port));
+                    logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址。");
+                } else {
+                    logger.info(String.format("服务器已启动，API 地址：https://[%s]:%s/index.json", ip,port));
+                }
+                logger.info(String.format("服务器已启动，API 地址：http://[%s]:%s/index.json", ip,port));
             } else {
-                logger.info("服务器已启动，API 地址：http://" + ip + ":" + port + "/index.json");
+                if (httpServerInitializer.isUseSsl()) {
+                    logger.info(String.format("服务器已启动，API 地址：http://%s:%s/index.json", httpServerInitializer.jks.getName().replace(".jks",""),port));
+                    logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址。");
+                } else {
+                    logger.info(String.format("服务器已启动，API 地址：http://%s:%s/index.json", ip,port));
+                }
             }
         } catch (Exception e) {
             isStarted.set(false);

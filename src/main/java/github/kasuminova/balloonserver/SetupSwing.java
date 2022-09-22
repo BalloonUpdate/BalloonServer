@@ -28,13 +28,6 @@ public class SetupSwing {
             e.printStackTrace();
         }
 
-        //更新 UI
-        try {
-            UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
-        } catch( Exception ex ) {
-            System.err.println("Failed to initialize LaF");
-        }
-
         //设置圆角弧度
         UIManager.put("Button.arc", 7);
         UIManager.put("Component.arc", 7);
@@ -53,6 +46,13 @@ public class SetupSwing {
 
         //选项卡分隔线/背景
         UIManager.put("TabbedPane.showTabSeparators", true);
+
+        //更新 UI
+        try {
+            UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
+        } catch( Exception ex ) {
+            System.err.println("Failed to initialize LaF");
+        }
     }
 
     /**

@@ -109,11 +109,13 @@ public class AboutPanel {
         themes.add("Atom One Dark Contrast");
         themes.add("Arc Dark Contrast");
 
+        JPanel themeListPanel = new JPanel();
+        themeListPanel.setBorder(new TitledBorder("选择界面主题"));
+
         JList<String> themeList = new JList<>();
         themeList.setListData(themes.toArray(new String[0]));
         themeList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         themeList.setSelectedIndex(5);
-        themeList.setBorder(new TitledBorder("选择界面主题"));
         themeList.addListSelectionListener(e -> {
             try {
                 switch (themeList.getSelectedValue()) {
@@ -130,12 +132,13 @@ public class AboutPanel {
                 ex.printStackTrace();
             }
         });
+        themeListPanel.add(themeList);
 
         descBox.add(titleBox);
         descBox.add(descPanel);
         aboutPanel.add(descBox);
         aboutPanel.add(licenseLabel, BorderLayout.SOUTH);
-        aboutPanel.add(themeList, BorderLayout.WEST);
+        aboutPanel.add(themeListPanel, BorderLayout.WEST);
         return aboutPanel;
     }
 }

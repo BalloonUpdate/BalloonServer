@@ -141,7 +141,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             public void operationComplete(ChannelProgressiveFuture channelProgressiveFuture) {
                 timer.stop();
                 //移除进度条的容器面板
-                requestListPanel.remove(progressBar.getParent());
+                requestListPanel.remove(progressBar.getParent().getParent());
                 requestListPanel.updateUI();
                 printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI);
             }

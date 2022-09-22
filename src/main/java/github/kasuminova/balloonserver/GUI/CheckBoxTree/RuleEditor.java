@@ -4,17 +4,25 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
+import github.kasuminova.balloonserver.Servers.LittleServer;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 可视化更新规则编辑器
+ */
 public class RuleEditor extends JDialog {
-    public static final String VERSION = "1.0-STABLE";
+    public static final String VERSION = "1.1-STABLE";
 
     List<String> result = new ArrayList<>();
+    ArrayList<String> rules = new ArrayList<>();
 
     public List<String> getResult() {
         return result;
@@ -23,16 +31,19 @@ public class RuleEditor extends JDialog {
     public RuleEditor(JSONArray jsonArray, String resDirPath) {
         setTitle("RuleEditor " + VERSION);
         setIconImage(BalloonServer.ICON.getImage());
-        JPanel contentPanel = new JPanel(new VFlowLayout(VFlowLayout.TOP, VFlowLayout.MIDDLE, 5, 5, 5, 5, true, true));
-
-        getContentPane().add(contentPanel);
-        setSize(750,605);
+        setSize(750,830);
         setResizable(false);
         setLocationRelativeTo(null);
 
-        contentPanel.add(new JLabel("更新规则编辑器是为不熟悉正则表达式的小白用户准备的，能够兼容大部分情况下的应用场景。"));
-        contentPanel.add(new JLabel("如果您对正则表达式稍有理解，请使用“添加更新规则”。"));
+        JPanel contentPane = (JPanel) getContentPane();
+        contentPane.setLayout(new VFlowLayout());
 
+        contentPane.add(new JLabel("更新规则编辑器是为不熟悉正则表达式的小白用户准备的，能够兼容大部分情况下的应用场景。"));
+        contentPane.add(new JLabel("如果您对正则表达式稍有理解，请使用“添加更新规则”。"));
+        contentPane.add(new JLabel("下方为资源文件夹结构列表，如打勾即为添加至规则，未打勾即忽略。"));
+
+        JPanel treePanel = new JPanel(new VFlowLayout(VFlowLayout.TOP, VFlowLayout.MIDDLE, 5, 5, 5, 5, true, false));
+        treePanel.setBorder(new TitledBorder("资源文件夹结构表"));
         JTree tree = new JTree();
         CheckBoxTreeNode rootNode = new CheckBoxTreeNode(resDirPath);
 
@@ -46,23 +57,57 @@ public class RuleEditor extends JDialog {
         tree.addMouseListener(new CheckBoxTreeNodeSelectionListener());
         tree.setModel(model);
         tree.setCellRenderer(new CheckBoxTreeCellRenderer());
-        JScrollPane scroll = new JScrollPane(tree);
+        JScrollPane treeScroll = new JScrollPane(tree);
+        treePanel.add(treeScroll);
+        contentPane.add(treePanel);
 
-        contentPanel.add(scroll);
+        contentPane.add(new JLabel("下方为额外更新规则列表，这些内容会与上方规则一同加入服务器规则列表中。"));
+        JPanel ruleListPanel = new JPanel(new VFlowLayout());
+        ruleListPanel.setBorder(new TitledBorder("额外更新规则"));
+        JList<String> ruleList = new JList<>();
+        ruleList.setVisibleRowCount(6);
+        JPopupMenu ruleListMenu = new JPopupMenu();
+        //添加更新规则
+        JMenuItem addRule = new JMenuItem("添加更新规则");
+        addRule.addActionListener(new LittleServer.AddUpdateRule(ruleList,rules,contentPane));
+        ruleListMenu.add(addRule);
+        //删除更新规则
+        JMenuItem removeRule = new JMenuItem("删除选定的规则");
+        removeRule.addActionListener(new LittleServer.DeleteUpdateRule(ruleList,rules,contentPane));
+        ruleListMenu.add(removeRule);
+        //鼠标监听
+        ruleList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger()){
+                    ruleListMenu.show(ruleList,e.getX(),e.getY());
+                }
+            }
+        });
+
+        JScrollPane ruleListScrollPane = new JScrollPane(
+                ruleList,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        ruleListPanel.add(ruleListScrollPane);
+
+        contentPane.add(ruleListPanel);
+
         JButton complete = new JButton("完成");
         complete.addActionListener(e -> {
-            ArrayList<String> rules = getSelectedFiles(rootNode);
+            rules.addAll(getSelectedFiles(rootNode));
 
             for (String rule : rules) {
                 result.add(rule.replace(resDirPath + "/", ""));
             }
             dispose();
         });
-        contentPanel.add(complete);
+        contentPane.add(complete);
 
         JButton cancel = new JButton("取消");
         cancel.addActionListener(e -> dispose());
-        contentPanel.add(cancel);
+        contentPane.add(cancel);
     }
 
     /**

@@ -26,12 +26,12 @@ public class BalloonServer {
         SetupSwing.init();
     }
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(BalloonServer.class.getResource("/image/icon_128x128.jpg")));
-    public static final String VERSION = "1.1.0-BETA";
+    public static final String VERSION = "1.1.1-BETA";
     //主窗口
     public static final JFrame frame = new JFrame("BalloonServer " + VERSION);
     //主窗口 Logger
     public static final Logger logger = Logger.getLogger("MAIN");
-    public static JProgressBar statusProgressBar = new JProgressBar(0,1000);
+    public static final JProgressBar statusProgressBar = new JProgressBar(0,1000);
     private static final JFrame premainFrame = new JFrame("加载中");
     private static final JPanel statusPanel = new JPanel(new BorderLayout());
     private static final JProgressBar preLoadProgressBar = new JProgressBar();
@@ -80,7 +80,7 @@ public class BalloonServer {
                 long memoryUsed = memoryMXBean.getHeapMemoryUsage().getUsed();
                 long memoryTotal = memoryMXBean.getHeapMemoryUsage().getInit();
 
-                threadCount.setText("当前运行的线程数量：" + Thread.activeCount());
+                threadCount.setText(String.format("当前运行的线程数量：%s", Thread.activeCount()));
 
                 memBar.setValue((int) ((double) memoryUsed * 200 / memoryTotal));
                 memBar.setString(memoryUsed/(1024 * 1024) + " M / " + memoryTotal/(1024 * 1024) + " M");
@@ -127,10 +127,10 @@ public class BalloonServer {
         logger.info("Java 版本为 " + version);
         if (version < 17) {
             int selection = JOptionPane.showConfirmDialog(premainFrame,
-                            "检测到当前 Java 运行库版本为 JAVA " +
-                                    version +
-                                    " 程序要求的运行库版本应为 JAVA 17 及以上, 您要强制使用不兼容的版本启动程序吗?\n" +
-                                    "选择 “是” 启用不安全模式, 选择 “否” 退出程序",
+                            String.format("""
+                                    检测到当前 Java 运行库版本为 JAVA %s
+                                    程序要求的运行库版本应为 JAVA 17 及以上, 您要强制使用不兼容的版本启动程序吗?
+                                    选择 “是” 启用不安全模式, 选择 “否” 退出程序""", version),
                             "不受支持的 JAVA 版本",
                             JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE);
@@ -143,15 +143,17 @@ public class BalloonServer {
     }
 
     /**
-     * 向主窗口添加一个状态栏进度条, 并删除原先存在的进度条
-     * @return 进度条
+     * 重置主窗口状态栏进度条
      */
-    public static JProgressBar resetStatusProgressBar() {
+    public static void resetStatusProgressBar() {
         statusProgressBar.setVisible(false);
         statusProgressBar.setIndeterminate(false);
         statusProgressBar.setValue(0);
-        return statusProgressBar;
     }
+
+    /**
+     * 主程序
+     */
     public static void main(String[] args) {
         preInit();
         init();

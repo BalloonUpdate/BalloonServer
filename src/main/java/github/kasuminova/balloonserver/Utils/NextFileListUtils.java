@@ -13,12 +13,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.CRC32;
 
-import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 
 import javax.swing.*;
+
+import static github.kasuminova.balloonserver.BalloonServer.resetStatusProgressBar;
+import static github.kasuminova.balloonserver.BalloonServer.statusProgressBar;
 
 /**
  * 计算资源缓存的公用类
@@ -235,15 +237,13 @@ public class NextFileListUtils {
         private long[] getFiles(File dir) {
             Thread thread = new Thread(new DirCalculatorThread(dir));
             thread.start();
-            JProgressBar statusProgressBar = BalloonServer.resetStatusProgressBar();
+            resetStatusProgressBar();
 
             statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");
-            Timer timer = new Timer(250, e -> {
-                statusProgressBar.setString(
-                        String.format("扫描文件夹内容... (%s, %s 文件)",
-                                FileUtil.formatFileSizeToStr(totalSize.get()),
-                                totalFiles.get()));
-            });
+            Timer timer = new Timer(250, e -> statusProgressBar.setString(
+                    String.format("扫描文件夹内容... (%s, %s 文件)",
+                            FileUtil.formatFileSizeToStr(totalSize.get()),
+                            totalFiles.get())));
 
             statusProgressBar.setVisible(true);
             statusProgressBar.setIndeterminate(true);

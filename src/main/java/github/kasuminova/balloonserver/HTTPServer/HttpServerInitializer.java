@@ -24,6 +24,10 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
     char[] jksPasswd;
     private final boolean useSsl;
     private final GUILogger logger;
+    public boolean isUseSsl() {
+        return useSsl;
+    }
+
     private final LittleServerInterface serverInterface;
     public HttpServerInitializer(LittleServerInterface serverInterface) {
         this.serverInterface = serverInterface;

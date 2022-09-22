@@ -10,8 +10,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static github.kasuminova.balloonserver.BalloonServer.resetStatusProgressBar;
@@ -21,7 +19,6 @@ import static github.kasuminova.balloonserver.BalloonServer.statusProgressBar;
  * 从 LittleServer 的 cacheUtils 的内部类独立出来的一个工具，用于计算文件缓存并输出 JSON
  */
 public class CacheUtils {
-    private final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
     private final HttpServerInterface httpServerInterface;
     private final LittleServerInterface serverInterface;
     public CacheUtils(LittleServerInterface serverInterface, HttpServerInterface httpServerInterface, JButton startOrStop) {
@@ -71,8 +68,6 @@ public class CacheUtils {
                 statusProgressBar.setVisible(false);
                 //重置变量
                 isGenerating.set(false);
-
-                return;
             } catch (InterruptedException e) {
                 logger.error("计算资源缓存的时候出现了问题...", e);
             }
@@ -241,7 +236,7 @@ public class CacheUtils {
                 counterThread = new Thread(() -> jsonArray = fileCacheCalculator.scanDir(jsonCache, finalDir));
                 counterThread.start();
 
-                statusProgressBar = resetStatusProgressBar();
+                resetStatusProgressBar();
                 statusProgressBar.setString("检查变化中：" + 0 + " 文件 / " + dirSize[1] + " 文件");
                 timer = new Timer(25, e -> {
                     int progress = fileCacheCalculator.progress.get();
@@ -257,7 +252,7 @@ public class CacheUtils {
                 counterThread = new Thread(() -> fileObjList = fileListUtils.scanDir(finalDir, logger));
                 counterThread.start();
 
-                statusProgressBar = resetStatusProgressBar();
+                resetStatusProgressBar();
                 //轮询线程, 读取进度
                 timer = new Timer(25, e -> {
                     long completedBytes = fileListUtils.getCompletedBytes();
