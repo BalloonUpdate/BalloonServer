@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver;
 
 import github.kasuminova.balloonserver.GUI.AboutPanel;
+import github.kasuminova.balloonserver.GUI.SetupSwing;
 import github.kasuminova.balloonserver.GUI.VFlowLayout;
 import github.kasuminova.balloonserver.Servers.LittleServer;
 
@@ -115,8 +116,8 @@ public class BalloonServer {
         MAIN_FRAME.setLocationRelativeTo(null);
         GLOBAL_LOGGER.info(String.format("程序已加载完成, 耗时 %sms", System.currentTimeMillis() - START));
 
-        PREMAIN_FRAME.dispose();
         MAIN_FRAME.setVisible(true);
+        PREMAIN_FRAME.dispose();
     }
 
     /**

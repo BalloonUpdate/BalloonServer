@@ -242,10 +242,10 @@ public class NextFileListUtils {
                     String.format("扫描文件夹内容... (%s, %s 文件)",
                             FileUtil.formatFileSizeToStr(totalSize.get()),
                             totalFiles.get())));
+            timer.start();
 
             GLOBAL_STATUS_PROGRESSBAR.setVisible(true);
             GLOBAL_STATUS_PROGRESSBAR.setIndeterminate(true);
-            timer.start();
 
             try {
                 new DirCalculatorThread(dir).run();

@@ -51,23 +51,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         String clientIP = getClientIP(ctx,req);
         String decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
 
-        //JSON 请求监听
-        if (decodedURI.contains(config.getMainDirPath() + ".json")) {
-            // 检测 100 Continue，是否同意接收将要发送过来的实体
-            ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
-            // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
-            // 创建完整的响应对象
-            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(resJson, CharsetUtil.UTF_8));
-            // 设置头信息
-            jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
-            // 响应写回给客户端,并在协会后断开这个连接
-            ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
-
-            //打印日志
-            printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI);
-            return;
-        }
-
+        //index 请求监听
         if (decodedURI.contains("/index.json")) {
             // 检测 100 Continue，是否同意接收将要发送过来的实体
             ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
@@ -79,6 +63,25 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(index.toJSONString(), CharsetUtil.UTF_8));
+            // 设置头信息
+            jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
+            // 响应写回给客户端,并在协会后断开这个连接
+            ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
+
+            //打印日志
+            printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI);
+            return;
+        }
+
+        //JSON 请求监听
+        if (decodedURI.contains(config.getMainDirPath() + ".json")) {
+            // 检测 100 Continue，是否同意接收将要发送过来的实体
+            ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
+            // 经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
+            // 创建完整的响应对象
+            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                    Unpooled.copiedBuffer(resJson, CharsetUtil.UTF_8));
             // 设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
             // 响应写回给客户端,并在协会后断开这个连接
@@ -157,7 +160,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * 创建一个进度条面板记录单独文件的显示
      * @return Component[] 第一个为面板, 第二个为进度条
      */
-    public synchronized JProgressBar createUploadPanel(String IP, String fileName) {
+    public JProgressBar createUploadPanel(String IP, String fileName) {
         //单个线程的面板
         JPanel uploadPanel = new JPanel(new VFlowLayout());
         //单个线程的 Box
@@ -180,12 +183,13 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
     /**
      * 打印日志
      * @param msg 额外信息
-     * @param StartTime 耗时
+     * @param startTime 耗时
      * @param clientIP 客户端 IP
      * @param decodedURI 转义后的 URI
      */
-    private void printLog(String msg, long StartTime, String clientIP, String decodedURI) {
-        logger.info(clientIP + " " + msg + " URI: " + decodedURI + " (" + (System.currentTimeMillis() - StartTime) + "ms)");
+    private void printLog(String msg, long startTime, String clientIP, String decodedURI) {
+        //格式为 IP, 额外信息, 转义后的 URI, 耗时
+        logger.info(String.format("%s %s URI: %s (%sms)", clientIP, msg, decodedURI, System.currentTimeMillis() - startTime));
     }
 
     /**

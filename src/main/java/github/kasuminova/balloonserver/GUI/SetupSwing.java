@@ -1,6 +1,7 @@
-package github.kasuminova.balloonserver;
+package github.kasuminova.balloonserver.GUI;
 
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
+import github.kasuminova.balloonserver.BalloonServer;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
