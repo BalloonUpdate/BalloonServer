@@ -40,7 +40,7 @@ public class CacheUtils {
     //fileObjList，用于序列化 JSON
     private ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
     //jsonArray 转化为资源文件夹缓存必要的变量
-    private JSONArray jsonArray;
+    private final JSONArray jsonArray = new JSONArray();
     private Thread counterThread;
 
     /**
@@ -82,7 +82,7 @@ public class CacheUtils {
                 logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
 
                 //输出并向服务器设置 JSON
-                jsonArray = new JSONArray();
+                jsonArray.clear();
                 jsonArray.addAll(fileObjList);
                 generateJsonToDiskAndSetServerJson(jsonArray);
 
@@ -100,7 +100,7 @@ public class CacheUtils {
      * 更新资源缓存结构并启动服务器
      * 传入的参数如果为 null，则完整生成一次缓存
      */
-    public void genResDirCacheAndStartServer(JSONArray jsonCache) {
+    public void updateDirCacheAndStartServer(JSONArray jsonCache) {
         if (jsonCache != null) {
             if (!genDirCache(jsonCache)) {
                 //启动服务器
@@ -147,7 +147,7 @@ public class CacheUtils {
                 logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
 
                 //输出并向服务器设置 JSON
-                jsonArray = new JSONArray();
+                jsonArray.clear();
                 jsonArray.addAll(fileObjList);
                 generateJsonToDiskAndSetServerJson(jsonArray);
 
@@ -197,18 +197,17 @@ public class CacheUtils {
      * @return 如果资源文件夹为空返回 false, 否则返回 true
      */
     private boolean genDirCache(JSONArray jsonCache) {
-        isGenerating.set(true);
-
         File dir = new File("." + config.getMainDirPath());
         if (!dir.exists()) {
             logger.warn(String.format("设定中的资源目录：%s 不存在, 使用默认路径", dir.getPath()));
             dir = new File("./res");
             if (!dir.exists()) {
                 logger.warn(String.format("默认资源目录不存在：%s, 正在创建文件夹", dir.getPath()));
-                if (dir.mkdir()) {
+                if (!dir.mkdir()) {
                     logger.error("默认资源目录创建失败！请检查你的资源目录文件夹是否被占用或非文件夹。");
                 }
                 logger.warn("资源目录为空, 跳过缓存生成.");
+
                 return false;
             }
         }
@@ -216,60 +215,65 @@ public class CacheUtils {
         logger.info("正在计算资源目录大小...");
         File[] fileList = dir.listFiles();
         //检查文件夹是否为空
-        if (fileList == null) {
+        if (fileList == null || fileList.length == 0) {
             logger.warn("资源目录为空, 跳过缓存生成.");
+
             return false;
         }
 
+        isGenerating.set(true);
         //计算文件夹内的文件和总大小（文件夹不计入），用于进度条显示
         long[] dirSize = NextFileListUtils.getDirSize(dir);
 
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
-        if (dirSize[0] != 0) {
-            FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger);
-            logger.info(String.format("文件夹大小：%s, 文件数量：%s", totalSize,dirSize[1]));
-            if (jsonCache != null) {
-                logger.info("检测到已缓存的 JSON, 正在检查变化...");
 
-                //创建新线程实例并执行
-                File finalDir = dir;
-                counterThread = new Thread(() -> jsonArray = fileCacheCalculator.scanDir(jsonCache, finalDir));
-                counterThread.start();
+        FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger);
+        logger.info(String.format("文件夹大小：%s, 文件数量：%s", totalSize,dirSize[1]));
+        if (jsonCache != null) {
+            logger.info("检测到已缓存的 JSON, 正在检查变化...");
 
-                resetStatusProgressBar();
-                statusProgressBar.setString(String.format("检查变化中：0 文件 / %s 文件", dirSize[1]));
-                timer = new Timer(25, e -> {
-                    int completedFiles = fileCacheCalculator.completedFiles.get();
-                    statusProgressBar.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
-                    statusProgressBar.setString(String.format("检查变化中：%s 文件 / %s 文件", completedFiles, dirSize[1]));
-                });
-            } else {
-                logger.info("正在生成资源目录缓存...");
-                File finalDir = dir;
-                //新建资源计算器实例
-                fileListUtils = new NextFileListUtils();
-                //创建新线程实例并执行
-                counterThread = new Thread(() -> fileObjList = fileListUtils.scanDir(finalDir, logger));
-                counterThread.start();
+            //创建新线程实例并执行
+            File finalDir = dir;
+            counterThread = new Thread(() -> {
+                jsonArray.clear();
+                jsonArray.addAll(fileCacheCalculator.scanDir(jsonCache, finalDir));
+            });
+            counterThread.start();
 
-                resetStatusProgressBar();
-                //轮询线程, 读取进度
-                timer = new Timer(25, e -> {
-                    long completedBytes = fileListUtils.getCompletedBytes();
-                    long completedFiles = fileListUtils.getCompletedFiles();
-                    String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
-                    statusProgressBar.setValue((int) ((double) completedBytes * 1000 / dirSize[0]));
-                    statusProgressBar.setString(String.format("生成缓存中：%s / %s - %s 文件 / %s 文件",
-                            completedSize,
-                            totalSize,
-                            completedFiles,
-                            dirSize[1]));
-                });
-            }
-            //启动轮询
-            timer.start();
-            statusProgressBar.setVisible(true);
+            resetStatusProgressBar();
+            statusProgressBar.setString(String.format("检查变化中：0 文件 / %s 文件", dirSize[1]));
+            timer = new Timer(25, e -> {
+                int completedFiles = fileCacheCalculator.completedFiles.get();
+                statusProgressBar.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
+                statusProgressBar.setString(String.format("检查变化中：%s 文件 / %s 文件", completedFiles, dirSize[1]));
+            });
+        } else {
+            logger.info("正在生成资源目录缓存...");
+            File finalDir = dir;
+            //新建资源计算器实例
+            fileListUtils = new NextFileListUtils();
+            //创建新线程实例并执行
+            counterThread = new Thread(() -> fileObjList = fileListUtils.scanDir(finalDir, logger));
+            counterThread.start();
+
+            resetStatusProgressBar();
+            //轮询线程, 读取进度
+            timer = new Timer(25, e -> {
+                long completedBytes = fileListUtils.getCompletedBytes();
+                long completedFiles = fileListUtils.getCompletedFiles();
+                String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
+                statusProgressBar.setValue((int) ((double) completedBytes * 1000 / dirSize[0]));
+                statusProgressBar.setString(String.format("生成缓存中：%s / %s - %s 文件 / %s 文件",
+                        completedSize,
+                        totalSize,
+                        completedFiles,
+                        dirSize[1]));
+            });
         }
+        //启动轮询
+        timer.start();
+        statusProgressBar.setVisible(true);
+
         return true;
     }
 }
