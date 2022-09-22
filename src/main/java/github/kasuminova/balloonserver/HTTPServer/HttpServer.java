@@ -102,6 +102,7 @@ public class HttpServer {
                             isFileChanged.set(false);
                         }
                     });
+                    fileChangeListener.start();
                     logger.info("实时文件监听器已启动." + String.format(" (%sms)", System.currentTimeMillis() - start));
                 } catch (Exception e) {
                     fileMonitor = null;

@@ -26,7 +26,7 @@ public class BalloonServer {
         SetupSwing.init();
     }
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(BalloonServer.class.getResource("/image/icon_128x128.jpg")));
-    public static final String VERSION = "1.1.2-BETA";
+    public static final String VERSION = "1.1.3-BETA";
     //主窗口
     public static final JFrame frame = new JFrame("BalloonServer " + VERSION);
     //主窗口 Logger

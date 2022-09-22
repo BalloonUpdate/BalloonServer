@@ -247,7 +247,7 @@ public class LittleServer {
 
         JPanel southControlPanel = new JPanel(new VFlowLayout());
         JLabel tipLabel = new JLabel("上方配置修改后，请点击保存配置按钮来载入配置.");
-        tipLabel.setForeground(new Color(255,64,64));
+        tipLabel.setForeground(new Color(255,75,75));
         southControlPanel.add(tipLabel);
 
         //存储当前配置

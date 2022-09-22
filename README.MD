@@ -3,6 +3,11 @@ BalloonServer 是 LittleServer 的完全图形化版本，基于 Netty-IO 的增
 
 ### 程序运行实例：
 
-![image](example.png)
+#### 主功能
+![image](main.gif)
 
-### 
+#### 可视化更新规则编辑器
+![image](ruleeditor.gif)
+
+#### 实时文件监听器
+![image](filechangelistener.gif)
