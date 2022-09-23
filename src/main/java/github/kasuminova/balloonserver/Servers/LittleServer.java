@@ -163,7 +163,7 @@ public class LittleServer {
         JScrollPane common_ModeScrollPane = new JScrollPane(
                 commonMode,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         commonModePanel.add(common_ModeScrollPane);
         configPanel.add(commonModePanel);
@@ -201,7 +201,7 @@ public class LittleServer {
         JScrollPane once_ModeScrollPane = new JScrollPane(
                 onceMode,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         onceModePanel.add(once_ModeScrollPane);
 
@@ -375,58 +375,7 @@ public class LittleServer {
 
         logger.debug(String.format("载入服务器耗时 %sms.", System.currentTimeMillis() - start));
     }
-    public static class AddUpdateRule implements ActionListener {
-        private final JList<String> modeList;
-        private final List<String> rules;
-        private final Container container;
 
-        public AddUpdateRule(JList<String> modeList, List<String> rules, Container container) {
-            this.modeList = modeList;
-            this.rules = rules;
-            this.container = container;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String newRule = JOptionPane.showInputDialog(container,
-                    "请输入更新规则：", "提示",
-                    JOptionPane.INFORMATION_MESSAGE);
-            if (newRule != null && !newRule.isEmpty()) {
-                //防止插入相同内容
-                if (rules.contains(newRule)) {
-                    JOptionPane.showMessageDialog(container,
-                            "重复的更新规则","错误",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    rules.add(newRule);
-                    modeList.setListData(rules.toArray(new String[0]));
-                }
-            }
-        }
-    }
-    public static class DeleteUpdateRule implements ActionListener {
-        private final JList<String> modeList;
-        private final List<String> rules;
-        private final Container container;
-        public DeleteUpdateRule(JList<String> modeList, List<String> rules, Container container) {
-            this.modeList = modeList;
-            this.rules = rules;
-            this.container = container;
-        }
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            List<String> selected = modeList.getSelectedValuesList();
-
-            if (!selected.isEmpty()) {
-                rules.removeAll(selected);
-                modeList.setListData(rules.toArray(new String[0]));
-            } else {
-                JOptionPane.showMessageDialog(container,
-                        "请选择一个规则后再删除.", "错误",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
     //更新规则编辑器类
     private class RuleEditorActionListener implements ActionListener {
         private final JList<String> ruleList;

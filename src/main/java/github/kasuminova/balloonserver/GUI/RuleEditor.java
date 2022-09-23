@@ -6,7 +6,8 @@ import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeCellRenderer;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNode;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNodeSelectionListener;
-import github.kasuminova.balloonserver.Servers.LittleServer;
+import github.kasuminova.balloonserver.Servers.AddUpdateRule;
+import github.kasuminova.balloonserver.Servers.DeleteUpdateRule;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -69,11 +70,11 @@ public class RuleEditor extends JDialog {
         JPopupMenu ruleListMenu = new JPopupMenu();
         //添加更新规则
         JMenuItem addRule = new JMenuItem("添加更新规则");
-        addRule.addActionListener(new LittleServer.AddUpdateRule(ruleList,rules,contentPane));
+        addRule.addActionListener(new AddUpdateRule(ruleList,rules,contentPane));
         ruleListMenu.add(addRule);
         //删除更新规则
         JMenuItem removeRule = new JMenuItem("删除选定的规则");
-        removeRule.addActionListener(new LittleServer.DeleteUpdateRule(ruleList,rules,contentPane));
+        removeRule.addActionListener(new DeleteUpdateRule(ruleList,rules,contentPane));
         ruleListMenu.add(removeRule);
         //鼠标监听
         ruleList.addMouseListener(new MouseAdapter() {
