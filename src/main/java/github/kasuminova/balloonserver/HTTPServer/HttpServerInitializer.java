@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
+import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
 import github.kasuminova.balloonserver.Servers.LittleServerInterface;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.channel.ChannelInitializer;

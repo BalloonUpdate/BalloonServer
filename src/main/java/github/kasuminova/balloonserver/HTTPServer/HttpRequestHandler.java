@@ -1,8 +1,8 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
 import com.alibaba.fastjson2.JSONObject;
-import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
-import github.kasuminova.balloonserver.GUI.VFlowLayout;
+import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
+import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.Servers.LittleServerInterface;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 import github.kasuminova.balloonserver.Utils.GUILogger;
@@ -130,7 +130,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
         Timer timer = new Timer(100, e -> {
             progressBar.setString(String.format("%s / %s", FileUtil.formatFileSizeToStr(fileProgress[0]), FileUtil.formatFileSizeToStr(fileLength)));
-            progressBar.setValue((int) (fileProgress[0] * 100 / fileLength) );
+            progressBar.setValue((int) (fileProgress[0] * 200 / fileLength) );
         });
         timer.start();
 
@@ -171,12 +171,13 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         //状态
         box.add(new JLabel("进度："), BorderLayout.WEST);
         //进度条
-        JProgressBar progressBar = new JProgressBar(0,100);
+        JProgressBar progressBar = new JProgressBar(0,200);
         progressBar.setStringPainted(true);
         //向 Box 添加进度条
         box.add(progressBar, BorderLayout.EAST);
         uploadPanel.add(box);
         requestListPanel.add(uploadPanel);
+        requestListPanel.updateUI();
         return progressBar;
     }
 

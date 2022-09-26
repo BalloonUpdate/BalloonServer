@@ -1,4 +1,4 @@
-package github.kasuminova.balloonserver.GUI;
+package github.kasuminova.balloonserver.GUI.LayoutManager;
 
 import java.awt.*;
 import java.io.Serial;

@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Utils;
 
+import github.kasuminova.balloonserver.BalloonServer;
+
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -72,6 +74,9 @@ public class GUILogger {
     }
 
     public void debug(String msg) {
+        if (!BalloonServer.CONFIG.isDebugMode()) {
+            return;
+        }
         String threadName = Thread.currentThread().getName();
         LOGGER_THREAD_POOL.execute(() -> {
             logger.info(msg);
@@ -131,7 +136,7 @@ public class GUILogger {
      * @param e Exception
      * @return 字符串
      */
-    private static String stackTraceToString(Throwable e) {
+    public static String stackTraceToString(Throwable e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
@@ -141,6 +146,6 @@ public class GUILogger {
 
     private static String buildNormalLogMessage(String threadName, String msg, String name) {
         //占位符分别为 日期，线程名，名称，消息本体
-        return String.format("[%s][%s]%s: %s\n", DATE_FORMAT.format(System.currentTimeMillis()),threadName, name, msg);
+        return String.format("[%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()),threadName, name, msg);
     }
 }

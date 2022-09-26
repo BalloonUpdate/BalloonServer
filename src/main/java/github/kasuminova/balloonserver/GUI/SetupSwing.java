@@ -1,7 +1,6 @@
 package github.kasuminova.balloonserver.GUI;
 
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
-import github.kasuminova.balloonserver.BalloonServer;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -38,8 +37,20 @@ public class SetupSwing {
 //        UIManager.put("ScrollBar.trackInsets", new Insets(5,5,5,5));
             UIManager.put("ScrollBar.thumbInsets", new Insets(2,2,2,2));
             UIManager.put("ScrollBar.track", new Color(0,0,0,0));
-            //选项卡分隔线/背景
+            //选项卡分隔线
             UIManager.put("TabbedPane.showTabSeparators", true);
+            UIManager.put("TabbedPane.tabSeparatorsFullHeight", true);
+            //菜单
+            UIManager.put("MenuItem.selectionType", "underline");
+            UIManager.put("MenuItem.underlineSelectionHeight", 3);
+            UIManager.put("MenuItem.margin", new Insets(5,8,3,5));
+            //窗口标题居中
+            UIManager.put("TitlePane.centerTitle", true);
+            UIManager.put("TitlePane.centerIcon", true);
+            //进度条
+            UIManager.put("ProgressBar.repaintInterval", 15);
+            UIManager.put("ProgressBar.cycleTime", 7500);
+
             System.out.printf("UIThread Completed, Used %sms%n", System.currentTimeMillis() - start);
         });
         uiThread.start();
@@ -49,9 +60,9 @@ public class SetupSwing {
             long start = System.currentTimeMillis();
             //设置字体
             try {
-                InputStream ttfFile = BalloonServer.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf");
+                InputStream ttfFile = SetupSwing.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf");
                 if (ttfFile != null) {
-                    initGlobalFont(Font.createFont(Font.TRUETYPE_FONT, ttfFile).deriveFont(14f));
+                    initGlobalFont(Font.createFont(Font.TRUETYPE_FONT, ttfFile).deriveFont(13f));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

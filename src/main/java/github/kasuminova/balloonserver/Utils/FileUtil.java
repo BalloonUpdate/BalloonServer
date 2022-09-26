@@ -128,6 +128,7 @@ public class FileUtil {
 
     public static class SimpleFileFilter extends FileFilter {
         private final String[] ext;
+        private final String[] blackList;
         private final String des;
 
         /**
@@ -136,14 +137,21 @@ public class FileUtil {
          * @param ext 扩展名数组，如 png,jpg
          * @param des 扩展描述
          */
-        public SimpleFileFilter(String[] ext, String des) {
+        public SimpleFileFilter(String[] ext, String[] blackList,String des) {
             this.ext = ext;
+            this.blackList = blackList;
             this.des = des;
         }
 
         public boolean accept(File file) {
             if (!file.isDirectory()) {
                 String fileName = file.getName();
+                //黑名单检查
+                if (blackList != null) {
+                    for (String s : blackList) {
+                        if (fileName.contains(s)) return false;
+                    }
+                }
                 int index = fileName.lastIndexOf('.');
                 if (index > 0 && index < fileName.length() - 1) {
                     // 表示文件名称不为".xxx"现"xxx."之类型

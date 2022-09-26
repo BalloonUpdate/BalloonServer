@@ -1,10 +1,12 @@
 package github.kasuminova.balloonserver.GUI.CheckBoxTree;
 
+import github.kasuminova.balloonserver.Utils.SvgIcons;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+
 
 public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
 {
@@ -38,11 +40,12 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
         label.setSelected(selected);
         label.setFocus(hasFocus);
         if (((CheckBoxTreeNode) value).getAllowsChildren()) {
-            label.setIcon(UIManager.getIcon("Tree.closedIcon"));
-        } else if (expanded) {
-            label.setIcon(UIManager.getIcon("Tree.openIcon"));
+            label.setIcon(SvgIcons.DIR_ICON);
+//            label.setIcon(UIManager.getIcon("Tree.closedIcon"));
+//        } else if (expanded) {
+//            label.setIcon(UIManager.getIcon("Tree.openIcon"));
         } else {
-            label.setIcon(UIManager.getIcon("Tree.leafIcon"));
+            setFileIcon();
         }
 
         return this;
@@ -79,5 +82,42 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
         if(color instanceof ColorUIResource)
             color = null;
         super.setBackground(color);
+    }
+
+    public void setFileIcon()
+    {
+        String fileName = label.getText();
+
+        if (fileName.endsWith(".class")) {
+            label.setIcon(SvgIcons.CLASS_FILE_ICON);
+        } else if (fileName.endsWith("doc") || fileName.endsWith("docx")) {
+            label.setIcon(SvgIcons.DOC_FILE_ICON);
+        } else if (fileName.endsWith("ppt") || fileName.endsWith("pptx")) {
+            label.setIcon(SvgIcons.PPT_FILE_ICON);
+        } else if (fileName.endsWith("xls") || fileName.endsWith("xlsx")) {
+            label.setIcon(SvgIcons.XLS_FILE_ICON);
+        } else if (fileName.endsWith("exe")) {
+            label.setIcon(SvgIcons.EXE_FILE_ICON);
+        } else if (fileName.endsWith("jar")) {
+            label.setIcon(SvgIcons.JAR_FILE_ICON);
+        } else if (fileName.endsWith("java")) {
+            label.setIcon(SvgIcons.JAVA_FILE_ICON);
+        } else if (fileName.endsWith("jpg")) {
+            label.setIcon(SvgIcons.JPG_FILE_ICON);
+        } else if (fileName.endsWith("json")) {
+            label.setIcon(SvgIcons.JSON_FILE_ICON);
+        } else if (fileName.endsWith("md")) {
+            label.setIcon(SvgIcons.MD_FILE_ICON);
+        } else if (fileName.endsWith("txt")) {
+            label.setIcon(SvgIcons.TXT_FILE_ICON);
+        } else if (fileName.endsWith("xml")) {
+            label.setIcon(SvgIcons.XML_FILE_ICON);
+        } else if (fileName.endsWith("yml")) {
+            label.setIcon(SvgIcons.YML_FILE_ICON);
+        } else if (fileName.endsWith("zip")) {
+            label.setIcon(SvgIcons.ZIP_FILE_ICON);
+        } else {
+            label.setIcon(SvgIcons.FILE_ICON);
+        }
     }
 }

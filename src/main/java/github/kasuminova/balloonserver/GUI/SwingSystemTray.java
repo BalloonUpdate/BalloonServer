@@ -1,4 +1,7 @@
-package github.kasuminova.balloonserver;
+package github.kasuminova.balloonserver.GUI;
+
+import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -6,7 +9,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.net.URL;
+
+import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
 
 /**
  * 中文系统托盘弹出菜单不乱码。
@@ -14,8 +20,23 @@ import java.net.URL;
  * @author Kasumi_Nova
  */
 public class SwingSystemTray {
-    public static void initSystemTray(JFrame frame) {
-        frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+    /**
+     * 载入托盘
+     * @param frame 主窗口
+     * @param isHideOnClose 关闭窗口是否最小化至托盘
+     * @param isExitOnClose 关闭窗口是否退出程序
+     */
+    public static void initSystemTrayAndFrame(JFrame frame, boolean isHideOnClose, boolean isExitOnClose) {
+        //如果系统不支持任务栏，则设置为关闭窗口时退出程序
+        if (!SystemTray.isSupported() || isExitOnClose) {
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            return;
+        }
+        if (isHideOnClose) {
+            frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+        } else {
+            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        }
         //使用JDialog 作为JPopupMenu载体
         JDialog dialog = new JDialog();
         //关闭JDialog的装饰器
@@ -36,7 +57,15 @@ public class SwingSystemTray {
 
         //添加菜单选项
         JMenuItem exit = new JMenuItem("退出程序");
-        exit.addActionListener(e -> System.exit(0));
+        exit.addActionListener(e -> {
+            try {
+                ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
+                BalloonServer.GLOBAL_LOGGER.info("已保存主程序配置文件.");
+            } catch (IOException ex) {
+                BalloonServer.GLOBAL_LOGGER.warning("保存主程序配置文件失败！");
+            }
+            System.exit(0);
+        });
         JMenuItem showMainFrame = new JMenuItem("显示窗口");
         showMainFrame.addActionListener(e -> {
             //显示窗口
@@ -80,7 +109,7 @@ public class SwingSystemTray {
         // 关闭窗口时显示信息
         frame.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
+            public void windowClosed(WindowEvent e) {
                 trayIcon.displayMessage("提示","程序已最小化至后台运行。", TrayIcon.MessageType.INFO);
             }
         });

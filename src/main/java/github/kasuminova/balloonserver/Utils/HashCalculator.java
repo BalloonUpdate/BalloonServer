@@ -32,9 +32,9 @@ public class HashCalculator {
             }
             fc.close();
             //转换并返回包含 16 个元素字节数组,返回数值范围为 -128 到 127
-            byte[] md5Bytes = md.digest();
+            byte[] sha1Bytes = md.digest();
             //1 代表绝对值
-            BigInteger bigInt = new BigInteger(1, md5Bytes);
+            BigInteger bigInt = new BigInteger(1, sha1Bytes);
             //转换为 16 进制
             return bigInt.toString(16);
         } catch (Exception e) {

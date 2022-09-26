@@ -6,8 +6,10 @@ import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeCellRenderer;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNode;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNodeSelectionListener;
+import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.Servers.AddUpdateRule;
 import github.kasuminova.balloonserver.Servers.DeleteUpdateRule;
+import github.kasuminova.balloonserver.UpdateChecker.ApplicationVersion;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -22,7 +24,7 @@ import java.util.List;
  * 可视化更新规则编辑器
  */
 public class RuleEditor extends JDialog {
-    public static final String VERSION = "1.2-STABLE";
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.0-STABLE");
     private final List<String> result = new ArrayList<>();
     private final ArrayList<String> rules = new ArrayList<>();
     public List<String> getResult() {
@@ -32,7 +34,7 @@ public class RuleEditor extends JDialog {
     public RuleEditor(JSONArray jsonArray, String resDirPath) {
         setTitle("RuleEditor " + VERSION);
         setIconImage(BalloonServer.ICON.getImage());
-        setSize(800,855);
+        setSize(750,840);
         setResizable(false);
         setLocationRelativeTo(null);
 

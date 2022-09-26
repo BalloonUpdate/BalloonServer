@@ -3,7 +3,7 @@ package github.kasuminova.balloonserver.Utils;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Servers.LittleServerInterface;
-import github.kasuminova.balloonserver.ConfigurationManager.LittleServerConfig;
+import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 
 import javax.swing.*;
@@ -182,7 +182,7 @@ public class CacheUtils {
         String resJSONStr = jsonArray.toJSONString();
         serverInterface.setResJson(resJSONStr);
         try {
-            FileUtil.createJsonFile(resJSONStr, "./", "res-cache");
+            FileUtil.createJsonFile(resJSONStr, "./", String.format("%s_res-cache", serverInterface.getServerName()));
             logger.info("JSON 缓存生成完毕.");
         } catch (IOException ex) {
             logger.error("生成 JSON 缓存的时候出现了问题...", ex);
