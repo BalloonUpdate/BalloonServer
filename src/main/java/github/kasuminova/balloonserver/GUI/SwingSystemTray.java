@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver.GUI;
 
 import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.Configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 
 import javax.swing.*;
@@ -23,20 +24,14 @@ public class SwingSystemTray {
     /**
      * 载入托盘
      * @param frame 主窗口
-     * @param isHideOnClose 关闭窗口是否最小化至托盘
-     * @param isExitOnClose 关闭窗口是否退出程序
      */
-    public static void initSystemTrayAndFrame(JFrame frame, boolean isHideOnClose, boolean isExitOnClose) {
+    public static void initSystemTrayAndFrame(JFrame frame) {
         //如果系统不支持任务栏，则设置为关闭窗口时退出程序
-        if (!SystemTray.isSupported() || isExitOnClose) {
+        if (!SystemTray.isSupported() || CONFIG.getCloseOperation() == BalloonServerConfig.EXIT_ON_CLOSE.getOperation()) {
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             return;
         }
-        if (isHideOnClose) {
-            frame.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-        } else {
-            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        }
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         //使用JDialog 作为JPopupMenu载体
         JDialog dialog = new JDialog();
         //关闭JDialog的装饰器

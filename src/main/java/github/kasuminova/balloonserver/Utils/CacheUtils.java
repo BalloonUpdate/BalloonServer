@@ -182,7 +182,7 @@ public class CacheUtils {
         String resJSONStr = jsonArray.toJSONString();
         serverInterface.setResJson(resJSONStr);
         try {
-            FileUtil.createJsonFile(resJSONStr, "./", String.format("%s_res-cache", serverInterface.getServerName()));
+            FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.res-cache", serverInterface.getServerName()));
             logger.info("JSON 缓存生成完毕.");
         } catch (IOException ex) {
             logger.error("生成 JSON 缓存的时候出现了问题...", ex);

@@ -10,18 +10,31 @@ import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkCon
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme;
 import github.kasuminova.balloonserver.Configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.Configurations.CloseOperations;
+import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
+import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 
+/**
+ * 设置面板类，一个主程序只能有一个设置面板。
+ */
 public class SettingsPanel {
+    private static final JCheckBox autoStartDefaultServer = new JCheckBox("自动启动主服务端");
+    private static final JCheckBox autoStartDefaultServerOnce = new JCheckBox("自动启动主服务端（单次）");
+    private static final JCheckBox autoCheckUpdates = new JCheckBox("自动检查更新");
+    private static final JCheckBox autoUpdate = new JCheckBox("自动更新");
+    private static final Vector<CloseOperations> operations = new Vector<>();
+    private static final JComboBox<CloseOperations> closeOperationComboBox = new JComboBox<>(operations);
+    private static final JCheckBox enableDebugMode = new JCheckBox("启用 Debug 模式");
     public static JPanel getPanel() {
         //主面板
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -32,42 +45,37 @@ public class SettingsPanel {
         JPanel settingsPanel = new JPanel(new VFlowLayout(VFlowLayout.TOP,VFlowLayout.LEFT,5,10,5,5,false,false));
 
         //自动启动主服务端
-        JCheckBox autoStartDefaultServer = new JCheckBox("自动启动主服务端");
         JLabel autoStartDefaultServerDesc = new JLabel("此项选中后，BalloonServer 在启动时会自动启动主服务端的服务器，无需手动开启服务端.");
 
         //自动启动主服务端
-        JCheckBox autoStartDefaultServerOnce = new JCheckBox("自动启动主服务端（单次）");
         JLabel autoStartDefaultServerOnceDesc = new JLabel("此项选中后，BalloonServer 在启动时会自动启动主服务端的服务器，仅生效一次，生效后自动关闭.");
 
         //自动检查更新
-        JCheckBox autoCheckUpdates = new JCheckBox("自动检查更新");
         JLabel autoCheckUpdatesDesc = new JLabel("此项选中后，BalloonServer 在会定时检查最新更新.");
 
         //自动更新
-        JCheckBox autoUpdate = new JCheckBox("自动更新");
         JLabel autoUpdateDesc = new JLabel("此项选中后，BalloonServer 在检查到更新后，会自动下载并自动重启应用更新（仅支持 exe 格式服务端）.");
-//        System.out.println(SettingsPanel.class.getProtectionDomain().getCodeSource().getLocation());
-        if (!System.getProperty("os.name").contains("Windows")) {
+        //如果程序非 exe 格式则设置为禁用
+        if (!SettingsPanel.class.getProtectionDomain().getCodeSource().getLocation().getFile().endsWith(".exe")) {
             autoUpdate.setEnabled(false);
             autoUpdate.setText("自动更新（不支持）");
         }
 
         //关闭选项
-        Vector<CloseOperations> operations = new Vector<>();
         operations.add(BalloonServerConfig.QUERY);
         operations.add(BalloonServerConfig.HIDE_ON_CLOSE);
         operations.add(BalloonServerConfig.EXIT_ON_CLOSE);
 
         Box closeOperationBox = Box.createHorizontalBox();
-        JComboBox<CloseOperations> closeOperationComboBox = new JComboBox<>(operations);
         closeOperationComboBox.setMaximumRowCount(3);
         closeOperationBox.add(new JLabel("窗口关闭选项："));
         closeOperationBox.add(closeOperationComboBox);
         JLabel closeOperationsDesc = new JLabel("此项决定点击 BalloonServer 窗口右上角关闭按钮后程序的操作.");
 
         //Debug Mode
-        JCheckBox enableDebugMode = new JCheckBox("启用 Debug 模式");
-        JLabel enableDebugModeDesc = new JLabel("此项仅为开发人员提供，普通用户请问开启.");
+        JLabel enableDebugModeDesc = new JLabel("此项仅为开发人员提供，普通用户请勿开启.");
+
+        applyConfiguration();
 
         //组装
         settingsPanel.add(autoStartDefaultServer);
@@ -89,14 +97,58 @@ public class SettingsPanel {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         settingsPanelScroll.getVerticalScrollBar().setUnitIncrement(20);
         settingsPanelScroll.setBorder(new TitledBorder("主程序设置"));
-
         subMainPanel.add(settingsPanelScroll, BorderLayout.CENTER);
-        subMainPanel.add(new JButton("保存配置"), BorderLayout.SOUTH);
+
+        JPanel saveConfigPanel = new JPanel(new VFlowLayout());
+        //保存提示
+        JLabel tipLabel = new JLabel("上方配置修改后，请点击保存配置按钮来应用配置.", SwingConstants.CENTER);
+        tipLabel.setForeground(new Color(255,75,75));
+        saveConfigPanel.add(tipLabel);
+
+        //保存配置
+        JButton saveConfig = new JButton("保存配置");
+        saveConfig.addActionListener(e -> saveConfiguration());
+        saveConfigPanel.add(saveConfig);
+
+        subMainPanel.add(saveConfigPanel, BorderLayout.SOUTH);
 
         mainPanel.add(subMainPanel, BorderLayout.CENTER);
         mainPanel.add(loadThemeListPanel(), BorderLayout.WEST);
 
         return mainPanel;
+    }
+
+    /**
+     * 将配置文件内的配置应用到 GUI 中
+     */
+    private static void applyConfiguration()
+    {
+        autoStartDefaultServer.setSelected(CONFIG.isAutoStartServer());
+        autoStartDefaultServerOnce.setSelected(CONFIG.isAutoStartServerOnce());
+        autoCheckUpdates.setSelected(CONFIG.isAutoCheckUpdates());
+        autoUpdate.setSelected(CONFIG.isAutoUpdate());
+        closeOperationComboBox.setSelectedIndex(CONFIG.getCloseOperation());
+        enableDebugMode.setSelected(CONFIG.isDebugMode());
+    }
+
+    /**
+     * 将 GUI 中的配置保存到配置文件中
+     */
+    private static void saveConfiguration()
+    {
+        CONFIG.setAutoStartServer(autoStartDefaultServer.isSelected());
+        CONFIG.setAutoStartServerOnce(autoStartDefaultServerOnce.isSelected());
+        CONFIG.setAutoCheckUpdates(autoCheckUpdates.isSelected());
+        CONFIG.setAutoUpdate(autoUpdate.isSelected());
+        CONFIG.setCloseOperation(closeOperationComboBox.getSelectedIndex());
+        CONFIG.setDebugMode(enableDebugMode.isSelected());
+
+        try {
+            ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
+            GLOBAL_LOGGER.info("成功保存主程序配置文件.");
+        } catch (IOException e) {
+            GLOBAL_LOGGER.warning("主程序配置文件保存失败！\n" + GUILogger.stackTraceToString(e));
+        }
     }
 
     private static JPanel loadThemeListPanel() {

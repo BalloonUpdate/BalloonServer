@@ -42,7 +42,7 @@ public class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.0-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.0-STABLE-PREVIEW_2");
     private static final long START = System.currentTimeMillis();
     private static final JFrame PREMAIN_FRAME = new JFrame("加载中");
     private static final JPanel STATUS_PANEL = new JPanel(new BorderLayout());
@@ -52,8 +52,8 @@ public class BalloonServer {
 
     //主窗口
     public static final JFrame MAIN_FRAME = new JFrame("BalloonServer " + VERSION);
-    public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
-    public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);
+    public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);
+    public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     //主窗口 Logger
     public static final Logger GLOBAL_LOGGER = Logger.getLogger("MAIN");
     public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0,1000);
@@ -72,6 +72,9 @@ public class BalloonServer {
         //标签页配置
         PRE_LOAD_PROGRESS_BAR.setString("载入主面板...");
         TABBED_PANE.putClientProperty("JTabbedPane.tabAreaAlignment", "fill");
+
+        //载入主配置文件
+        loadConfig();
 
         //创建一个子面板，存放 SERVER_TABBED_PANE.
         //关于为什么要这么做，因为直接向 TABBED_PANE 放入 SERVER_TABBED_PANE 会导致服务端列表标签页可被删除，目前暂时不清楚问题所在...
@@ -102,20 +105,6 @@ public class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabsPopupPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
-
-        //载入主配置文件
-        try {
-            if (new File("./balloonserver.json").exists()) {
-                ConfigurationManager.loadBalloonServerConfigFromFile("./balloonserver.json", CONFIG);
-                GLOBAL_LOGGER.info("成功载入主程序配置文件.");
-            } else {
-                GLOBAL_LOGGER.info("主程序配置文件不存在，正在创建文件...");
-                ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
-                GLOBAL_LOGGER.info("成功生成主程序配置文件.");
-            }
-        } catch (Exception e) {
-            GLOBAL_LOGGER.warning("主程序配置文件加载失败！\n" + GUILogger.stackTraceToString(e));
-        }
 
         Thread serverThread = new Thread(() -> {
             LittleServer littleServer;
@@ -148,23 +137,22 @@ public class BalloonServer {
 
         GLOBAL_THREAD_POOL.execute(() -> {
             long start = System.currentTimeMillis();
-            if (CONFIG.getCloseOperation() == BalloonServerConfig.QUERY.getOperation()) {
-                SwingSystemTray.initSystemTrayAndFrame(MAIN_FRAME, false, false);
-                MAIN_FRAME.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosing(WindowEvent e) {
-                        if (MAIN_FRAME.getDefaultCloseOperation() == WindowConstants.DO_NOTHING_ON_CLOSE) {
-                            ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(MAIN_FRAME, CONFIG);
-                            confirmExitDialog.setVisible(true);
-                        }
+            SwingSystemTray.initSystemTrayAndFrame(MAIN_FRAME);
+            MAIN_FRAME.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    if (CONFIG.getCloseOperation() == BalloonServerConfig.QUERY.getOperation()) {
+                        ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(MAIN_FRAME, CONFIG);
+                        confirmExitDialog.setVisible(true);
+                    } else if (CONFIG.getCloseOperation() == BalloonServerConfig.HIDE_ON_CLOSE.getOperation()){
+                        MAIN_FRAME.setVisible(false);
+                    } else {
+                        CONFIG.setCloseOperation(BalloonServerConfig.EXIT_ON_CLOSE.getOperation());
+                        saveConfig();
+                        System.exit(0);
                     }
-                });
-            } else if (CONFIG.getCloseOperation() == BalloonServerConfig.HIDE_ON_CLOSE.getOperation()){
-                SwingSystemTray.initSystemTrayAndFrame(MAIN_FRAME, true, false);
-            } else {
-                SwingSystemTray.initSystemTrayAndFrame(MAIN_FRAME, false, true);
-            }
-
+                }
+            });
             GLOBAL_LOGGER.info(String.format("任务栏已加载完毕, 耗时 %sms", System.currentTimeMillis() - start));
         });
 
@@ -182,6 +170,35 @@ public class BalloonServer {
         MAIN_FRAME.setVisible(true);
         PREMAIN_FRAME.dispose();
     }
+    /**
+     * 载入配置文件
+     */
+    private static void loadConfig() {
+        try {
+            if (new File("./balloonserver.json").exists()) {
+                ConfigurationManager.loadBalloonServerConfigFromFile("./balloonserver.json", CONFIG);
+                GLOBAL_LOGGER.info("成功载入主程序配置文件.");
+            } else {
+                GLOBAL_LOGGER.info("主程序配置文件不存在，正在创建文件...");
+                ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
+                GLOBAL_LOGGER.info("成功生成主程序配置文件.");
+            }
+        } catch (Exception e) {
+            GLOBAL_LOGGER.warning("主程序配置文件加载失败！\n" + GUILogger.stackTraceToString(e));
+        }
+    }
+
+    /**
+     * 保存配置文件
+     */
+    private static void saveConfig() {
+        try {
+            ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
+            GLOBAL_LOGGER.info("成功保存主程序配置文件.");
+        } catch (IOException e) {
+            GLOBAL_LOGGER.warning("主程序配置文件保存失败！\n" + GUILogger.stackTraceToString(e));
+        }
+    }
 
     /**
      * 菜单栏组装
@@ -198,7 +215,7 @@ public class BalloonServer {
             String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务器实例名称","创建",JOptionPane.INFORMATION_MESSAGE);
             if (Security.stringIsUnsafe(MAIN_FRAME, serverName, null)) return;
 
-            if (new File(String.format("./%s.json", serverName)).exists()) {
+            if (new File(String.format("./%s.lscfg.json", serverName)).exists()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
                         "已存在此服务器名，请使用载入服务器.","已存在服务器",
                         JOptionPane.WARNING_MESSAGE);
@@ -228,7 +245,7 @@ public class BalloonServer {
         loadLittleServer.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setMultiSelectionEnabled(true);
-            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"json"}, new String[]{"res-cache", "littleserver", "balloonserver"} ,"LittleServer 配置文件 (*.json)"));
+            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"} ,"LittleServer 配置文件 (*.lscfg.json)"));
 
             if (!(fileChooser.showDialog(MAIN_FRAME, "载入选中实例") == JFileChooser.APPROVE_OPTION)) {
                 return;
@@ -237,7 +254,7 @@ public class BalloonServer {
             String[] serverNames = new String[selectedFiles.length];
 
             for (int i = 0; i < selectedFiles.length; i++) {
-                serverNames[i] = selectedFiles[i].getName().replace(".json", "");
+                serverNames[i] = selectedFiles[i].getName().replace(".lscfg.json", "");
             }
 
             LittleServer[] customServers = new LittleServer[serverNames.length];

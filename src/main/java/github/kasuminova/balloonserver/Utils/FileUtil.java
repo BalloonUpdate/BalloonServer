@@ -144,25 +144,17 @@ public class FileUtil {
         }
 
         public boolean accept(File file) {
-            if (!file.isDirectory()) {
-                String fileName = file.getName();
-                //黑名单检查
-                if (blackList != null) {
-                    for (String s : blackList) {
-                        if (fileName.contains(s)) return false;
-                    }
+            //如果是文件夹则显示文件夹
+            if (file.isDirectory()) return true;
+            String fileName = file.getName();
+            //黑名单检查
+            if (blackList != null) {
+                for (String s : blackList) {
+                    if (fileName.contains(s)) return false;
                 }
-                int index = fileName.lastIndexOf('.');
-                if (index > 0 && index < fileName.length() - 1) {
-                    // 表示文件名称不为".xxx"现"xxx."之类型
-                    String extension = fileName.substring(index + 1).toLowerCase();
-                    for (String s : ext) {
-                        if (extension.equals(s)) return true;
-                    }
-                }
-            } else {
-                //如果是文件夹，则显示文件夹
-                return true;
+            }
+            for (String extension : ext) {
+                if (file.getName().endsWith(String.format(".%s", extension))) return true;
             }
             return false;
         }

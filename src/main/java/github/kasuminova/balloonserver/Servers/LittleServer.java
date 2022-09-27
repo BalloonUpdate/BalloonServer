@@ -292,7 +292,7 @@ public class LittleServer {
         configPanel.add(onceModePanel);
 
         //载入配置文件并初始化 HTTP 服务端
-        loadConfigurationFromFile(String.format("./%s.json", serverName));
+        loadConfigurationFromFile(String.format("./%s.lscfg.json", serverName));
         loadHttpServer();
 
         JPanel southControlPanel = new JPanel(new VFlowLayout());
@@ -324,7 +324,7 @@ public class LittleServer {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            File jsonCache = new File(String.format("./%s_res-cache.json", serverName));
+            File jsonCache = new File(String.format("./%s.res-cache.json", serverName));
             CacheUtils cacheUtil = new CacheUtils(serverInterface, httpServerInterface, startOrStop);
             if (jsonCache.exists()) {
                 try {
@@ -432,43 +432,42 @@ public class LittleServer {
                 return;
             }
 
-            if (new File(String.format("./%s_res-cache.json", serverName)).exists()) {
+            if (new File(String.format("./%s.res-cache.json", serverName)).exists()) {
                 int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
                         "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
                         "已检测到本地 JSON 缓存", JOptionPane.YES_NO_OPTION);
-                if (selection == JOptionPane.YES_OPTION) {
-                    try {
-                        String json = FileUtil.readStringFromFile(new File(String.format("./%s_res-cache.json", serverName)));
-                        showRuleEditorDialog(JSONArray.parseArray(json));
+                if (!(selection == JOptionPane.YES_OPTION)) return;
 
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(MAIN_FRAME,
-                                "无法读取本地 JSON 缓存" + ex,"错误",
-                                JOptionPane.ERROR_MESSAGE);
-                    }
+                try {
+                    String json = FileUtil.readStringFromFile(new File(String.format("./%s.res-cache.json", serverName)));
+                    showRuleEditorDialog(JSONArray.parseArray(json));
+
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(MAIN_FRAME,
+                            "无法读取本地 JSON 缓存" + ex,"错误",
+                            JOptionPane.ERROR_MESSAGE);
                 }
-                return;
             }
 
             int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
                     "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
                     "未检测到 JSON 缓存", JOptionPane.YES_NO_OPTION);
-            if (selection == JOptionPane.YES_OPTION) {
-                GLOBAL_THREAD_POOL.execute(() -> {
-                    new CacheUtils(serverInterface,httpServerInterface,startOrStop).updateDirCache(null);
-                    if (new File(String.format("./%s_res-cache.json", serverName)).exists()) {
-                        try {
-                            String json = FileUtil.readStringFromFile(new File(String.format("./%s_res-cache.json", serverName)));
-                            showRuleEditorDialog(JSONArray.parseArray(json));
+            if (!(selection == JOptionPane.YES_OPTION)) return;
 
-                        } catch (IOException ex) {
-                            JOptionPane.showMessageDialog(MAIN_FRAME,
-                                    "无法读取本地 JSON 缓存" + ex, "错误",
-                                    JOptionPane.ERROR_MESSAGE);
-                        }
+            GLOBAL_THREAD_POOL.execute(() -> {
+                new CacheUtils(serverInterface,httpServerInterface,startOrStop).updateDirCache(null);
+                if (new File(String.format("./%s.res-cache.json", serverName)).exists()) {
+                    try {
+                        String json = FileUtil.readStringFromFile(new File(String.format("./%s.res-cache.json", serverName)));
+                        showRuleEditorDialog(JSONArray.parseArray(json));
+
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(MAIN_FRAME,
+                                "无法读取本地 JSON 缓存" + ex, "错误",
+                                JOptionPane.ERROR_MESSAGE);
                     }
-                });
-            }
+                }
+            });
         }
     }
 
@@ -477,7 +476,7 @@ public class LittleServer {
      */
     private void startServer() {
         GLOBAL_THREAD_POOL.execute(() -> {
-            File jsonCache = new File(String.format("./%s_res-cache.json", serverName));
+            File jsonCache = new File(String.format("./%s.res-cache.json", serverName));
 
             CacheUtils cacheUtil = new CacheUtils(serverInterface, httpServerInterface, startOrStop);
             if (jsonCache.exists()) {
@@ -569,7 +568,7 @@ public class LittleServer {
      * 重新生成缓存
      */
     private void regenResCache() {
-        File jsonCache = new File(String.format("./%s_res-cache.json", serverName));
+        File jsonCache = new File(String.format("./%s.res-cache.json", serverName));
         CacheUtils cacheUtil = new CacheUtils(serverInterface,httpServerInterface,startOrStop);
         if (jsonCache.exists()) {
             try {
@@ -610,7 +609,7 @@ public class LittleServer {
         if (!new File(configFilePath).exists()) {
             try {
                 logger.warn("未找到配置文件，正在尝试在程序当前目录生成配置文件...");
-                ConfigurationManager.saveConfigurationToFile(new LittleServerConfig(), "./", serverName);
+                ConfigurationManager.saveConfigurationToFile(new LittleServerConfig(), "./", String.format("%s.lscfg", serverName));
                 logger.info("配置生成成功.");
                 logger.info("目前正在使用程序默认配置.");
             } catch (Exception e) {
