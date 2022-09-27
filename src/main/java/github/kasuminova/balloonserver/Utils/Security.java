@@ -20,7 +20,8 @@ public class Security {
         }
 
         //非法字符检查
-        List<String> unavailableStrList = new ArrayList<>(List.of(":", "*", "?", "<", ">", "|",
+        List<String> unavailableStrList = new ArrayList<>(List.of(
+                ":", "*", "?", "<", ">", "|",
                 "CON", "AUX",
                 "COM1", "COM2", "COM3", "COM4",
                 "LPT1", "LPT2", "LPT3",

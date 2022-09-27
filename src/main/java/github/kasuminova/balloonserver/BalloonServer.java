@@ -213,7 +213,7 @@ public class BalloonServer {
         newMenu.add(createNewLittleServer);
         createNewLittleServer.addActionListener(e -> {
             String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务器实例名称","创建",JOptionPane.INFORMATION_MESSAGE);
-            if (Security.stringIsUnsafe(MAIN_FRAME, serverName, null)) return;
+            if (Security.stringIsUnsafe(MAIN_FRAME, serverName, new String[]{"balloonserver","littleserver","res-cache",".lscfg",".json"})) return;
 
             if (new File(String.format("./%s.lscfg.json", serverName)).exists()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
