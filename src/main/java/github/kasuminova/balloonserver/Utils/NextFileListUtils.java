@@ -1,17 +1,12 @@
 package github.kasuminova.balloonserver.Utils;
 
 import java.io.File;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.security.MessageDigest;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.CRC32;
 
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
@@ -20,13 +15,19 @@ import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 import javax.swing.*;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
+import static github.kasuminova.balloonserver.Utils.HashCalculator.getCRC32;
+import static github.kasuminova.balloonserver.Utils.HashCalculator.getSHA1;
 
 /**
  * 计算资源缓存的公用类
  */
 public class NextFileListUtils {
+    public NextFileListUtils(String hashAlgorithm) {
+        this.hashAlgorithm = hashAlgorithm;
+    }
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
+    private final String hashAlgorithm;
     private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
     public long getCompletedBytes() {
@@ -144,88 +145,20 @@ public class NextFileListUtils {
             this.file = file;
         }
         @Override
-        public SimpleFileObject call() {
-            String sha1 = getSHA1(file);
+        public SimpleFileObject call() throws IOException, NoSuchAlgorithmException {
+            String hash;
+            if (hashAlgorithm.equals(HashCalculator.SHA1)) {
+                hash = getSHA1(file, completedBytes);
+            } else {
+                hash = getCRC32(file, completedBytes);
+            }
             completedFiles.getAndIncrement();
             return new SimpleFileObject(
                     file.getName(),
                     file.length(),
-                    sha1,
+                    hash,
                     file.lastModified() / 1000);
         }
-    }
-
-    private String getMD5(File file) {
-        try {
-            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
-            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            int len;
-            while ((len = fc.read(byteBuffer)) > 0) {
-                md.update(byteBuffer.array(), 0, len);
-                completedBytes.getAndAdd(len);
-                byteBuffer.flip();
-                byteBuffer.clear();
-            }
-            fc.close();
-            //转换并返回包含 16 个元素字节数组,返回数值范围为 -128 到 127
-            byte[] md5Bytes = md.digest();
-            //1 代表绝对值
-            BigInteger bigInt = new BigInteger(1, md5Bytes);
-            //转换为 16 进制
-            return bigInt.toString(16);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "ERROR";
-    }
-
-    private String getSHA1(File file) {
-        try {
-            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
-            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-            MessageDigest md = MessageDigest.getInstance("SHA1");
-
-            int len;
-            while ((len = fc.read(byteBuffer)) > 0) {
-                md.update(byteBuffer.array(), 0, len);
-                completedBytes.getAndAdd(len);
-                byteBuffer.flip();
-                byteBuffer.clear();
-            }
-            fc.close();
-            //转换并返回包含 16 个元素字节数组,返回数值范围为 -128 到 127
-            byte[] md5Bytes = md.digest();
-            //1 代表绝对值
-            BigInteger bigInt = new BigInteger(1, md5Bytes);
-            //转换为 16 进制
-            return bigInt.toString(16);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "ERROR";
-    }
-
-    private String getCRC32(File file) {
-        try {
-            FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
-            ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-            CRC32 crc32 = new CRC32();
-
-            int len;
-            while ((len = fc.read(byteBuffer)) > 0) {
-                crc32.update(byteBuffer.array(), 0, len);
-                completedBytes.getAndAdd(len);
-                byteBuffer.flip();
-                byteBuffer.clear();
-            }
-            fc.close();
-            return String.valueOf(crc32.getValue());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "ERROR";
     }
 
     /**

@@ -66,6 +66,7 @@ public class HttpServer {
             future = bootstrap.bind(new InetSocketAddress(ip, port)).sync();
             String addressType = IPAddressUtil.checkAddress(ip);
             assert addressType != null;
+
             if ("v6".equals(addressType)) {
                 if (httpServerInitializer.isUseSsl()) {
                     logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",

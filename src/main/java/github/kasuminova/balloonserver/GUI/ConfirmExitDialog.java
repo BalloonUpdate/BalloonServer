@@ -11,6 +11,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_LOGGER;
+import static github.kasuminova.balloonserver.BalloonServer.stopAllServers;
 
 public class ConfirmExitDialog extends JDialog {
     public ConfirmExitDialog(JFrame frame, BalloonServerConfig config) {
@@ -57,7 +58,8 @@ public class ConfirmExitDialog extends JDialog {
                         GLOBAL_LOGGER.warning("主程序配置文件保存失败！\n" + GUILogger.stackTraceToString(ex));
                     }
                 }
-
+                //停止所有正在运行的服务器并保存配置
+                stopAllServers(true);
                 System.exit(0);
             }
             //保存配置并最小化窗口

@@ -51,14 +51,14 @@ public class SettingsPanel {
         JLabel autoStartDefaultServerOnceDesc = new JLabel("此项选中后，BalloonServer 在启动时会自动启动主服务端的服务器，仅生效一次，生效后自动关闭.");
 
         //自动检查更新
-        JLabel autoCheckUpdatesDesc = new JLabel("此项选中后，BalloonServer 在会定时检查最新更新.");
+        JLabel autoCheckUpdatesDesc = new JLabel("此项选中后，BalloonServer 在会在启动时检查最新更新.");
 
         //自动更新
-        JLabel autoUpdateDesc = new JLabel("此项选中后，BalloonServer 在检查到更新后，会自动下载并自动重启应用更新（仅支持 exe 格式服务端）.");
+        JLabel autoUpdateDesc = new JLabel("此项及“自动检查更新”项选中后，BalloonServer 在检查到更新后，会自动下载并自动重启应用更新，如果主服务端正在运行，则下次启动会自动启动服务器.");
         //如果程序非 exe 格式则设置为禁用
-        if (!SettingsPanel.class.getProtectionDomain().getCodeSource().getLocation().getFile().endsWith(".exe")) {
+        if (!ARCHIVE_NAME.contains("e4j")) {
             autoUpdate.setEnabled(false);
-            autoUpdate.setText("自动更新（不支持）");
+            autoUpdate.setText("自动更新（不支持，目前仅支持 exe 格式服务端）");
         }
 
         //关闭选项

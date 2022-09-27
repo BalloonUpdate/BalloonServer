@@ -48,6 +48,8 @@ public class CacheUtils {
      * 传入的参数如果为 null，则完整生成一次缓存
      */
     public void updateDirCache(JSONArray jsonCache) {
+        long start = System.currentTimeMillis();
+
         if (jsonCache != null) {
             if (!genDirCache(jsonCache)) {
                 return;
@@ -55,14 +57,15 @@ public class CacheUtils {
             try {
                 //等待线程结束
                 counterThread.join();
-                System.gc();
-                logger.info("内存已完成回收.");
 
                 timer.stop();
-                logger.info("资源变化计算完毕, 正在向磁盘生成 JSON 缓存.");
+                logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
 
                 //输出并向服务器设置 JSON
                 generateJsonToDiskAndSetServerJson(jsonArray);
+
+                System.gc();
+                logger.info("内存已完成回收.");
 
                 //隐藏状态栏进度条
                 GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
@@ -75,16 +78,17 @@ public class CacheUtils {
             try {
                 //等待线程结束
                 counterThread.join();
-                System.gc();
-                logger.info("内存已完成回收.");
 
                 timer.stop();
-                logger.info("资源目录缓存生成完毕, 正在向磁盘生成 JSON 缓存.");
+                logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
 
                 //输出并向服务器设置 JSON
                 jsonArray.clear();
                 jsonArray.addAll(fileObjList);
                 generateJsonToDiskAndSetServerJson(jsonArray);
+
+                System.gc();
+                logger.info("内存已完成回收.");
 
                 //隐藏状态栏进度条
                 GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
@@ -182,7 +186,7 @@ public class CacheUtils {
         String resJSONStr = jsonArray.toJSONString();
         serverInterface.setResJson(resJSONStr);
         try {
-            FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.res-cache", serverInterface.getServerName()));
+            FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.%s", serverInterface.getServerName(), serverInterface.getResJsonFileExtensionName()));
             logger.info("JSON 缓存生成完毕.");
         } catch (IOException ex) {
             logger.error("生成 JSON 缓存的时候出现了问题...", ex);
@@ -227,7 +231,7 @@ public class CacheUtils {
 
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
 
-        FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger);
+        FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger, serverInterface.getHashAlgorithm());
         logger.info(String.format("文件夹大小：%s, 文件数量：%s", totalSize,dirSize[1]));
         if (jsonCache != null) {
             logger.info("检测到已缓存的 JSON, 正在检查变化...");
@@ -251,7 +255,7 @@ public class CacheUtils {
             logger.info("正在生成资源目录缓存...");
             File finalDir = dir;
             //新建资源计算器实例
-            fileListUtils = new NextFileListUtils();
+            fileListUtils = new NextFileListUtils(serverInterface.getHashAlgorithm());
             //创建新线程实例并执行
             counterThread = new Thread(() -> {
                 fileObjList.clear();

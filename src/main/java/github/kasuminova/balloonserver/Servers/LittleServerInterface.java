@@ -19,8 +19,10 @@ public interface LittleServerInterface {
     //获取文件结构 JSON
     String getResJson();
     String getServerName();
+    String getResJsonFileExtensionName();
     //设置新的文件结构 JSON
     void setResJson(String newResJson);
+
     /**
      * 重新生成缓存
      */
@@ -31,8 +33,14 @@ public interface LittleServerInterface {
      * @return 是否关闭成功
      */
     boolean stopServer();
+
     /**
      * 保存配置
      */
     void saveConfig();
+
+    /**
+     * 获取 Hash 算法
+     */
+    String getHashAlgorithm();
 }

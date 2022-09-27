@@ -3,38 +3,145 @@ package github.kasuminova.balloonserver.UpdateChecker;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.Utils.GUILogger;
+
+import javax.swing.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+
+import static github.kasuminova.balloonserver.BalloonServer.*;
+import static github.kasuminova.balloonserver.UpdateChecker.HttpClient.downloadFileWithURL;
 
 public class Checker {
-    public static void main(String[] args) {
+    /**
+     * 从 Gitee 仓库获取最新 Release 信息
+     */
+    public static void checkUpdates() {
         String apiURL = "https://gitee.com/api/v5/repos/hikari_nova/BalloonServer/releases";
         String giteeAPIJson = HttpClient.getStringWithURL(apiURL);
         if (giteeAPIJson.startsWith("ERROR:")) {
             return;
         }
         JSONArray jsonArray = JSONArray.parseArray(giteeAPIJson);
-        JSONObject newRelease = jsonArray.getJSONObject(0);
-        ApplicationVersion newVersion = new ApplicationVersion(newRelease.getString("tag_name"));
+        JSONObject latestRelease = jsonArray.getJSONObject(0);
+        ApplicationVersion newVersion = new ApplicationVersion(latestRelease.getString("tag_name"));
 
         ApplicationVersion applicationVersion = BalloonServer.VERSION;
-        //大版本更新检查
-        if (applicationVersion.getBigVersion() < newVersion.getBigVersion()) {
-            //业务代码...
-            System.out.println("Has a BigVersion Update");
 
-               //子版本更新检查
-        } else if (applicationVersion.getSubVersion() < newVersion.getSubVersion()) {
-            System.out.println("Has a SubVersion Update");
-            //业务代码...
-
-               //小版本更新检查
-        } else if (applicationVersion.getMinorVersion() < newVersion.getMinorVersion()) {
-            System.out.println("Has a MinorVersion Update");
-            //业务代码...
-        } else {
-            System.out.println("No Update");
+        //如果当前版本高于仓库最新版本则忽略更新
+        if (applicationVersion.getBigVersion() > newVersion.getBigVersion() ||
+            applicationVersion.getSubVersion() > newVersion.getSubVersion() ||
+            applicationVersion.getMinorVersion() > newVersion.getMinorVersion())
+        {
+            GLOBAL_LOGGER.info("当前版本为最新版本.");
+            return;
         }
 
-        System.out.println(BalloonServer.VERSION);
-        System.out.println(newVersion);
+        //版本更新检查
+        if (applicationVersion.getBigVersion() < newVersion.getBigVersion() ||
+            applicationVersion.getSubVersion() < newVersion.getSubVersion() ||
+            applicationVersion.getMinorVersion() < newVersion.getMinorVersion())
+        {
+            if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp")) {
+                String fileName = downloadUpdate(latestRelease, false);
+                if (fileName != null) startProgram(fileName, true);
+                return;
+            }
+            int operation = JOptionPane.showConfirmDialog(MAIN_FRAME,
+                    String.format("检测到有版本更新 (%s)，您要下载更新吗？", newVersion),
+                    "更新提示",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (operation != JOptionPane.YES_NO_OPTION) return;
+
+            downloadUpdate(latestRelease, true);
+        } else {
+            GLOBAL_LOGGER.info("当前版本为最新版本.");
+        }
+    }
+
+    /**
+     * 启动指定名称的程序
+     * @param fileName 程序名
+     */
+    public static void startProgram(String fileName, boolean exitThisProgram) {
+        try {
+            Runtime.getRuntime().exec(String.format(".\\%s", fileName));
+            if (exitThisProgram) {
+                //如果主服务端正在运行，则打开自动启动服务器（仅一次）选项并保存，下次启动服务端时自动启动服务器
+                if (availableCustomServerInterfaces.get(0).isStarted().get()) {
+                    CONFIG.setAutoStartServerOnce(true);
+                    BalloonServer.saveConfig();
+                }
+                //停止所有正在运行的服务器并保存配置
+                BalloonServer.stopAllServers(false);
+                System.exit(0);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(MAIN_FRAME,
+                    String.format("无法启动服务端。\n%s", GUILogger.stackTraceToString(e)),"错误",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * 下载最新的程序版本，返回下载完成后的文件名
+     * @param latestRelease Release API 的 JSON 信息
+     * @param showCompleteDialog 完成下载后是否弹出完成对话框
+     * @return 文件名, 如果无匹配服务端或下载失败返回 null
+     */
+    private static String downloadUpdate(JSONObject latestRelease, boolean showCompleteDialog) {
+        JSONArray assets = latestRelease.getJSONArray("assets");
+        assets.remove(assets.size() - 1);
+
+        if (ARCHIVE_NAME.contains("e4j")) {
+            for (int i = 0; i < assets.size(); i++) {
+                JSONObject asset = assets.getJSONObject(i);
+                String fileName = asset.getString("name");
+                if (fileName.endsWith(".exe")) {
+                    try {
+                        //下载文件
+                        downloadFileWithURL(
+                                new URL(asset.getString("browser_download_url")),
+                                new File(String.format("./%s", fileName)));
+                        if (showCompleteDialog) {
+                            JOptionPane.showMessageDialog(MAIN_FRAME,
+                                    String.format("程序下载完成！已保存至当前程序路径(%s)。", fileName),
+                                    "完成",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        return fileName;
+                    } catch (IOException e) {
+                        GLOBAL_LOGGER.warning(String.format("下载更新失败\n%s", GUILogger.stackTraceToString(e)));
+                    }
+                }
+            }
+            return null;
+        }
+
+        for (int i = 0; i < assets.size(); i++) {
+            JSONObject asset = assets.getJSONObject(i);
+            String fileName = asset.getString("name");
+            if (fileName.endsWith(".jar")) {
+                try {
+                    //下载文件
+                    downloadFileWithURL(
+                            new URL(asset.getString("browser_download_url")),
+                            new File(String.format("./%s", fileName)));
+                    if (showCompleteDialog) {
+                        JOptionPane.showMessageDialog(MAIN_FRAME,
+                                String.format("程序下载完成！已保存至当前程序路径(%s)。", fileName),
+                                "完成",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    return fileName;
+                } catch (IOException e) {
+                    GLOBAL_LOGGER.warning(String.format("下载更新失败，可能是因为用户取消了操作或无法连接至服务器.\n%s", GUILogger.stackTraceToString(e)));
+                }
+            }
+        }
+        return null;
     }
 }

@@ -13,29 +13,17 @@ import java.nio.file.Paths;
  */
 public class ConfigurationManager {
     public static void loadLittleServerConfigFromFile(String path, LittleServerConfig oldConfig) throws IOException {
-        LittleServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
+        LittleServerConfig newConfig = JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
 
-        //配置文件版本验证
-        if (config.getConfigVersion() == 0) {
-            LittleServerConfig newConfig = new LittleServerConfig();
-            newConfig.setIp(config.getIp());
-            newConfig.setFileChangeListener(config.isFileChangeListener());
-            newConfig.setPort(config.getPort());
-            newConfig.setMainDirPath(config.getMainDirPath());
-            newConfig.setJksFilePath(config.getJksFilePath());
-            newConfig.setJksSslPassword(config.getJksSslPassword());
-            return;
-        }
-
-        oldConfig.setConfigVersion(config.getConfigVersion());
-        oldConfig.setIp(config.getIp());
-        oldConfig.setPort(config.getPort());
-        oldConfig.setMainDirPath(config.getMainDirPath());
-        oldConfig.setFileChangeListener(config.isFileChangeListener());
-        oldConfig.setJksFilePath(config.getJksFilePath());
-        oldConfig.setJksSslPassword(config.getJksSslPassword());
-        oldConfig.setCommonMode(config.getCommonMode());
-        oldConfig.setOnceMode(config.getOnceMode());
+        oldConfig.setConfigVersion(newConfig.getConfigVersion());
+        oldConfig.setIp(newConfig.getIp());
+        oldConfig.setPort(newConfig.getPort());
+        oldConfig.setMainDirPath(newConfig.getMainDirPath());
+        oldConfig.setFileChangeListener(newConfig.isFileChangeListener());
+        oldConfig.setJksFilePath(newConfig.getJksFilePath());
+        oldConfig.setJksSslPassword(newConfig.getJksSslPassword());
+        oldConfig.setCommonMode(newConfig.getCommonMode());
+        oldConfig.setOnceMode(newConfig.getOnceMode());
     }
     public static void loadBalloonServerConfigFromFile(String path, BalloonServerConfig oldConfig) throws IOException {
         BalloonServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), BalloonServerConfig.class);

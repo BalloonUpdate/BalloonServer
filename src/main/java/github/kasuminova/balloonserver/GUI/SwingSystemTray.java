@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URL;
 
 import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
+import static github.kasuminova.balloonserver.BalloonServer.stopAllServers;
 
 /**
  * 中文系统托盘弹出菜单不乱码。
@@ -59,6 +60,8 @@ public class SwingSystemTray {
             } catch (IOException ex) {
                 BalloonServer.GLOBAL_LOGGER.warning("保存主程序配置文件失败！");
             }
+            //停止所有正在运行的服务器并保存配置
+            stopAllServers(true);
             System.exit(0);
         });
         JMenuItem showMainFrame = new JMenuItem("显示窗口");
