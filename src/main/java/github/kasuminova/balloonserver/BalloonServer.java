@@ -49,7 +49,6 @@ public class BalloonServer {
     private static final JProgressBar PRE_LOAD_PROGRESS_BAR = new JProgressBar();
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(
             BalloonServer.class.getResource("/image/icon_128x128.jpg")));
-
     //主窗口
     public static final JFrame MAIN_FRAME = new JFrame("BalloonServer " + VERSION);
     public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);

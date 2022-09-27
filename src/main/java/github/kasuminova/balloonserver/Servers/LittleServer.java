@@ -441,12 +441,12 @@ public class LittleServer {
                 try {
                     String json = FileUtil.readStringFromFile(new File(String.format("./%s.res-cache.json", serverName)));
                     showRuleEditorDialog(JSONArray.parseArray(json));
-
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(MAIN_FRAME,
                             "无法读取本地 JSON 缓存" + ex,"错误",
                             JOptionPane.ERROR_MESSAGE);
                 }
+                return;
             }
 
             int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
