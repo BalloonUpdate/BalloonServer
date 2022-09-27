@@ -65,7 +65,7 @@ public class BalloonServer {
     public static final List<LittleServerInterface> availableCustomServerInterfaces = Collections.synchronizedList(new ArrayList<>());
     private static void init() {
         //大小设置
-        MAIN_FRAME.setSize(1350,785);
+        MAIN_FRAME.setSize(1350,780);
         MAIN_FRAME.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.8), MAIN_FRAME.getHeight()));
 
         //标签页配置
@@ -228,6 +228,7 @@ public class BalloonServer {
 
                 LittleServer customServer = new LittleServer(serverName, false);
 
+                availableCustomServerInterfaces.add(customServer.getServerInterface());
                 SERVER_TABBED_PANE.addTab(serverName, CUSTOM_SERVER_ICON, customServer.getPanel());
                 SERVER_TABBED_PANE.setSelectedIndex(SERVER_TABBED_PANE.getTabCount() - 1);
 
@@ -376,7 +377,7 @@ public class BalloonServer {
      */
     private static void loadStatusBar() {
         //状态栏
-        STATUS_PANEL.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(4, 4, 4, 4)));
+        STATUS_PANEL.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(2, 4, 2, 4)));
         JLabel threadCount = new JLabel("当前运行的线程数量：0");
         STATUS_PANEL.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
