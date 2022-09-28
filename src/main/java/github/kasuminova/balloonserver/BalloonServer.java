@@ -449,11 +449,6 @@ public class BalloonServer {
                 SERVER_TABBED_PANE.setSelectedIndex(index);
                 return false;
             }
-        } else {
-            if (inquireUser) {
-                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME, String.format("你要关闭 %s 这个实例吗？", serverName) , "提示", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
-                if (!(selection == JOptionPane.YES_OPTION)) return false;
-            }
         }
         //保存配置
         serverInterface.saveConfig();

@@ -9,7 +9,7 @@
       <registry />
     </searchSequence>
     <classPath>
-      <archive location="C:/Users/Kasumi_Nova/IdeaProjects/BalloonServer/build/libs/BalloonServer-GUI-1.2.0-STABLE-PREVIEW_3.jar" />
+      <archive location="C:/Users/Kasumi_Nova/IdeaProjects/BalloonServer/build/libs/BalloonServer-GUI-1.2.0-STABLE.jar" />
     </classPath>
   </java>
 </exe4j>
