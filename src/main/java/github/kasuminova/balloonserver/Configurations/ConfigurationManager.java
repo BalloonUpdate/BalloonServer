@@ -12,8 +12,8 @@ import java.nio.file.Paths;
  * @author Kasumi_Nova
  */
 public class ConfigurationManager {
-    public static void loadLittleServerConfigFromFile(String path, LittleServerConfig oldConfig) throws IOException {
-        LittleServerConfig newConfig = JSON.parseObject(Files.newInputStream(Paths.get(path)), LittleServerConfig.class);
+    public static void loadLittleServerConfigFromFile(String path, IntegratedServerConfig oldConfig) throws IOException {
+        IntegratedServerConfig newConfig = JSON.parseObject(Files.newInputStream(Paths.get(path)), IntegratedServerConfig.class);
 
         oldConfig.setConfigVersion(newConfig.getConfigVersion());
         oldConfig.setIp(newConfig.getIp());

@@ -15,6 +15,8 @@ import java.net.URL;
 
 import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
 import static github.kasuminova.balloonserver.BalloonServer.stopAllServers;
+import static github.kasuminova.balloonserver.Utils.SvgIcons.STOP_ICON;
+import static github.kasuminova.balloonserver.Utils.SvgIcons.TERMINAL_ICON;
 
 /**
  * 中文系统托盘弹出菜单不乱码。
@@ -52,7 +54,7 @@ public class SwingSystemTray {
         jPopupMenu.setSize(100, 30);
 
         //添加菜单选项
-        JMenuItem exit = new JMenuItem("退出程序");
+        JMenuItem exit = new JMenuItem("退出程序", STOP_ICON);
         exit.addActionListener(e -> {
             try {
                 ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
@@ -64,7 +66,7 @@ public class SwingSystemTray {
             stopAllServers(true);
             System.exit(0);
         });
-        JMenuItem showMainFrame = new JMenuItem("显示窗口");
+        JMenuItem showMainFrame = new JMenuItem("显示窗口", TERMINAL_ICON);
         showMainFrame.addActionListener(e -> {
             //显示窗口
             frame.setVisible(true);

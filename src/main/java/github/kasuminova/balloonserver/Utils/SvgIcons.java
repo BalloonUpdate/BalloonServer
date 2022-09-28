@@ -28,6 +28,10 @@ public class SvgIcons {
             SvgIcons.class.getResource("/icons/delete.svg")));
     public static final FlatSVGIcon RELOAD_ICON = new FlatSVGIcon(Objects.requireNonNull(
             SvgIcons.class.getResource("/icons/reload.svg")));
+    public static final FlatSVGIcon TERMINAL_ICON = new FlatSVGIcon(Objects.requireNonNull(
+            SvgIcons.class.getResource("/icons/terminal.svg")));
+    public static final FlatSVGIcon STOP_ICON = new FlatSVGIcon(Objects.requireNonNull(
+            SvgIcons.class.getResource("/icons/stop.svg")));
     public static final FlatSVGIcon RESOURCE_ICON = new FlatSVGIcon(Objects.requireNonNull(
             SvgIcons.class.getResource("/icons/resource.svg")));
     public static final FlatSVGIcon PLAY_ICON = new FlatSVGIcon(Objects.requireNonNull(

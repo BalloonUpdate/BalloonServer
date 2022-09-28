@@ -1,7 +1,7 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
-import github.kasuminova.balloonserver.Servers.LittleServerInterface;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
+import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -28,11 +28,11 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         return useSsl;
     }
 
-    private final LittleServerInterface serverInterface;
-    public HttpServerInitializer(LittleServerInterface serverInterface) {
+    private final IntegratedServerInterface serverInterface;
+    public HttpServerInitializer(IntegratedServerInterface serverInterface) {
         this.serverInterface = serverInterface;
 
-        LittleServerConfig config = serverInterface.getConfig();
+        IntegratedServerConfig config = serverInterface.getConfig();
         this.logger = serverInterface.getLogger();
 
         if (config.getJksFilePath().isEmpty() || config.getJksSslPassword().isEmpty()) {

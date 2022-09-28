@@ -1,7 +1,7 @@
 package github.kasuminova.balloonserver.Servers;
 
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
-import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Utils.HashCalculator;
 
 import java.io.File;
@@ -9,11 +9,11 @@ import java.io.IOException;
 import java.util.Arrays;
 
 /**
- * 旧版 LittleServer 面板实例，支持多实例化，兼容 4.x.x - 4.1.14 版本的客户端
+ * 旧版 IntegratedServer 面板实例，支持多实例化，兼容 4.x.x 版本的客户端
  * @author Kasumi_Nova
  */
-public class LegacyLittleServer extends AbstractLittleServer {
-    public LegacyLittleServer(String serverName, boolean autoStart) {
+public class LegacyIntegratedServer extends AbstractIntegratedServer {
+    public LegacyIntegratedServer(String serverName, boolean autoStart) {
         super(serverName, autoStart);
         this.resJsonFileExtensionName = "legacy_res-cache";
         this.hashAlgorithm = HashCalculator.SHA1;
@@ -37,7 +37,7 @@ public class LegacyLittleServer extends AbstractLittleServer {
         if (!new File("./" + serverName + ".legacy.lscfg.json").exists()) {
             try {
                 logger.warn("未找到配置文件，正在尝试在程序当前目录生成配置文件...");
-                ConfigurationManager.saveConfigurationToFile(new LittleServerConfig(), "./", String.format("%s.legacy.lscfg", serverName));
+                ConfigurationManager.saveConfigurationToFile(new IntegratedServerConfig(), "./", String.format("%s.legacy.lscfg", serverName));
                 logger.info("配置生成成功.");
                 logger.info("目前正在使用程序默认配置.");
             } catch (Exception e) {

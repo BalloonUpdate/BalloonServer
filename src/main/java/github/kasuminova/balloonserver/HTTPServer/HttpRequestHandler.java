@@ -1,9 +1,9 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
 import com.alibaba.fastjson2.JSONObject;
-import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
-import github.kasuminova.balloonserver.Servers.LittleServerInterface;
+import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 import github.kasuminova.balloonserver.Utils.HashCalculator;
@@ -29,11 +29,11 @@ import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
 public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
     private final String resJson;
-    private final LittleServerConfig config;
+    private final IntegratedServerConfig config;
     private final GUILogger logger;
     private final JPanel requestListPanel;
     private final String hashAlgorithm;
-    public HttpRequestHandler(LittleServerInterface serverInterface) {
+    public HttpRequestHandler(IntegratedServerInterface serverInterface) {
         this.resJson = serverInterface.getResJson();
         this.config = serverInterface.getConfig();
         this.logger = serverInterface.getLogger();

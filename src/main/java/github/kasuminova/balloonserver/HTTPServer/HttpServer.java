@@ -1,7 +1,7 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
-import github.kasuminova.balloonserver.Servers.LittleServerInterface;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
+import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.Utils.FileListener;
 import github.kasuminova.balloonserver.Utils.FileListener.FileMonitor;
 import github.kasuminova.balloonserver.Utils.GUILogger;
@@ -29,14 +29,14 @@ public class HttpServer {
     private final GUILogger logger;
     private final AtomicBoolean isGenerating;
     private final AtomicBoolean isFileChanged = new AtomicBoolean(false);
-    private final LittleServerConfig config;
+    private final IntegratedServerConfig config;
     private final AtomicBoolean isStarted;
-    private final LittleServerInterface serverInterface;
+    private final IntegratedServerInterface serverInterface;
     /**
      * 新建一个 HTTP 服务器实例
      * @param serverInterface 服务器实例接口
      */
-    public HttpServer(LittleServerInterface serverInterface) {
+    public HttpServer(IntegratedServerInterface serverInterface) {
         this.serverInterface = serverInterface;
 
         this.logger = serverInterface.getLogger();

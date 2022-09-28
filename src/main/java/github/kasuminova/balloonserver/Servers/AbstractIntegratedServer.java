@@ -2,7 +2,7 @@ package github.kasuminova.balloonserver.Servers;
 
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
-import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.GUI.RuleEditor;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
@@ -31,14 +31,17 @@ import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
 import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
 
-public abstract class AbstractLittleServer {
+/**
+ * 可继承 IntegratedServer 面板实例
+ */
+public abstract class AbstractIntegratedServer {
     protected HttpServer server;
     protected String resJson;
     protected String resJsonFileExtensionName = "res-cache";
     protected String hashAlgorithm;
     protected final String serverName;
     protected final GUILogger logger;
-    protected final LittleServerConfig config = new LittleServerConfig();
+    protected final IntegratedServerConfig config = new IntegratedServerConfig();
     protected final List<String> commonModeList = new ArrayList<>();
     protected final List<String> onceModeList = new ArrayList<>();
     //服务器启动状态
@@ -64,7 +67,7 @@ public abstract class AbstractLittleServer {
     protected final JList<String> commonMode = new JList<>();
     //补全模式
     protected final JList<String> onceMode = new JList<>();
-    protected LittleServerInterface serverInterface;
+    protected IntegratedServerInterface serverInterface;
     protected HttpServerInterface httpServerInterface;
 
     /**
@@ -79,7 +82,7 @@ public abstract class AbstractLittleServer {
      * 返回当前服务器实例的接口
      * @return LittleServerInterface
      */
-    public LittleServerInterface getServerInterface() {
+    public IntegratedServerInterface getServerInterface() {
         return serverInterface;
     }
 
@@ -96,7 +99,7 @@ public abstract class AbstractLittleServer {
      * @param serverName LittleServerConfig 配置文件路径
      * @param autoStart 是否在创建对象后自动启动服务器
      */
-    public AbstractLittleServer(String serverName, boolean autoStart) {
+    public AbstractIntegratedServer(String serverName, boolean autoStart) {
         this.serverName = serverName;
         long start = System.currentTimeMillis();
         //设置 Logger，主体为 logPanel
@@ -472,14 +475,14 @@ public abstract class AbstractLittleServer {
      * 初始化 HTTP 服务器
      */
     protected void loadHttpServer() {
-        serverInterface = new LittleServerInterface() {
+        serverInterface = new IntegratedServerInterface() {
             @Override
             public GUILogger getLogger() {
                 return logger;
             }
 
             @Override
-            public LittleServerConfig getConfig() {
+            public IntegratedServerConfig getConfig() {
                 return config;
             }
 
@@ -525,7 +528,7 @@ public abstract class AbstractLittleServer {
 
             @Override
             public boolean stopServer() {
-                return AbstractLittleServer.this.stopServer();
+                return AbstractIntegratedServer.this.stopServer();
             }
 
             @Override
@@ -601,7 +604,7 @@ public abstract class AbstractLittleServer {
         if (!new File("./" + serverName + ".lscfg.json").exists()) {
             try {
                 logger.warn("未找到配置文件，正在尝试在程序当前目录生成配置文件...");
-                ConfigurationManager.saveConfigurationToFile(new LittleServerConfig(), "./", String.format("%s.lscfg", serverName));
+                ConfigurationManager.saveConfigurationToFile(new IntegratedServerConfig(), "./", String.format("%s.lscfg", serverName));
                 logger.info("配置生成成功.");
                 logger.info("目前正在使用程序默认配置.");
             } catch (Exception e) {

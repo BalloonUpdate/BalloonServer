@@ -2,8 +2,8 @@ package github.kasuminova.balloonserver.Utils;
 
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
-import github.kasuminova.balloonserver.Servers.LittleServerInterface;
-import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
+import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 
 import javax.swing.*;
@@ -20,8 +20,8 @@ import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_STATUS_PROGRE
  */
 public class CacheUtils {
     private final HttpServerInterface httpServerInterface;
-    private final LittleServerInterface serverInterface;
-    public CacheUtils(LittleServerInterface serverInterface, HttpServerInterface httpServerInterface, JButton startOrStop) {
+    private final IntegratedServerInterface serverInterface;
+    public CacheUtils(IntegratedServerInterface serverInterface, HttpServerInterface httpServerInterface, JButton startOrStop) {
         this.serverInterface = serverInterface;
         this.httpServerInterface = httpServerInterface;
         this.startOrStop = startOrStop;
@@ -33,7 +33,7 @@ public class CacheUtils {
     private final JButton startOrStop;
     private final GUILogger logger;
     private final AtomicBoolean isGenerating;
-    private final LittleServerConfig config;
+    private final IntegratedServerConfig config;
     //jsonArray 转化为资源文件夹缓存必要的变量
     private final JSONArray jsonArray = new JSONArray();
     private final ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();

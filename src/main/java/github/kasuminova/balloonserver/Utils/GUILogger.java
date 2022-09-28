@@ -26,7 +26,7 @@ public class GUILogger {
      * logger 线程池
      * 用于保证 Log 顺序
      */
-    private static final ExecutorService LOGGER_THREAD_POOL = Executors.newSingleThreadExecutor();
+    private final ExecutorService loggerThreadPool = Executors.newSingleThreadExecutor();
     //日期格式
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
     private static final Color INFO_COLOR  = new Color(30,170,255);
@@ -67,7 +67,7 @@ public class GUILogger {
 
     public void info(String msg) {
         String threadName = Thread.currentThread().getName();
-        LOGGER_THREAD_POOL.execute(() -> {
+        loggerThreadPool.execute(() -> {
             logger.info(msg);
             insertStringToDocument(buildNormalLogMessage(threadName, msg, name), INFO_ATTRIBUTE);
         });
@@ -78,7 +78,7 @@ public class GUILogger {
             return;
         }
         String threadName = Thread.currentThread().getName();
-        LOGGER_THREAD_POOL.execute(() -> {
+        loggerThreadPool.execute(() -> {
             logger.info(msg);
             insertStringToDocument(buildNormalLogMessage(threadName, msg, name), DEBUG_ATTRIBUTE);
         });
@@ -86,7 +86,7 @@ public class GUILogger {
 
     public void warn(String msg) {
         String threadName = Thread.currentThread().getName();
-        LOGGER_THREAD_POOL.execute(() -> {
+        loggerThreadPool.execute(() -> {
             logger.warning(msg);
             insertStringToDocument(buildNormalLogMessage(threadName, msg, name), WARN_ATTRIBUTE);
         });
@@ -94,7 +94,7 @@ public class GUILogger {
 
     public void error(String msg) {
         String threadName = Thread.currentThread().getName();
-        LOGGER_THREAD_POOL.execute(() -> {
+        loggerThreadPool.execute(() -> {
             logger.warning(msg);
             insertStringToDocument(buildNormalLogMessage(threadName, msg, name), ERROR_ATTRIBUTE);
         });
@@ -102,7 +102,7 @@ public class GUILogger {
 
     public void error(String msg, Exception e) {
         String threadName = Thread.currentThread().getName();
-        LOGGER_THREAD_POOL.execute(() -> {
+        loggerThreadPool.execute(() -> {
             logger.warning(msg);
             logger.warning(stackTraceToString(e));
             insertStringToDocument(buildNormalLogMessage(threadName,
@@ -112,7 +112,7 @@ public class GUILogger {
 
     public void error(Exception e) {
         String threadName = Thread.currentThread().getName();
-        LOGGER_THREAD_POOL.execute(() -> {
+        loggerThreadPool.execute(() -> {
             logger.warning(stackTraceToString(e));
             insertStringToDocument(buildNormalLogMessage(threadName, stackTraceToString(e), name), ERROR_ATTRIBUTE);
         });

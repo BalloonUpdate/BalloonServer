@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver.Configurations;
 
-public class LittleServerConfig extends Configuration {
+public class IntegratedServerConfig extends Configuration {
     private String ip = "127.0.0.1";
     private int port = 8080;
     private String mainDirPath = "/res";
@@ -9,7 +9,7 @@ public class LittleServerConfig extends Configuration {
     private String jksSslPassword = "";
     private String[] commonMode = new String[0];
     private String[] onceMode = new String[0];
-    public LittleServerConfig() {
+    public IntegratedServerConfig() {
         configVersion = 1;
     }
 

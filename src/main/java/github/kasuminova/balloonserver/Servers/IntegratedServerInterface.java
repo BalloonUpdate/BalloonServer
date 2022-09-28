@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver.Servers;
 
-import github.kasuminova.balloonserver.Configurations.LittleServerConfig;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
@@ -10,9 +10,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * LittleServer 面板向外开放的接口，大部分内容都在此处交互。
  * TODO 计划添加子状态栏功能
  */
-public interface LittleServerInterface {
+public interface IntegratedServerInterface {
     GUILogger getLogger();
-    LittleServerConfig getConfig();
+    IntegratedServerConfig getConfig();
     JPanel getRequestListPanel();
     AtomicBoolean isGenerating();
     AtomicBoolean isStarted();
