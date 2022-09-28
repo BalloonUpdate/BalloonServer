@@ -391,7 +391,7 @@ public class BalloonServer {
 
             //按顺序添加面板和接口
             for (int i = 0; i < customServers.length; i++) {
-                SERVER_TABBED_PANE.addTab(serverNames[i], CUSTOM_SERVER_ICON, customServers[i].getPanel());
+                SERVER_TABBED_PANE.addTab(serverNames[i].replace(".legacy", ""), CUSTOM_SERVER_ICON, customServers[i].getPanel());
                 availableCustomServerInterfaces.add(customServers[i].getServerInterface());
             }
 
