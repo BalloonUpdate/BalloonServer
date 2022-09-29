@@ -40,7 +40,7 @@ import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
 /**
  * 主 窗口/程序。
  */
-public class BalloonServer {
+public final class BalloonServer {
     static {
         //设置全局主题，字体等
         SetupSwing.init();
@@ -501,7 +501,7 @@ public class BalloonServer {
         STATUS_PANEL.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
-        JProgressBar memBar = new JProgressBar(0,225);
+        JProgressBar memBar = new JProgressBar(0,200);
         memBar.setPreferredSize(new Dimension(memBar.getMaximum(),memBar.getHeight()));
         memBar.setBorder(new EmptyBorder(0,0,0,5));
         memBar.setStringPainted(true);
@@ -516,7 +516,6 @@ public class BalloonServer {
         GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
         GLOBAL_STATUS_PROGRESSBAR.setStringPainted(true);
         GLOBAL_STATUS_PROGRESSBAR.setBorder(new EmptyBorder(0, 25, 0, 25));
-        GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
         STATUS_PANEL.add(GLOBAL_STATUS_PROGRESSBAR);
         mainPanel.add(STATUS_PANEL, BorderLayout.SOUTH);
         //新建任务，每 0.5 秒更新内存和线程信息

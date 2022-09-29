@@ -27,12 +27,13 @@ import java.nio.charset.StandardCharsets;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
-public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
     private final String resJson;
     private final IntegratedServerConfig config;
     private final GUILogger logger;
     private final JPanel requestListPanel;
     private final String hashAlgorithm;
+    private final JSONObject index = new JSONObject();
     public HttpRequestHandler(IntegratedServerInterface serverInterface) {
         this.resJson = serverInterface.getResJson();
         this.config = serverInterface.getConfig();
@@ -59,28 +60,26 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             // 检测 100 Continue，是否同意接收将要发送过来的实体
             ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
             // 构建 index
-            JSONObject index = new JSONObject();
+            index.clear();
             index.put("common_mode", config.getCommonMode());
             index.put("once_mode", config.getOnceMode());
-            index.put("update", config.getMainDirPath().replace("/", ""));
-            index.put("hash_algorithm", hashAlgorithm);
+            index.put("update", config.getMainDirPath().replace("/", "").intern());
+            index.put("hash_algorithm", hashAlgorithm.intern());
             // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象
-            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK, Unpooled.copiedBuffer(index.toJSONString(), CharsetUtil.UTF_8));
-            // 设置头信息
+            FullHttpResponse jsonResponse = new DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1,
+                    HttpResponseStatus.OK,
+                    Unpooled.copiedBuffer(index.toJSONString(), CharsetUtil.UTF_8));
+
+            //设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
+
             // 响应写回给客户端,并在协会后断开这个连接
             ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
 
             //打印日志
-            printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI);
-            return;
-        }
-
-        //如果使用旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户使用旧版服务端
-        if (hashAlgorithm.contains(HashCalculator.CRC32) && decodedURI.contains(config.getMainDirPath() + ".json")) {
-            sendError(ctx, HttpResponseStatus.FORBIDDEN, "当前服务端版本不兼容此版本客户端，请使用旧版服务端.（仅兼容 4.1.14+）\n".repeat(6), clientIP, decodedURI);
-            logger.error("检测到你可能正在使用旧版客户端获取新版服务端缓存文件，请使用旧版服务端。");
+            printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI, logger);
             return;
         }
 
@@ -93,37 +92,46 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
                     Unpooled.copiedBuffer(resJson, CharsetUtil.UTF_8));
-            // 设置头信息
+
+            //设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
+
             // 响应写回给客户端,并在协会后断开这个连接
             ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
 
             //打印日志
-            printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI);
+            printLog(String.valueOf(jsonResponse.status().code()), start, clientIP, decodedURI, logger);
+            return;
+        }
+
+        //如果使用旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户使用旧版服务端
+        if (hashAlgorithm.contains(HashCalculator.CRC32) && decodedURI.contains(config.getMainDirPath() + ".json")) {
+            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端版本不兼容此版本客户端，请使用旧版服务端.（仅兼容 4.1.14+）\n".repeat(6), clientIP, decodedURI);
+            logger.error("检测到你可能正在使用旧版客户端获取新版服务端缓存文件，请使用旧版服务端。");
             return;
         }
 
         //安全性检查
         if (!decodedURI.startsWith(config.getMainDirPath())) {
-            sendError(ctx, HttpResponseStatus.FORBIDDEN, clientIP, decodedURI);
+            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, clientIP, decodedURI);
             return;
         }
 
         //文件请求监听
         File file = new File("." + decodedURI);
         if (file.isHidden()||!file.exists()) {
-            sendError(ctx, HttpResponseStatus.NOT_FOUND, clientIP, decodedURI);
+            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, clientIP, decodedURI);
             return;
         }
         if (!file.isFile()){
-            sendError(ctx, HttpResponseStatus.BAD_REQUEST, clientIP, decodedURI);
+            sendError(ctx, logger, HttpResponseStatus.BAD_REQUEST, clientIP, decodedURI);
             return;
         }
         RandomAccessFile randomAccessFile;
         try {
             randomAccessFile = new RandomAccessFile(file,"r");  //只读模式
         } catch (FileNotFoundException e){
-            sendError(ctx, HttpResponseStatus.NOT_FOUND, clientIP, decodedURI);
+            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, clientIP, decodedURI);
             return;
         }
         long fileLength = randomAccessFile.length();    //文件大小
@@ -158,7 +166,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
                 //移除进度条的容器面板
                 requestListPanel.remove(progressBar.getParent().getParent());
                 requestListPanel.updateUI();
-                printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI);
+                printLog(String.valueOf(HttpResponseStatus.OK.code()), start, clientIP, decodedURI, logger);
             }
         });
 
@@ -200,7 +208,7 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
      * @param clientIP 客户端 IP
      * @param decodedURI 转义后的 URI
      */
-    private void printLog(String msg, long startTime, String clientIP, String decodedURI) {
+    private static void printLog(String msg, long startTime, String clientIP, String decodedURI, GUILogger logger) {
         //格式为 IP, 额外信息, 转义后的 URI, 耗时
         logger.info(String.format("%s %s URI: %s (%sms)", clientIP, msg, decodedURI, System.currentTimeMillis() - startTime));
     }
@@ -223,18 +231,19 @@ public class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
         }
     }
 
-    private void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, String clientIP, String decodedURI){
+    private static void sendError(ChannelHandlerContext ctx, GUILogger logger, HttpResponseStatus status, String clientIP, String decodedURI){
         long start = System.currentTimeMillis();
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,status,Unpooled.copiedBuffer("Failure: " + status + "\r\n", CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE,HttpHeaderValues.TEXT_PLAIN);
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-        printLog(String.valueOf(status.code()), start, clientIP, decodedURI);
+        printLog(String.valueOf(status.code()), start, clientIP, decodedURI, logger);
     }
-    private void sendError(ChannelHandlerContext ctx, HttpResponseStatus status, String message, String clientIP, String decodedURI){
+
+    private static void sendError(ChannelHandlerContext ctx, GUILogger logger, HttpResponseStatus status, String message, String clientIP, String decodedURI){
         long start = System.currentTimeMillis();
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,status,Unpooled.copiedBuffer(status + ": " + message + "\r\n", CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE,HttpHeaderValues.TEXT_PLAIN);
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-        printLog(String.valueOf(status.code()), start, clientIP, decodedURI);
+        printLog(String.valueOf(status.code()), start, clientIP, decodedURI, logger);
     }
 }

@@ -12,7 +12,7 @@ import java.util.Arrays;
  * 旧版 IntegratedServer 面板实例，支持多实例化，兼容 4.x.x 版本的客户端
  * @author Kasumi_Nova
  */
-public class LegacyIntegratedServer extends AbstractIntegratedServer {
+public final class LegacyIntegratedServer extends AbstractIntegratedServer {
     public LegacyIntegratedServer(String serverName, boolean autoStart) {
         super(serverName, autoStart);
         this.resJsonFileExtensionName = "legacy_res-cache";

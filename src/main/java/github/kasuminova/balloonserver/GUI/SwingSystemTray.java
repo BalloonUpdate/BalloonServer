@@ -30,11 +30,15 @@ public class SwingSystemTray {
      */
     public static void initSystemTrayAndFrame(JFrame frame) {
         //如果系统不支持任务栏，则设置为关闭窗口时退出程序
-        if (!SystemTray.isSupported() || CONFIG.getCloseOperation() == BalloonServerConfig.EXIT_ON_CLOSE.getOperation()) {
+        if (!SystemTray.isSupported()) {
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             return;
         }
-        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        if (CONFIG.getCloseOperation() == BalloonServerConfig.EXIT_ON_CLOSE.getOperation()) {
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        } else {
+            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        }
         //使用JDialog 作为JPopupMenu载体
         JDialog dialog = new JDialog();
         //关闭JDialog的装饰器

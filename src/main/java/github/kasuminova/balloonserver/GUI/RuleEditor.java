@@ -98,12 +98,12 @@ public class RuleEditor extends JDialog {
             //构建规则
             rules.addAll(buildRules(rootNode));
 
-            //去重后再添加
+            //复制
             List<String> listTmp = new ArrayList<>(rules);
-            listTmp = listTmp.stream().distinct().toList();
 
             rules.clear();
-            rules.addAll(listTmp);
+            //添加去重后的 List
+            rules.addAll(listTmp.stream().distinct().toList());
             ruleList.setListData(rules.toArray(new String[0]));
             dispose();
         });

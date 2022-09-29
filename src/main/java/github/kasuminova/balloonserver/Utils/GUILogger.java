@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -29,6 +30,7 @@ public class GUILogger {
      * 用于保证 Log 顺序
      */
     private final ExecutorService loggerThreadPool = Executors.newSingleThreadExecutor();
+    private final AtomicInteger prepared = new AtomicInteger(0);
     //日期格式
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
     private static final Color INFO_COLOR  = new Color(30,170,255);
@@ -102,50 +104,71 @@ public class GUILogger {
     }
 
     public void info(String msg) {
+        if (prepared.get() > 100) return;
+
         String threadName = Thread.currentThread().getName();
+
+        prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.info(msg);
             String logMessage = buildNormalLogMessage(threadName, msg, INFO, name);
             writeAndFlushMessage(logMessage);
             insertStringToDocument(logMessage, INFO_ATTRIBUTE);
+            prepared.getAndDecrement();
         });
     }
 
     public void debug(String msg) {
-        if (!BalloonServer.CONFIG.isDebugMode()) {
-            return;
-        }
+        if (prepared.get() > 100) return;
+        if (!BalloonServer.CONFIG.isDebugMode()) return;
+
         String threadName = Thread.currentThread().getName();
+
+        prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.info(msg);
             String logMessage = buildNormalLogMessage(threadName, msg, DEBUG, name);
             writeAndFlushMessage(logMessage);
             insertStringToDocument(logMessage, DEBUG_ATTRIBUTE);
+            prepared.getAndDecrement();
         });
     }
 
     public void warn(String msg) {
+        if (prepared.get() > 100) return;
+
         String threadName = Thread.currentThread().getName();
+
+        prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
             String logMessage = buildNormalLogMessage(threadName, msg, WARN, name);
             writeAndFlushMessage(logMessage);
             insertStringToDocument(logMessage, WARN_ATTRIBUTE);
+            prepared.getAndDecrement();
         });
     }
 
     public void error(String msg) {
+        if (prepared.get() > 100) return;
+
         String threadName = Thread.currentThread().getName();
+
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
             String logMessage = buildNormalLogMessage(threadName, msg, ERROR, name);
             writeAndFlushMessage(logMessage);
             insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
+            prepared.getAndDecrement();
         });
     }
 
     public void error(String msg, Exception e) {
+        if (prepared.get() > 100) return;
+
         String threadName = Thread.currentThread().getName();
+
+        prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
             logger.warning(stackTraceToString(e));
@@ -153,16 +176,22 @@ public class GUILogger {
                     String.format("%s\n%s", msg, stackTraceToString(e)), ERROR, name);
             writeAndFlushMessage(logMessage);
             insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
+            prepared.getAndDecrement();
         });
     }
 
     public void error(Exception e) {
+        if (prepared.get() > 100) return;
+
         String threadName = Thread.currentThread().getName();
+
+        prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.warning(stackTraceToString(e));
             String logMessage = buildNormalLogMessage(threadName, stackTraceToString(e), ERROR, name);
             writeAndFlushMessage(logMessage);
             insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
+            prepared.getAndDecrement();
         });
     }
 
@@ -174,7 +203,7 @@ public class GUILogger {
         if (logWriter == null) return;
         logWriter.close();
     }
-    
+
     /**
      * 向 log 文件输出字符串
      * @param logMessage 要输出的内容
@@ -184,9 +213,7 @@ public class GUILogger {
         try {
             logWriter.write(logMessage);
             logWriter.flush();
-        } catch (IOException e) {
-            logger.warning(stackTraceToString(e));
-        }
+        } catch (IOException ignored) {}
     }
 
     /*
@@ -196,6 +223,10 @@ public class GUILogger {
         if (logPane == null) return;
         try {
             Document document = logPane.getDocument();
+            if (document.getLength() > 100000) {
+                document.remove(0,logPane.getDocument().getLength());
+                info("日志窗口过长，已清空当前服务器实例日志.");
+            }
             document.insertString(document.getLength(), str, ATTRIBUTE);
         } catch (BadLocationException e) {
             logger.warning(stackTraceToString(e));
