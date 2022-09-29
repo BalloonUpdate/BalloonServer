@@ -170,6 +170,7 @@ public class GUILogger {
      * 关闭 Writer, 解除 log 文件的占用
      */
     public void closeLogWriter() throws IOException {
+        loggerThreadPool.shutdown();
         if (logWriter == null) return;
         logWriter.close();
     }
@@ -217,6 +218,6 @@ public class GUILogger {
 
     private static String buildNormalLogMessage(String threadName, String msg, String logLevel ,String name) {
         //占位符分别为 日期，线程名，名称，消息本体
-        return String.format("[%s][%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), threadName, logLevel, name, msg);
+        return String.format("[%s][%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, name, threadName, msg);
     }
 }

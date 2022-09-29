@@ -652,32 +652,26 @@ public abstract class AbstractIntegratedServer {
      * 以面板当前配置重载配置
      */
     protected void reloadConfigurationFromGUI() {
-        //设置端口
-        config.setPort((Integer) portSpinner.getValue())
-        //设置资源目录
-        .setMainDirPath(mainDirTextField.getText())
-        //设置实时文件监听器
-        .setFileChangeListener(fileChangeListener.isSelected())
-        //设置 Jks 证书密码
-        .setJksSslPassword(String.valueOf(JksSslPassField.getPassword()))
-        //设置普通模式
-        .setCommonMode(commonModeList.toArray(new String[0]))
-        //设置补全模式
-        .setOnceMode(onceModeList.toArray(new String[0]));
-
-        //设置 IP
+        //IP 检查
         String IP = IPTextField.getText();
         String IPType = IPAddressUtil.checkAddress(IP);
         if (IPType != null) {
             if (IP.contains("0.0.0.0")) {
-                config.setIp("127.0.0.1");
-            } else if ("v4".equals(IPType) || "v6".equals(IPType)) {
-                config.setIp(IP);
+                IP = "127.0.0.1";
             }
         } else {
+            IP = "127.0.0.1";
             config.setIp("127.0.0.1");
             logger.warn("配置中的 IP 格式错误，使用默认 IP 地址 127.0.0.1");
         }
+
+        config.setPort((Integer) portSpinner.getValue()) //设置端口
+                .setMainDirPath(mainDirTextField.getText()) //设置资源目录
+                .setFileChangeListener(fileChangeListener.isSelected()) //设置实时文件监听器
+                .setJksSslPassword(String.valueOf(JksSslPassField.getPassword())) //设置 Jks 证书密码
+                .setCommonMode(commonModeList.toArray(new String[0])) //设置普通模式
+                .setOnceMode(onceModeList.toArray(new String[0])) //设置补全模式
+                .setIp(IP);
 
         logger.info("已加载配置.");
     }

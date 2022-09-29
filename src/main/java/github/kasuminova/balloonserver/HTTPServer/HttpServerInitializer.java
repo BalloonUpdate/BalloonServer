@@ -73,11 +73,10 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
             pipeline.addFirst("ssl", new SslHandler(engine));
         }
 
-        //将消息转为单一的 FullHttpRequest或者 FullHttpResponse，因为 http 解码器在每个 http 消息中会生成多个消息对象
-        pipeline.addLast("http-aggregator",new HttpObjectAggregator(65535));
         //反向代理适配器
         pipeline.addLast("decoder",new DecodeProxy(logger));
         pipeline.addLast(new HttpServerCodec());
+        pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024));
         pipeline.addLast("http-chunked",new ChunkedWriteHandler());
         //gzip 压缩
 //        pipeline.addLast("compressor",new HttpContentCompressor());

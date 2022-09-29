@@ -127,6 +127,7 @@ public class BalloonServer {
                 abstractIntegratedServer = new IntegratedServer("littleserver", true);
 
                 CONFIG.setAutoStartServerOnce(false);
+                SettingsPanel.applyConfiguration();
 
                 try {
                     ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
@@ -434,7 +435,16 @@ public class BalloonServer {
      * @return 用户是否确认关闭了服务器
      */
     private static boolean stopIntegratedServer(IntegratedServerInterface serverInterface, String serverName, int index, boolean inquireUser) {
+        boolean isGenerating = serverInterface.isGenerating().get();
+        //如果服务器正在生成缓存，并且启用了向用户确认关闭服务端的选项，则弹出警告对话框
+        if (isGenerating && inquireUser) {
+            JOptionPane.showMessageDialog(MAIN_FRAME,
+                    "当前正在生成资源缓存，请稍后再试。","注意",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
         boolean isStarted = serverInterface.isStarted().get();
+
         //如果服务器已启动，则提示是否关闭服务器
         if (isStarted) {
             if (inquireUser) {
@@ -449,12 +459,13 @@ public class BalloonServer {
                 return false;
             }
         }
+
         //保存配置
         serverInterface.saveConfig();
         //关闭 Logger 文件输出
         try {
             serverInterface.getLogger().closeLogWriter();
-        } catch (Exception e) {
+        } catch (IOException e) {
             GLOBAL_LOGGER.error("无法关闭 logger", e);
         }
         return true;

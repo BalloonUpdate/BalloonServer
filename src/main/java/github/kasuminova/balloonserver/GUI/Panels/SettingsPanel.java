@@ -120,7 +120,7 @@ public class SettingsPanel {
     /**
      * 将配置文件内的配置应用到 GUI 中
      */
-    private static void applyConfiguration()
+    public static void applyConfiguration()
     {
         autoStartDefaultServer.setSelected(CONFIG.isAutoStartServer());
         autoStartDefaultServerOnce.setSelected(CONFIG.isAutoStartServerOnce());

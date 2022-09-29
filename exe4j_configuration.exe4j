@@ -2,7 +2,7 @@
 <exe4j version="8.0.1" transformSequenceNumber="3">
   <directoryPresets config="C:/Users/Kasumi_Nova/IdeaProjects/BalloonServer" />
   <application name="BalloonServer-GUI-LIB-1.2.1-STABLE" distributionSourceDir="C:/Users/Kasumi_Nova/IdeaProjects/BalloonServer/build/libs" />
-  <executable name="BalloonServer-1.2.1-STABLE" wrapperType="embed" iconSet="true" iconFile="C:/Users/Kasumi_Nova/IdeaProjects/BalloonServer/src/main/resources/image/icon_16x16.ico" stderrFile="balloonserver.log" redirectStdout="true" stdoutFile="balloonserver.log" executableMode="gui" singleInstance="true" checkConsoleParameter="true" />
+  <executable name="BalloonServer-1.2.1-STABLE" wrapperType="embed" iconSet="true" iconFile="C:/Users/Kasumi_Nova/IdeaProjects/BalloonServer/src/main/resources/image/icon_16x16.ico" executableDir="." redirectStderr="false" stderrFile="balloonserver.log" stdoutFile="balloonserver.log" executableMode="gui" singleInstance="true" />
   <java mainClass="github.kasuminova.balloonserver.BalloonServer" vmParameters="-Xms512m -XX:+UseStringDeduplication -XX:+UseFastAccessorMethods -XX:+UseG1GC" preferredVM="server" minVersion="17" allowBetaVM="true">
     <searchSequence>
       <directory location="../../java17-jre" />
