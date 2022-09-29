@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Servers;
 
+import github.kasuminova.balloonserver.BalloonServer;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -26,7 +28,7 @@ public class DeleteUpdateRule implements ActionListener {
             modeList.setListData(rules.toArray(new String[0]));
         } else {
             JOptionPane.showMessageDialog(container,
-                    "请选择一个规则后再删除.", "错误",
+                    "请选择一个规则后再删除.", BalloonServer.TITLE,
                     JOptionPane.ERROR_MESSAGE);
         }
     }

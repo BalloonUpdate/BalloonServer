@@ -75,12 +75,6 @@ public class GUILogger {
         StyleConstants.setForeground(WARN_ATTRIBUTE, WARN_COLOR);
         StyleConstants.setForeground(ERROR_ATTRIBUTE, ERROR_COLOR);
         StyleConstants.setForeground(DEBUG_ATTRIBUTE, DEBUG_COLOR);
-
-        try {
-            logPane.setFont(logPane.getFont().deriveFont(13f));
-        } catch (Exception e) {
-            logger.warning(stackTraceToString(e));
-        }
     }
 
     public GUILogger(String name) {

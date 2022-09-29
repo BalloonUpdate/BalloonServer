@@ -1,8 +1,10 @@
 package github.kasuminova.balloonserver.GUI;
 
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
+import github.kasuminova.balloonserver.GUI.Panels.AboutPanel;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.io.InputStream;
@@ -18,7 +20,6 @@ public class SetupSwing {
         //抗锯齿字体
         System.setProperty("awt.useSystemAAFontSettings", "lcd");
         System.setProperty("swing.aatext", "true");
-//        System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
 
         //UI 配置线程
         Thread uiThread = new Thread(() -> {
@@ -31,10 +32,8 @@ public class SetupSwing {
             UIManager.put("CheckBox.arc", 3);
             //设置滚动条
             UIManager.put("ScrollBar.showButtons", false);
-//        UIManager.put("ScrollBar.trackArc", 3);
             UIManager.put("ScrollBar.thumbArc", 7);
             UIManager.put("ScrollBar.width", 12);
-//        UIManager.put("ScrollBar.trackInsets", new Insets(5,5,5,5));
             UIManager.put("ScrollBar.thumbInsets", new Insets(2,2,2,2));
             UIManager.put("ScrollBar.track", new Color(0,0,0,0));
             //选项卡分隔线
@@ -44,12 +43,15 @@ public class SetupSwing {
             UIManager.put("MenuItem.selectionType", "underline");
             UIManager.put("MenuItem.underlineSelectionHeight", 3);
             UIManager.put("MenuItem.margin", new Insets(5,8,3,5));
+            UIManager.put("MenuBar.underlineSelectionHeight", 3);
             //窗口标题居中
             UIManager.put("TitlePane.centerTitle", true);
             UIManager.put("TitlePane.centerIcon", true);
             //进度条
-            UIManager.put("ProgressBar.repaintInterval", 15);
+            UIManager.put("ProgressBar.repaintInterval", 16);
             UIManager.put("ProgressBar.cycleTime", 7500);
+            //提示框
+            UIManager.put("ToolTip.border", new LineBorder(new Color(55,60,70), 2, true));
 
             System.out.printf("UIThread Completed, Used %sms%n", System.currentTimeMillis() - start);
         });
@@ -60,9 +62,16 @@ public class SetupSwing {
             long start = System.currentTimeMillis();
             //设置字体
             try {
-                InputStream ttfFile = SetupSwing.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf");
-                if (ttfFile != null) {
-                    initGlobalFont(Font.createFont(Font.TRUETYPE_FONT, ttfFile).deriveFont(13f));
+                InputStream sarasa_mono = SetupSwing.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf");
+                InputStream saira = AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf");
+                Font font;
+                if (sarasa_mono != null) {
+                    font = Font.createFont(Font.TRUETYPE_FONT, sarasa_mono).deriveFont(13f);
+                    initGlobalFont(font);
+                }
+                if (saira != null) {
+                    font = Font.createFont(Font.TRUETYPE_FONT, saira).deriveFont(15f);
+                    UIManager.put("TitlePane.font", font);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

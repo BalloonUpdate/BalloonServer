@@ -81,7 +81,7 @@ public class Checker {
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(MAIN_FRAME,
-                    String.format("无法启动服务端。\n%s", GUILogger.stackTraceToString(e)),"错误",
+                    String.format("无法启动服务端。\n%s", GUILogger.stackTraceToString(e)), BalloonServer.TITLE,
                     JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -109,7 +109,7 @@ public class Checker {
                         if (showCompleteDialog) {
                             JOptionPane.showMessageDialog(MAIN_FRAME,
                                     String.format("程序下载完成！已保存至当前程序路径(%s)。", fileName),
-                                    "完成",
+                                    BalloonServer.TITLE,
                                     JOptionPane.INFORMATION_MESSAGE);
                         }
                         return fileName;
@@ -133,7 +133,7 @@ public class Checker {
                     if (showCompleteDialog) {
                         JOptionPane.showMessageDialog(MAIN_FRAME,
                                 String.format("程序下载完成！已保存至当前程序路径(%s)。", fileName),
-                                "完成",
+                                BalloonServer.TITLE,
                                 JOptionPane.INFORMATION_MESSAGE);
                     }
                     return fileName;

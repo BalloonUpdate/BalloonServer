@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.UpdateChecker;
 
+import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 
@@ -85,6 +86,7 @@ public class HttpClient {
         }
 
         JFrame downloadingFrame = new JFrame("下载更新中");
+        downloadingFrame.setIconImage(BalloonServer.ICON.getImage());
         downloadingFrame.setSize(new Dimension(350,145));
         downloadingFrame.setResizable(false);
 

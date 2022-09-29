@@ -45,7 +45,8 @@ public final class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.1-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.2-STABLE");
+    public static final String TITLE = "BalloonServer " + VERSION;
     /*
     可执行文件名称。
     如 BalloonServer-GUI-1.2.0-STABLE.jar,
@@ -59,7 +60,7 @@ public final class BalloonServer {
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(
             BalloonServer.class.getResource("/image/icon_128x128.jpg")));
     //主窗口
-    public static final JFrame MAIN_FRAME = new JFrame("BalloonServer " + VERSION);
+    public static final JFrame MAIN_FRAME = new JFrame(TITLE);
     public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);
     public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     //主窗口 Logger
@@ -102,7 +103,7 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabCloseCallback", (BiConsumer<JTabbedPane, Integer>) (tabbedPane, tabIndex) -> {
             //检查是否为默认服务端
             if (tabIndex == 0) {
-                JOptionPane.showMessageDialog(MAIN_FRAME, "你不可以删除默认服务端！", "警告", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(MAIN_FRAME, "你不可以删除默认服务端！", BalloonServer.TITLE, JOptionPane.WARNING_MESSAGE);
                 return;
             }
             //定义变量
@@ -272,12 +273,12 @@ public final class BalloonServer {
         JMenuItem createNewLittleServer = new JMenuItem("创建集成服务端实例 (兼容 4.1.15+ 版本客户端)", PLUS_ICON);
         newMenu.add(createNewLittleServer);
         createNewLittleServer.addActionListener(e -> {
-            String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务器实例名称","创建",JOptionPane.INFORMATION_MESSAGE);
+            String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务器实例名称", BalloonServer.TITLE, JOptionPane.INFORMATION_MESSAGE);
             if (Security.stringIsUnsafe(MAIN_FRAME, serverName, new String[]{"balloonserver","littleserver","res-cache",".lscfg",".json"})) return;
 
             if (new File(String.format("./%s.lscfg.json", serverName)).exists()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "已存在此服务器名，请使用载入服务器.","已存在服务器",
+                        "已存在此服务器名，请使用载入服务器.", BalloonServer.TITLE,
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -300,12 +301,12 @@ public final class BalloonServer {
         JMenuItem createNewLegacyLittleServer = new JMenuItem("创建旧版集成服务端实例 (兼容 4.x.x 版本客户端)", PLUS_ICON);
         newMenu.add(createNewLegacyLittleServer);
         createNewLegacyLittleServer.addActionListener(e -> {
-            String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务端实例名称","创建",JOptionPane.INFORMATION_MESSAGE);
+            String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务端实例名称", BalloonServer.TITLE, JOptionPane.INFORMATION_MESSAGE);
             if (Security.stringIsUnsafe(MAIN_FRAME, serverName, new String[]{"balloonserver","littleserver","res-cache",".lscfg",".json"})) return;
 
             if (new File(String.format("./%s.legacy.lscfg.json", serverName)).exists() || new File(String.format("./%s.lscfg.json", serverName)).exists()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "已存在此服务器名，请使用载入服务器.","已存在服务器",
+                        "已存在此服务器名，请使用载入服务器.", BalloonServer.TITLE,
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -439,7 +440,7 @@ public final class BalloonServer {
         //如果服务器正在生成缓存，并且启用了向用户确认关闭服务端的选项，则弹出警告对话框
         if (isGenerating && inquireUser) {
             JOptionPane.showMessageDialog(MAIN_FRAME,
-                    "当前正在生成资源缓存，请稍后再试。","注意",
+                    "当前正在生成资源缓存，请稍后再试。", BalloonServer.TITLE,
                     JOptionPane.WARNING_MESSAGE);
             return false;
         }
@@ -448,13 +449,13 @@ public final class BalloonServer {
         //如果服务器已启动，则提示是否关闭服务器
         if (isStarted) {
             if (inquireUser) {
-                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME, String.format("%s 实例正在运行，你希望关闭服务器后再关闭此实例吗？", serverName), "警告", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME, String.format("%s 实例正在运行，你希望关闭服务器后再关闭此实例吗？", serverName), BalloonServer.TITLE, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
                 if (!(selection == JOptionPane.YES_OPTION)) return false;
             }
 
             //停止服务器
             if (!serverInterface.stopServer()) {
-                JOptionPane.showMessageDialog(MAIN_FRAME, "无法正常关闭服务器，请检查窗口.", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MAIN_FRAME, "无法正常关闭服务器，请检查窗口.", BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
                 SERVER_TABBED_PANE.setSelectedIndex(index);
                 return false;
             }
@@ -480,11 +481,11 @@ public final class BalloonServer {
         for (int i = 0; i < SERVER_TABBED_PANE.getTabCount(); i++) {
             if (serverName.endsWith(".legacy")) {
                 if (SERVER_TABBED_PANE.getTitleAt(i).equals(serverName.replace(".legacy", ""))) {
-                    JOptionPane.showMessageDialog(MAIN_FRAME, String.format("名为 %s 的配置文件已经载入到服务器中了!", serverName), "错误", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(MAIN_FRAME, String.format("名为 %s 的配置文件已经载入到服务器中了!", serverName), BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
                     return true;
                 }
             } else if (SERVER_TABBED_PANE.getTitleAt(i).equals(serverName)) {
-                JOptionPane.showMessageDialog(MAIN_FRAME, String.format("名为 %s 的配置文件已经载入到服务器中了!", serverName), "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(MAIN_FRAME, String.format("名为 %s 的配置文件已经载入到服务器中了!", serverName), BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
                 return true;
             }
         }

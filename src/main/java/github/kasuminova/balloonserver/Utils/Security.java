@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Utils;
 
+import github.kasuminova.balloonserver.BalloonServer;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -33,7 +35,7 @@ public class Security {
         //循环检查
         for (String s : unavailableStrList) {
             if (str.contains(s)) {
-                JOptionPane.showMessageDialog(c, String.format("名称包含非法字符 “%s”.", s), "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(c, String.format("名称包含非法字符 “%s”.", s), BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
                 return true;
             }
         }

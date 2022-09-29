@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver.Servers;
 
 import com.alibaba.fastjson2.JSONArray;
+import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
@@ -317,7 +318,7 @@ public abstract class AbstractIntegratedServer {
         regenDirectoryStructureCache.addActionListener(e -> {
             if (isGenerating.get()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在生成资源缓存，请稍后再试。","注意",
+                        "当前正在生成资源缓存，请稍后再试。", BalloonServer.TITLE,
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -328,7 +329,7 @@ public abstract class AbstractIntegratedServer {
         startOrStop.addActionListener(e -> {
             if (isGenerating.get()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在生成资源缓存，请稍后再试。","注意",
+                        "当前正在生成资源缓存，请稍后再试。", BalloonServer.TITLE,
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -400,7 +401,8 @@ public abstract class AbstractIntegratedServer {
         public void actionPerformed(ActionEvent e) {
             if (isGenerating.get()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在生成资源缓存，请稍后再试。","注意",
+                        "当前正在生成资源缓存，请稍后再试。",
+                        BalloonServer.TITLE,
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -408,7 +410,7 @@ public abstract class AbstractIntegratedServer {
             if (new File(String.format("./%s.%s.json", serverName, resJsonFileExtensionName)).exists()) {
                 int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
                         "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
-                        "已检测到本地 JSON 缓存", JOptionPane.YES_NO_OPTION);
+                        BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
                 if (!(selection == JOptionPane.YES_OPTION)) return;
 
                 try {
@@ -416,7 +418,7 @@ public abstract class AbstractIntegratedServer {
                     showRuleEditorDialog(JSONArray.parseArray(json));
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(MAIN_FRAME,
-                            "无法读取本地 JSON 缓存" + ex,"错误",
+                            "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
                             JOptionPane.ERROR_MESSAGE);
                 }
                 return;
@@ -424,7 +426,7 @@ public abstract class AbstractIntegratedServer {
 
             int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
                     "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
-                    "未检测到 JSON 缓存", JOptionPane.YES_NO_OPTION);
+                    BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
             if (!(selection == JOptionPane.YES_OPTION)) return;
 
             GLOBAL_THREAD_POOL.execute(() -> {
@@ -436,7 +438,7 @@ public abstract class AbstractIntegratedServer {
 
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(MAIN_FRAME,
-                                "无法读取本地 JSON 缓存" + ex, "错误",
+                                "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
                                 JOptionPane.ERROR_MESSAGE);
                     }
                 }
