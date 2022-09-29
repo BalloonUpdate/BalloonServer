@@ -108,7 +108,7 @@ public class BalloonServer {
             //定义变量
             IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(tabIndex);
             String serverName = serverInterface.getServerName();
-            if (!stopLittleServer(serverInterface, serverName, tabIndex, true)) return;
+            if (!stopIntegratedServer(serverInterface, serverName, tabIndex, true)) return;
 
             SERVER_TABBED_PANE.removeTabAt(tabIndex);
             availableCustomServerInterfaces.remove((int) tabIndex);
@@ -210,7 +210,7 @@ public class BalloonServer {
         //停止所有运行的实例
         for (int i = 0; i < availableCustomServerInterfaces.size(); i++) {
             IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(i);
-            stopLittleServer(serverInterface, serverInterface.getServerName(), i, inquireUser);
+            stopIntegratedServer(serverInterface, serverInterface.getServerName(), i, inquireUser);
             if (i != 0) {
                 SERVER_TABBED_PANE.removeTabAt(i);
                 availableCustomServerInterfaces.remove(i);
@@ -406,7 +406,7 @@ public class BalloonServer {
             IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(selected);
             String serverName = serverInterface.getServerName();
 
-            if (stopLittleServer(serverInterface, serverName, selected, true)) {
+            if (stopIntegratedServer(serverInterface, serverName, selected, true)) {
                 GLOBAL_THREAD_POOL.execute(() -> {
                     IntegratedServer littleServer;
                     if (serverName.equals("littleserver")) {
@@ -433,7 +433,7 @@ public class BalloonServer {
      * @param inquireUser 是否向用户确认关闭服务端
      * @return 用户是否确认关闭了服务器
      */
-    private static boolean stopLittleServer(IntegratedServerInterface serverInterface, String serverName, int index, boolean inquireUser) {
+    private static boolean stopIntegratedServer(IntegratedServerInterface serverInterface, String serverName, int index, boolean inquireUser) {
         boolean isStarted = serverInterface.isStarted().get();
         //如果服务器已启动，则提示是否关闭服务器
         if (isStarted) {
