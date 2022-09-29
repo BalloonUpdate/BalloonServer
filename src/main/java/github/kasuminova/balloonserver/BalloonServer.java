@@ -45,7 +45,7 @@ public class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.0-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.1-STABLE");
     /*
     可执行文件名称。
     如 BalloonServer-GUI-1.2.0-STABLE.jar,
