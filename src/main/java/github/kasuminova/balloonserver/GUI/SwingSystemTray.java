@@ -60,7 +60,7 @@ public class SwingSystemTray {
                 ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
                 BalloonServer.GLOBAL_LOGGER.info("已保存主程序配置文件.");
             } catch (IOException ex) {
-                BalloonServer.GLOBAL_LOGGER.warning("保存主程序配置文件失败！");
+                BalloonServer.GLOBAL_LOGGER.error("保存主程序配置文件失败！");
             }
             //停止所有正在运行的服务器并保存配置
             stopAllServers(true);

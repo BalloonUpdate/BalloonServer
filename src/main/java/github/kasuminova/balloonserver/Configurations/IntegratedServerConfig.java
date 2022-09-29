@@ -16,7 +16,7 @@ public class IntegratedServerConfig extends Configuration {
     /**
      * 重置配置文件
      */
-    public void reset() {
+    public IntegratedServerConfig reset() {
         configVersion = 1;
         ip = "127.0.0.1";
         port = 8080;
@@ -26,6 +26,13 @@ public class IntegratedServerConfig extends Configuration {
         jksSslPassword = "";
         commonMode = new String[0];
         onceMode = new String[0];
+        return this;
+    }
+
+    @Override
+    public IntegratedServerConfig setConfigVersion(int configVersion) {
+        this.configVersion = configVersion;
+        return this;
     }
 
     public String getIp() {
@@ -36,59 +43,67 @@ public class IntegratedServerConfig extends Configuration {
         return port;
     }
 
-    public void setPort(int port) {
+    public IntegratedServerConfig setPort(int port) {
         this.port = port;
+        return this;
     }
 
     public String getJksFilePath() {
         return jksFilePath;
     }
 
-    public void setJksFilePath(String jksFilePath) {
+    public IntegratedServerConfig setJksFilePath(String jksFilePath) {
         this.jksFilePath = jksFilePath;
+        return this;
     }
 
     public String getJksSslPassword() {
         return jksSslPassword;
     }
 
-    public void setJksSslPassword(String jksSslPassword) {
+    public IntegratedServerConfig setJksSslPassword(String jksSslPassword) {
         this.jksSslPassword = jksSslPassword;
+        return this;
     }
 
     public String[] getCommonMode() {
         return commonMode;
     }
 
-    public void setCommonMode(String[] commonMode) {
+    public IntegratedServerConfig setCommonMode(String[] commonMode) {
         this.commonMode = commonMode;
+        return this;
     }
 
     public String[] getOnceMode() {
         return onceMode;
     }
 
-    public void setOnceMode(String[] onceMode) {
+    public IntegratedServerConfig setOnceMode(String[] onceMode) {
         this.onceMode = onceMode;
+        return this;
     }
 
-    public void setIp(String ip) {
+    public IntegratedServerConfig setIp(String ip) {
         this.ip = ip;
+        return this;
     }
 
     public String getMainDirPath() {
         return mainDirPath;
     }
 
-    public void setMainDirPath(String mainDirPath) {
+    public IntegratedServerConfig setMainDirPath(String mainDirPath) {
         this.mainDirPath = mainDirPath;
+        return this;
     }
 
     public boolean isFileChangeListener() {
         return fileChangeListener;
     }
 
-    public void setFileChangeListener(boolean fileChangeListener) {
+    public IntegratedServerConfig setFileChangeListener(boolean fileChangeListener) {
         this.fileChangeListener = fileChangeListener;
+        return this;
     }
 }

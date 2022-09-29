@@ -239,12 +239,12 @@ public abstract class AbstractIntegratedServer {
         //添加更新规则
         JMenuItem addNewCommonRule = new JMenuItem("添加更新规则");
         addNewCommonRule.setIcon(PLUS_ICON);
-        addNewCommonRule.addActionListener(new AddUpdateRule(commonMode,commonModeList, MAIN_FRAME));
+        addNewCommonRule.addActionListener(new AddUpdateRule(commonMode, commonModeList, MAIN_FRAME));
         commonModeMenu.add(addNewCommonRule);
         //删除指定规则
         JMenuItem deleteCommonRule = new JMenuItem("删除选定的规则");
         deleteCommonRule.setIcon(REMOVE_ICON);
-        deleteCommonRule.addActionListener(new DeleteUpdateRule(commonMode,commonModeList, MAIN_FRAME));
+        deleteCommonRule.addActionListener(new DeleteUpdateRule(commonMode, commonModeList, MAIN_FRAME));
         commonModeMenu.add(deleteCommonRule);
         //鼠标监听
         commonMode.addMouseListener(new MouseAdapter() {
@@ -387,16 +387,13 @@ public abstract class AbstractIntegratedServer {
         protected void showRuleEditorDialog(JSONArray jsonArray) {
             //锁定窗口，防止用户误操作
             MAIN_FRAME.setEnabled(false);
-            RuleEditor editorDialog = new RuleEditor(jsonArray, config.getMainDirPath().replace("/",""));
+            RuleEditor editorDialog = new RuleEditor(jsonArray, (ArrayList<String>) rules);
             editorDialog.setModal(true);
 
             MAIN_FRAME.setEnabled(true);
             editorDialog.setVisible(true);
 
-            if (!editorDialog.getResult().isEmpty()) {
-                rules.addAll(editorDialog.getResult());
-                ruleList.setListData(rules.toArray(new String[0]));
-            }
+            ruleList.setListData(rules.toArray(new String[0]));
         }
 
         @Override
@@ -656,7 +653,18 @@ public abstract class AbstractIntegratedServer {
      */
     protected void reloadConfigurationFromGUI() {
         //设置端口
-        config.setPort((Integer) portSpinner.getValue());
+        config.setPort((Integer) portSpinner.getValue())
+        //设置资源目录
+        .setMainDirPath(mainDirTextField.getText())
+        //设置实时文件监听器
+        .setFileChangeListener(fileChangeListener.isSelected())
+        //设置 Jks 证书密码
+        .setJksSslPassword(String.valueOf(JksSslPassField.getPassword()))
+        //设置普通模式
+        .setCommonMode(commonModeList.toArray(new String[0]))
+        //设置补全模式
+        .setOnceMode(onceModeList.toArray(new String[0]));
+
         //设置 IP
         String IP = IPTextField.getText();
         String IPType = IPAddressUtil.checkAddress(IP);
@@ -670,16 +678,7 @@ public abstract class AbstractIntegratedServer {
             config.setIp("127.0.0.1");
             logger.warn("配置中的 IP 格式错误，使用默认 IP 地址 127.0.0.1");
         }
-        //设置资源目录
-        config.setMainDirPath(mainDirTextField.getText());
-        //设置实时文件监听器
-        config.setFileChangeListener(fileChangeListener.isSelected());
-        //设置 Jks 证书密码
-        config.setJksSslPassword(String.valueOf(JksSslPassField.getPassword()));
-        //设置普通模式
-        config.setCommonMode(commonModeList.toArray(new String[0]));
-        //设置补全模式
-        config.setOnceMode(onceModeList.toArray(new String[0]));
+
         logger.info("已加载配置.");
     }
 }

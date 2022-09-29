@@ -114,7 +114,7 @@ public class Checker {
                         }
                         return fileName;
                     } catch (IOException e) {
-                        GLOBAL_LOGGER.warning(String.format("下载更新失败\n%s", GUILogger.stackTraceToString(e)));
+                        GLOBAL_LOGGER.error("下载更新失败.", e);
                     }
                 }
             }
@@ -138,7 +138,7 @@ public class Checker {
                     }
                     return fileName;
                 } catch (IOException e) {
-                    GLOBAL_LOGGER.warning(String.format("下载更新失败，可能是因为用户取消了操作或无法连接至服务器.\n%s", GUILogger.stackTraceToString(e)));
+                    GLOBAL_LOGGER.error("下载更新失败，可能是因为用户取消了操作或无法连接至服务器.", e);
                 }
             }
         }

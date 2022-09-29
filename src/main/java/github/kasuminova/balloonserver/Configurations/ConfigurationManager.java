@@ -15,24 +15,24 @@ public class ConfigurationManager {
     public static void loadLittleServerConfigFromFile(String path, IntegratedServerConfig oldConfig) throws IOException {
         IntegratedServerConfig newConfig = JSON.parseObject(Files.newInputStream(Paths.get(path)), IntegratedServerConfig.class);
 
-        oldConfig.setConfigVersion(newConfig.getConfigVersion());
-        oldConfig.setIp(newConfig.getIp());
-        oldConfig.setPort(newConfig.getPort());
-        oldConfig.setMainDirPath(newConfig.getMainDirPath());
-        oldConfig.setFileChangeListener(newConfig.isFileChangeListener());
-        oldConfig.setJksFilePath(newConfig.getJksFilePath());
-        oldConfig.setJksSslPassword(newConfig.getJksSslPassword());
-        oldConfig.setCommonMode(newConfig.getCommonMode());
-        oldConfig.setOnceMode(newConfig.getOnceMode());
+        oldConfig.setConfigVersion(newConfig.getConfigVersion())
+                 .setIp(newConfig.getIp())
+                 .setPort(newConfig.getPort())
+                 .setMainDirPath(newConfig.getMainDirPath())
+                 .setFileChangeListener(newConfig.isFileChangeListener())
+                 .setJksFilePath(newConfig.getJksFilePath())
+                 .setJksSslPassword(newConfig.getJksSslPassword())
+                 .setCommonMode(newConfig.getCommonMode())
+                 .setOnceMode(newConfig.getOnceMode());
     }
     public static void loadBalloonServerConfigFromFile(String path, BalloonServerConfig oldConfig) throws IOException {
         BalloonServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), BalloonServerConfig.class);
-        oldConfig.setAutoStartServer(config.isAutoStartServer());
-        oldConfig.setAutoStartServerOnce(config.isAutoStartServerOnce());
-        oldConfig.setDebugMode(config.isDebugMode());
-        oldConfig.setCloseOperation(config.getCloseOperation());
-        oldConfig.setAutoCheckUpdates(config.isAutoCheckUpdates());
-        oldConfig.setAutoUpdate(config.isAutoUpdate());
+        oldConfig.setAutoStartServer(config.isAutoStartServer())
+                 .setAutoStartServerOnce(config.isAutoStartServerOnce())
+                 .setDebugMode(config.isDebugMode())
+                 .setCloseOperation(config.getCloseOperation())
+                 .setAutoCheckUpdates(config.isAutoCheckUpdates())
+                 .setAutoUpdate(config.isAutoUpdate());
     }
 
     public static void saveConfigurationToFile(Configuration configuration, String path, String name) throws IOException {

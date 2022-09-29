@@ -12,7 +12,6 @@ import github.kasuminova.balloonserver.Configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.Configurations.CloseOperations;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
-import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -147,7 +146,7 @@ public class SettingsPanel {
             ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
             GLOBAL_LOGGER.info("成功保存主程序配置文件.");
         } catch (IOException e) {
-            GLOBAL_LOGGER.warning("主程序配置文件保存失败！\n" + GUILogger.stackTraceToString(e));
+            GLOBAL_LOGGER.error("主程序配置文件保存失败！", e);
         }
     }
 

@@ -4,7 +4,6 @@ import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.Configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
-import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -55,7 +54,7 @@ public class ConfirmExitDialog extends JDialog {
                     try {
                         ConfigurationManager.saveConfigurationToFile(config, "./", "balloonserver");
                     } catch (Exception ex) {
-                        GLOBAL_LOGGER.warning("主程序配置文件保存失败！\n" + GUILogger.stackTraceToString(ex));
+                        GLOBAL_LOGGER.error("主程序配置文件保存失败！", ex);
                     }
                 }
                 //停止所有正在运行的服务器并保存配置
@@ -73,7 +72,7 @@ public class ConfirmExitDialog extends JDialog {
                     try {
                         ConfigurationManager.saveConfigurationToFile(config, "./", "balloonserver");
                     } catch (Exception ex) {
-                        GLOBAL_LOGGER.warning("主程序配置文件保存失败！\n" + GUILogger.stackTraceToString(ex));
+                        GLOBAL_LOGGER.error("主程序配置文件保存失败！", ex);
                     }
                 }
             }

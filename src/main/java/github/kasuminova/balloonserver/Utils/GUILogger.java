@@ -8,8 +8,9 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,6 +23,7 @@ public class GUILogger {
     private final String name;
     private final JTextPane logPane;
     private final Logger logger;
+    private Writer logWriter = null;
     /**
      * logger 线程池
      * 用于保证 Log 顺序
@@ -37,10 +39,10 @@ public class GUILogger {
     private static final SimpleAttributeSet WARN_ATTRIBUTE  = new SimpleAttributeSet();
     private static final SimpleAttributeSet ERROR_ATTRIBUTE = new SimpleAttributeSet();
     private static final SimpleAttributeSet DEBUG_ATTRIBUTE = new SimpleAttributeSet();
-//    private static final String INFO  = "INFO";
-//    private static final String WARN  = "WARN";
-//    private static final String ERROR = "ERROR";
-//    private static final String DEBUG = "DEBUG";
+    private static final String INFO  = "INFO";
+    private static final String WARN  = "WARN";
+    private static final String ERROR = "ERROR";
+    private static final String DEBUG = "DEBUG";
 
     /**
      * 创建一个 Logger
@@ -52,6 +54,20 @@ public class GUILogger {
         this.name = name;
         this.logPane = logPane;
 
+        File logFile = new File(String.format("./%s.log", name));
+
+        try {
+            if (!logFile.exists()) {
+                if (logFile.createNewFile()) {
+                    this.logWriter = new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
+                }
+            } else {
+                this.logWriter = new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            logger.warning(stackTraceToString(e));
+        }
+
         //设置颜色
         StyleConstants.setForeground(INFO_ATTRIBUTE, INFO_COLOR);
         StyleConstants.setForeground(WARN_ATTRIBUTE, WARN_COLOR);
@@ -61,7 +77,27 @@ public class GUILogger {
         try {
             logPane.setFont(logPane.getFont().deriveFont(13f));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warning(stackTraceToString(e));
+        }
+    }
+
+    public GUILogger(String name) {
+        logger = Logger.getLogger(name);
+        logPane = null;
+        this.name = name;
+
+        File logFile = new File(String.format("./%s.log", name));
+
+        try {
+            if (!logFile.exists()) {
+                if (logFile.createNewFile()) {
+                    this.logWriter = new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
+                }
+            } else {
+                this.logWriter = new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            logger.warning(stackTraceToString(e));
         }
     }
 
@@ -69,7 +105,9 @@ public class GUILogger {
         String threadName = Thread.currentThread().getName();
         loggerThreadPool.execute(() -> {
             logger.info(msg);
-            insertStringToDocument(buildNormalLogMessage(threadName, msg, name), INFO_ATTRIBUTE);
+            String logMessage = buildNormalLogMessage(threadName, msg, INFO, name);
+            writeAndFlushMessage(logMessage);
+            insertStringToDocument(logMessage, INFO_ATTRIBUTE);
         });
     }
 
@@ -80,7 +118,9 @@ public class GUILogger {
         String threadName = Thread.currentThread().getName();
         loggerThreadPool.execute(() -> {
             logger.info(msg);
-            insertStringToDocument(buildNormalLogMessage(threadName, msg, name), DEBUG_ATTRIBUTE);
+            String logMessage = buildNormalLogMessage(threadName, msg, DEBUG, name);
+            writeAndFlushMessage(logMessage);
+            insertStringToDocument(logMessage, DEBUG_ATTRIBUTE);
         });
     }
 
@@ -88,7 +128,9 @@ public class GUILogger {
         String threadName = Thread.currentThread().getName();
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
-            insertStringToDocument(buildNormalLogMessage(threadName, msg, name), WARN_ATTRIBUTE);
+            String logMessage = buildNormalLogMessage(threadName, msg, WARN, name);
+            writeAndFlushMessage(logMessage);
+            insertStringToDocument(logMessage, WARN_ATTRIBUTE);
         });
     }
 
@@ -96,7 +138,9 @@ public class GUILogger {
         String threadName = Thread.currentThread().getName();
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
-            insertStringToDocument(buildNormalLogMessage(threadName, msg, name), ERROR_ATTRIBUTE);
+            String logMessage = buildNormalLogMessage(threadName, msg, ERROR, name);
+            writeAndFlushMessage(logMessage);
+            insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
         });
     }
 
@@ -105,8 +149,10 @@ public class GUILogger {
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
             logger.warning(stackTraceToString(e));
-            insertStringToDocument(buildNormalLogMessage(threadName,
-                    String.format("%s\n%s", msg, stackTraceToString(e)), name), ERROR_ATTRIBUTE);
+            String logMessage = buildNormalLogMessage(threadName,
+                    String.format("%s\n%s", msg, stackTraceToString(e)), ERROR, name);
+            writeAndFlushMessage(logMessage);
+            insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
         });
     }
 
@@ -114,19 +160,44 @@ public class GUILogger {
         String threadName = Thread.currentThread().getName();
         loggerThreadPool.execute(() -> {
             logger.warning(stackTraceToString(e));
-            insertStringToDocument(buildNormalLogMessage(threadName, stackTraceToString(e), name), ERROR_ATTRIBUTE);
+            String logMessage = buildNormalLogMessage(threadName, stackTraceToString(e), ERROR, name);
+            writeAndFlushMessage(logMessage);
+            insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
         });
+    }
+
+    /**
+     * 关闭 Writer, 解除 log 文件的占用
+     */
+    public void closeLogWriter() throws IOException {
+        if (logWriter == null) return;
+        logWriter.close();
+    }
+    
+    /**
+     * 向 log 文件输出字符串
+     * @param logMessage 要输出的内容
+     */
+    private void writeAndFlushMessage(String logMessage) {
+        if (logWriter == null) return;
+        try {
+            logWriter.write(logMessage);
+            logWriter.flush();
+        } catch (IOException e) {
+            logger.warning(stackTraceToString(e));
+        }
     }
 
     /*
      * 向 logPane 输出信息
      */
     private void insertStringToDocument(String str, SimpleAttributeSet ATTRIBUTE) {
+        if (logPane == null) return;
         try {
             Document document = logPane.getDocument();
             document.insertString(document.getLength(), str, ATTRIBUTE);
         } catch (BadLocationException e) {
-            e.printStackTrace();
+            logger.warning(stackTraceToString(e));
         }
     }
 
@@ -144,8 +215,8 @@ public class GUILogger {
         return sw.toString();
     }
 
-    private static String buildNormalLogMessage(String threadName, String msg, String name) {
+    private static String buildNormalLogMessage(String threadName, String msg, String logLevel ,String name) {
         //占位符分别为 日期，线程名，名称，消息本体
-        return String.format("[%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()),threadName, name, msg);
+        return String.format("[%s][%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), threadName, logLevel, name, msg);
     }
 }

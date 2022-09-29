@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
-import java.util.logging.Logger;
 
 import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
 
@@ -64,7 +63,7 @@ public class BalloonServer {
     public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);
     public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     //主窗口 Logger
-    public static final Logger GLOBAL_LOGGER = Logger.getLogger("MAIN");
+    public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
     public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0,1000);
     //全局线程池
     public static final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
@@ -133,7 +132,7 @@ public class BalloonServer {
                     ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
                     BalloonServer.GLOBAL_LOGGER.info("已更新主程序配置文件.");
                 } catch (IOException e) {
-                    GLOBAL_LOGGER.warning("保存主程序配置文件失败！");
+                    GLOBAL_LOGGER.error("保存主程序配置文件失败！", e);
                 }
             } else {
                 abstractIntegratedServer = new IntegratedServer("littleserver", false);
@@ -244,7 +243,7 @@ public class BalloonServer {
                 GLOBAL_LOGGER.info("成功生成主程序配置文件.");
             }
         } catch (Exception e) {
-            GLOBAL_LOGGER.warning("主程序配置文件加载失败！\n" + GUILogger.stackTraceToString(e));
+            GLOBAL_LOGGER.error("主程序配置文件加载失败！", e);
         }
     }
 
@@ -256,7 +255,7 @@ public class BalloonServer {
             ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
             GLOBAL_LOGGER.info("成功保存主程序配置文件.");
         } catch (IOException e) {
-            GLOBAL_LOGGER.warning("主程序配置文件保存失败！\n" + GUILogger.stackTraceToString(e));
+            GLOBAL_LOGGER.error("主程序配置文件保存失败！", e);
         }
     }
 
@@ -385,7 +384,7 @@ public class BalloonServer {
                 try {
                     thread.join();
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    GLOBAL_LOGGER.error(ex);
                 }
             }
 
@@ -452,6 +451,12 @@ public class BalloonServer {
         }
         //保存配置
         serverInterface.saveConfig();
+        //关闭 Logger 文件输出
+        try {
+            serverInterface.getLogger().closeLogWriter();
+        } catch (Exception e) {
+            GLOBAL_LOGGER.error("无法关闭 logger", e);
+        }
         return true;
     }
 

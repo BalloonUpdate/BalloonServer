@@ -14,7 +14,6 @@ import github.kasuminova.balloonserver.UpdateChecker.ApplicationVersion;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -24,14 +23,9 @@ import java.util.List;
  * 可视化更新规则编辑器
  */
 public class RuleEditor extends JDialog {
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.0-STABLE");
-    private final List<String> result = new ArrayList<>();
-    private final ArrayList<String> rules = new ArrayList<>();
-    public List<String> getResult() {
-        return result;
-    }
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.4.0-STABLE");
 
-    public RuleEditor(JSONArray jsonArray, String resDirPath) {
+    public RuleEditor(JSONArray jsonArray, ArrayList<String> rules) {
         setTitle("RuleEditor " + VERSION);
         setIconImage(BalloonServer.ICON.getImage());
         setSize(750,840);
@@ -48,13 +42,15 @@ public class RuleEditor extends JDialog {
         JPanel treePanel = new JPanel(new VFlowLayout(VFlowLayout.TOP, VFlowLayout.MIDDLE, 5, 5, 5, 5, true, false));
         treePanel.setBorder(new TitledBorder("资源文件夹结构表"));
         JTree tree = new JTree();
-        CheckBoxTreeNode rootNode = new CheckBoxTreeNode(resDirPath);
+        CheckBoxTreeNode rootNode = new CheckBoxTreeNode("res");
 
         ArrayList<CheckBoxTreeNode> fileList = scanDirAndBuildTree(jsonArray);
 
         for (CheckBoxTreeNode checkBoxTreeNode : fileList) {
             rootNode.add(checkBoxTreeNode);
         }
+
+        compareRules(rootNode, rules);
 
         DefaultTreeModel model = new DefaultTreeModel(rootNode);
         tree.addMouseListener(new CheckBoxTreeNodeSelectionListener());
@@ -99,11 +95,16 @@ public class RuleEditor extends JDialog {
 
         JButton complete = new JButton("完成");
         complete.addActionListener(e -> {
-            rules.addAll(getSelectedFiles(rootNode));
+            //构建规则
+            rules.addAll(buildRules(rootNode));
 
-            for (String rule : rules) {
-                result.add(rule.replace(resDirPath + "/", ""));
-            }
+            //去重后再添加
+            List<String> listTmp = new ArrayList<>(rules);
+            listTmp = listTmp.stream().distinct().toList();
+
+            rules.clear();
+            rules.addAll(listTmp);
+            ruleList.setListData(rules.toArray(new String[0]));
             dispose();
         });
         contentPane.add(complete);
@@ -117,42 +118,85 @@ public class RuleEditor extends JDialog {
      * 可复用变量（降低内存使用率）
      */
     private static final StringBuilder childPath = new StringBuilder();
+
     /**
      * 获取选中的文件，自动获取父节点
      * @param root 节点
      * @return 选中的文件
      */
-    private static ArrayList<String> getSelectedFiles(CheckBoxTreeNode root) {
-        ArrayList<String> abstractSimpleFileObjects = new ArrayList<>();
+    private static ArrayList<String> buildRules(CheckBoxTreeNode root) {
+        ArrayList<String> rules = new ArrayList<>();
 
         if (root.isRoot() && root.isSelected()) {
-            abstractSimpleFileObjects.add("**");
-            return abstractSimpleFileObjects;
+            rules.add("**");
+            return rules;
         }
 
         if (!root.isSelected()) {
             if (!root.isLeaf()) {
                 for (int i = 0; i < root.getChildCount(); i++) {
-                    abstractSimpleFileObjects.addAll(getSelectedFiles(root.getChildAt(i)));
+                    rules.addAll(buildRules(root.getChildAt(i)));
                 }
             }
         } else if (root.getAllowsChildren()) {
             childPath.setLength(0);
-            for (TreeNode treeNode : root.getPath()) {
-                childPath.append(treeNode.toString().intern()).append("/");
+            for (int i = 1; i < root.getPath().length; i++) {
+                childPath.append(root.getPath()[i].toString().intern()).append("/");
             }
-            abstractSimpleFileObjects.add(childPath + "**");
+            rules.add(childPath + "**");
         } else {
             childPath.setLength(0);
-            for (TreeNode treeNode : root.getPath()) {
-                childPath.append(treeNode.toString().intern()).append("/");
+            for (int i = 1; i < root.getPath().length; i++) {
+                childPath.append(root.getPath()[i].toString().intern()).append("/");
             }
             //去除最后一个斜杠
             childPath.delete(childPath.length() - 1, childPath.length());
-            abstractSimpleFileObjects.add(childPath.toString());
+            rules.add(childPath.toString());
         }
 
-        return abstractSimpleFileObjects;
+        return rules;
+    }
+
+    /**
+     * 遍历文件树，将匹配更新规则的对象选中
+     */
+    private static void compareRules(CheckBoxTreeNode root, ArrayList<String> rules) {
+        for (String rule : rules) {
+            if (rule.equals("**")) {
+                root.setSelected(true);
+                return;
+            }
+            for (int i = 0; i < root.getChildCount(); i++) {
+                compareRule(root.getChildAt(i), rule);
+            }
+        }
+    }
+
+    private static void compareRule(CheckBoxTreeNode node, String rule) {
+        childPath.setLength(0);
+
+        if (node.getAllowsChildren()) {
+            for (int i = 1; i < node.getPath().length; i++) {
+                childPath.append(node.getPath()[i].toString().intern()).append("/");
+            }
+            childPath.append("**");
+            if (childPath.toString().equals(rule)) {
+                node.setSelected(true);
+                return;
+            }
+            for (int i = 0; i < node.getChildCount(); i++) {
+                compareRule(node.getChildAt(i), rule);
+            }
+        } else {
+            for (int i = 1; i < node.getPath().length; i++) {
+                childPath.append(node.getPath()[i].toString().intern()).append("/");
+            }
+            //去除最后一个斜杠
+            childPath.delete(childPath.length() - 1, childPath.length());
+            if (childPath.toString().equals(rule)) {
+                node.setSelected(true);
+            }
+        }
     }
 
     private static final JSONObject jsonObject = new JSONObject();
