@@ -95,7 +95,7 @@ public class SetupSwing {
             themeThread.join();
         } catch (InterruptedException ignored) {}
 
-        System.out.printf("SetupSwing Completed, Used %sms%n", System.currentTimeMillis() - start1);
+        System.out.printf("Swing Setup Completed, Used %sms%n", System.currentTimeMillis() - start1);
     }
 
     /**

@@ -87,6 +87,10 @@ public class HttpServer {
                             httpServerInitializer.jks.getName().replace(".jks",""),
                             port));
                     logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址。");
+                } else if (ip.equals("0.0.0.0")) {
+                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://localhost:%s/index.json",
+                            System.currentTimeMillis() - start,
+                            port));
                 } else {
                     logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",
                             System.currentTimeMillis() - start,

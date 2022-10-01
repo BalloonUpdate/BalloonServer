@@ -57,11 +57,11 @@ public class FileCacheCalculator {
                     if (resDirFile.isFile()) {
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(resDirFile));
                         fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.execute(fileCounterThread);
+                        FILE_THREAD_POOL.submit(fileCounterThread);
                     } else {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile));
                         dirThreadList.add(dirCounterThread);
-                        GLOBAL_THREAD_POOL.execute(dirCounterThread);
+                        GLOBAL_THREAD_POOL.submit(dirCounterThread);
                     }
                 }
             }
@@ -118,7 +118,7 @@ public class FileCacheCalculator {
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
                         fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.execute(fileCounterThread);
+                        FILE_THREAD_POOL.submit(fileCounterThread);
                     } else {
                         JSONArray children = obj.getJSONArray("children");
                         obj.put("children", scanDir(children, childFile));
@@ -131,7 +131,7 @@ public class FileCacheCalculator {
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
                         fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.execute(fileCounterThread);
+                        FILE_THREAD_POOL.submit(fileCounterThread);
                     } else {
                         completedFiles.getAndIncrement();
                     }
@@ -205,10 +205,10 @@ public class FileCacheCalculator {
                     if (file.isFile()) {
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(file));
                         fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.execute(fileCounterThread);
+                        FILE_THREAD_POOL.submit(fileCounterThread);
                     } else if (file.isDirectory()) {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file));
-                        GLOBAL_THREAD_POOL.execute(dirCounterThread);
+                        GLOBAL_THREAD_POOL.submit(dirCounterThread);
                         dirThreadList.add(dirCounterThread);
                     }
                 }

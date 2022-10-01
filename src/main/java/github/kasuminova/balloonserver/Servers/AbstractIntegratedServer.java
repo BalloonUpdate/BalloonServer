@@ -657,14 +657,10 @@ public abstract class AbstractIntegratedServer {
         //IP 检查
         String IP = IPTextField.getText();
         String IPType = IPAddressUtil.checkAddress(IP);
-        if (IPType != null) {
-            if (IP.contains("0.0.0.0")) {
-                IP = "127.0.0.1";
-            }
-        } else {
-            IP = "127.0.0.1";
-            config.setIp("127.0.0.1");
-            logger.warn("配置中的 IP 格式错误，使用默认 IP 地址 127.0.0.1");
+        if (IPType == null) {
+            IP = "0.0.0.0";
+            config.setIp("0.0.0.0");
+            logger.warn("配置中的 IP 格式错误，使用默认 IP 地址 0.0.0.0");
         }
 
         config.setPort((Integer) portSpinner.getValue()) //设置端口
