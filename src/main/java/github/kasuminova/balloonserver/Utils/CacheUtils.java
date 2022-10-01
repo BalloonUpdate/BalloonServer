@@ -238,10 +238,11 @@ public class CacheUtils {
 
             //创建新线程实例并执行
             File finalDir = dir;
-            counterThread = Thread.startVirtualThread(() -> {
+            counterThread = new Thread(() -> {
                 jsonArray.clear();
                 jsonArray.addAll(fileCacheCalculator.scanDir(jsonCache, finalDir));
             });
+            counterThread.start();
 
             resetStatusProgressBar();
             GLOBAL_STATUS_PROGRESSBAR.setString(String.format("检查变化中：0 文件 / %s 文件", dirSize[1]));
@@ -256,10 +257,11 @@ public class CacheUtils {
             //新建资源计算器实例
             fileListUtils = new NextFileListUtils(serverInterface.getHashAlgorithm());
             //创建新线程实例并执行
-            counterThread = Thread.startVirtualThread(() -> {
+            counterThread = new Thread(() -> {
                 fileObjList.clear();
                 fileObjList.addAll(fileListUtils.scanDir(finalDir, logger));
             });
+            counterThread.start();
 
             resetStatusProgressBar();
             //轮询线程, 读取进度

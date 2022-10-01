@@ -57,16 +57,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //index 请求监听
         if (decodedURI.contains("/index.json")) {
-            // 检测 100 Continue，是否同意接收将要发送过来的实体
-            ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
-            // 构建 index
+            //构建 index
             index.clear();
             index.put("common_mode", config.getCommonMode());
             index.put("once_mode", config.getOnceMode());
             index.put("update", config.getMainDirPath().replace("/", "").intern());
             index.put("hash_algorithm", hashAlgorithm.intern());
-            // 因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
-            // 创建完整的响应对象
+            //因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
+            //创建完整的响应对象
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
@@ -75,7 +73,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
             //设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
 
-            // 响应写回给客户端,并在协会后断开这个连接
+            //响应写回给客户端,并在协会后断开这个连接
             ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
 
             //打印日志
@@ -83,10 +81,8 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
             return;
         }
 
-        //JSON 请求监听
+        //资源结构 JSON 请求监听
         if (decodedURI.contains(config.getMainDirPath() + ".json") || decodedURI.contains(config.getMainDirPath() + "_crc32.json") && hashAlgorithm.contains(HashCalculator.CRC32)) {
-            // 检测 100 Continue，是否同意接收将要发送过来的实体
-            ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
             // 经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,

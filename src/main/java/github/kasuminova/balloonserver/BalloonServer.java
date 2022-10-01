@@ -45,7 +45,7 @@ public final class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.2-ALPHA");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.3-STABLE");
     public static final String TITLE = "BalloonServer " + VERSION;
     /*
     可执行文件名称。
@@ -67,7 +67,7 @@ public final class BalloonServer {
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
     public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0,1000);
     //全局线程池
-    public static final ExecutorService GLOBAL_THREAD_POOL = Executors.newVirtualThreadPerTaskExecutor();
+    public static final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
     //主面板
     public static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
@@ -118,7 +118,7 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
 
-        Thread serverThread = Thread.startVirtualThread(() -> {
+        Thread serverThread = new Thread(() -> {
             AbstractIntegratedServer abstractIntegratedServer;
             //自动启动服务器检测
             if (CONFIG.isAutoStartServer()) {
@@ -146,6 +146,7 @@ public final class BalloonServer {
             availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
             SERVER_TABBED_PANE.addTab("旧版集成服务端 (4.x.x)", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
         });
+        serverThread.start();
 
         loadStatusBar();
         loadMenuBar();
@@ -355,7 +356,7 @@ public final class BalloonServer {
                 String serverName = serverNames[i];
 
                 int panelArrayIndex = i;
-                Thread thread = Thread.startVirtualThread(() -> {
+                Thread thread = new Thread(() -> {
                     long start = System.currentTimeMillis();
                     GLOBAL_LOGGER.info(String.format("正在载入集成服务端实例：%s", serverName));
                     AbstractIntegratedServer customServer;
@@ -368,6 +369,7 @@ public final class BalloonServer {
                     GLOBAL_LOGGER.info(String.format("实例载入耗时 %sms.", System.currentTimeMillis() - start));
                 });
                 threadList.add(thread);
+                thread.start();
             }
 
             //等待所有线程操作完成

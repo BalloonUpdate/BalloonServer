@@ -3,8 +3,7 @@ plugins {
 }
 
 group 'github.kasuminova'
-version '1.2.2-ALPHA'
-
+version '1.2.3-STABLE'
 
 repositories {
     maven {
@@ -49,7 +48,7 @@ dependencies {
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
-    options.compilerArgs += "--enable-preview"
+//    options.compilerArgs += "--enable-preview"
 }
 
 test {

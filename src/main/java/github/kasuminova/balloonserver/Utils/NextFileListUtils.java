@@ -28,7 +28,7 @@ public class NextFileListUtils {
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
     private final String hashAlgorithm;
-    private final ExecutorService FILE_THREAD_POOL = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     public long getCompletedBytes() {
         return completedBytes.get();
     }
@@ -206,8 +206,9 @@ public class NextFileListUtils {
                             //计算文件
                             totalFiles.getAndIncrement();
                         } else {
-                            Thread thread = Thread.startVirtualThread(new DirCalculatorThread(value));
+                            Thread thread = new Thread(new DirCalculatorThread(value));
                             threadList.add(thread);
+                            thread.start();
                         }
                     }
                 }
