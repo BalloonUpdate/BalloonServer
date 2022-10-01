@@ -549,19 +549,19 @@ public final class BalloonServer {
         PRE_LOAD_PROGRESS_BAR.setString("检查运行环境...");
         int version = Integer.parseInt(System.getProperty("java.specification.version"));
         GLOBAL_LOGGER.info("Java 版本为 " + version);
-        if (version < 17) {
-            int selection = JOptionPane.showConfirmDialog(PREMAIN_FRAME,
-                            String.format("""
-                                    检测到当前 Java 运行库版本为 JAVA %s
-                                    程序要求的运行库版本应为 JAVA 17 及以上, 您要强制使用不兼容的版本启动程序吗?
-                                    选择 “是” 启用不安全模式, 选择 “否” 退出程序""", version),
-                            "不受支持的 JAVA 版本",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE);
-            if (selection == JOptionPane.YES_OPTION) {
-                MAIN_FRAME.setTitle(TITLE + " (Unsafe Mode)");
-            } else {
-                System.exit(1);
+        GLOBAL_LOGGER.info("程序分支为 " + VERSION.getBranch());
+        if (VERSION.getBranch().equals("ALPHA")) {
+            int selection = JOptionPane.showConfirmDialog(PREMAIN_FRAME, """
+                    此版本为 ALPHA 版本，通常引入了一些可能存在破坏性的强大的新功能。
+                    在使用之前，您应知悉此版本可能存在无征兆的程序崩溃，报错。
+                    请不要将此版本投入生产环境
+                    请不要将此版本投入生产环境
+                    请不要将此版本投入生产环境
+                    在阅读上方提示后，请点击“是”启动程序并代表你愿意承担因不稳定版本造成的程序崩溃后果，
+                    选择“否”退出程序。""",
+                    "WARNING", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (!(selection == JOptionPane.YES_OPTION)) {
+                System.exit(0);
             }
         }
     }
