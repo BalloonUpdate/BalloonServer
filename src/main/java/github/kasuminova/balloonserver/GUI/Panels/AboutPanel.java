@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.net.URI;
 
 public class AboutPanel {
-    static final int GLOBAL_BUTTON_WIDTH = 165;
+    static final int GLOBAL_BUTTON_WIDTH = 170;
     public static JPanel createPanel() {
         //主面板
         JPanel aboutPanel = new JPanel(new BorderLayout());
@@ -22,7 +22,7 @@ public class AboutPanel {
         titleBox.add(new JLabel(new ImageIcon(BalloonServer.ICON.getImage().getScaledInstance(64,64, Image.SCALE_DEFAULT))));
         //标题
         JLabel title = new JLabel("BalloonServer " + BalloonServer.VERSION);
-        title.setBorder(new EmptyBorder(0,30,0,0));
+        title.setBorder(new EmptyBorder(0,10,0,0));
         //设置字体
         try {
             InputStream ttfFile = AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf");
@@ -36,7 +36,7 @@ public class AboutPanel {
         //描述
         JPanel descPanel = new JPanel(new VFlowLayout(0, VFlowLayout.MIDDLE, 5, 5, 5, 5, false, false));
         descPanel.setBorder(new EmptyBorder(10,0,0,0));
-        descPanel.add(new JLabel("BalloonServer 是 LittleServer 的完全图形化版本, 基于 Netty-IO 的增强实现.", JLabel.CENTER));
+        descPanel.add(new JLabel("BalloonServer 是 LittleServer 的衍生图形化版本, 基于 Netty-IO 的增强实现.", JLabel.CENTER));
         descPanel.add(new JLabel("提示：BalloonServer 内嵌了可视化更新规则编辑器, 你可以通过右键更新模式列表打开.", JLabel.CENTER));
         descPanel.add(new JLabel("提示：BalloonServer 支持启动多个服务端, 你可以使用窗口左上角菜单来管理多个实例.", JLabel.CENTER));
         //链接

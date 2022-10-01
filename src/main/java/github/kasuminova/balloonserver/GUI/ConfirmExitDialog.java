@@ -14,7 +14,7 @@ import static github.kasuminova.balloonserver.BalloonServer.stopAllServers;
 
 public class ConfirmExitDialog extends JDialog {
     public ConfirmExitDialog(JFrame frame, BalloonServerConfig config) {
-        setTitle("提示");
+        setTitle(BalloonServer.TITLE);
         setIconImage(BalloonServer.ICON.getImage());
         setSize(360,160);
         setResizable(false);

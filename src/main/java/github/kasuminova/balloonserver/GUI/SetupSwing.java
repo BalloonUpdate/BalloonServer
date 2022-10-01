@@ -22,7 +22,7 @@ public class SetupSwing {
         System.setProperty("swing.aatext", "true");
 
         //UI 配置线程
-        Thread uiThread = new Thread(() -> {
+        Thread uiThread = Thread.startVirtualThread(() -> {
             long start = System.currentTimeMillis();
             //设置圆角弧度
             UIManager.put("Button.arc", 7);
@@ -46,7 +46,6 @@ public class SetupSwing {
             UIManager.put("MenuBar.underlineSelectionHeight", 3);
             //窗口标题居中
             UIManager.put("TitlePane.centerTitle", true);
-            UIManager.put("TitlePane.centerIcon", true);
             //进度条
             UIManager.put("ProgressBar.repaintInterval", 16);
             UIManager.put("ProgressBar.cycleTime", 7500);
@@ -55,10 +54,9 @@ public class SetupSwing {
 
             System.out.printf("UIThread Completed, Used %sms%n", System.currentTimeMillis() - start);
         });
-        uiThread.start();
 
         //字体更换线程
-        Thread fontThread = new Thread(() -> {
+        Thread fontThread = Thread.startVirtualThread(() -> {
             long start = System.currentTimeMillis();
             //设置字体
             try {
@@ -78,9 +76,8 @@ public class SetupSwing {
             }
             System.out.printf("FontThread Completed, Used %sms%n", System.currentTimeMillis() - start);
         });
-        fontThread.start();
 
-        Thread themeThread = new Thread(() -> {
+        Thread themeThread = Thread.startVirtualThread(() -> {
             long start = System.currentTimeMillis();
             //更新 UI
             try {
@@ -91,7 +88,6 @@ public class SetupSwing {
             }
             System.out.printf("ThemeThread Completed, Used %sms%n", System.currentTimeMillis() - start);
         });
-        themeThread.start();
 
         try {
             uiThread.join();

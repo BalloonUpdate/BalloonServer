@@ -25,40 +25,45 @@ public class Checker {
             return;
         }
         JSONArray jsonArray = JSONArray.parseArray(giteeAPIJson);
-        JSONObject latestRelease = jsonArray.getJSONObject(0);
-        ApplicationVersion newVersion = new ApplicationVersion(latestRelease.getString("tag_name"));
 
-        ApplicationVersion applicationVersion = BalloonServer.VERSION;
+        //遍历从 API 获取到的 Releases, 并寻找最新版本
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject latestRelease = jsonArray.getJSONObject(i);
+            ApplicationVersion newVersion = new ApplicationVersion(latestRelease.getString("tag_name"));
 
-        //如果当前版本高于仓库最新版本则忽略更新
-        if (applicationVersion.getBigVersion() > newVersion.getBigVersion() ||
-            applicationVersion.getSubVersion() > newVersion.getSubVersion() ||
-            applicationVersion.getMinorVersion() > newVersion.getMinorVersion())
-        {
-            GLOBAL_LOGGER.info("当前版本为最新版本.");
-            return;
-        }
+            ApplicationVersion applicationVersion = BalloonServer.VERSION;
 
-        //版本更新检查
-        if (applicationVersion.getBigVersion() < newVersion.getBigVersion() ||
-            applicationVersion.getSubVersion() < newVersion.getSubVersion() ||
-            applicationVersion.getMinorVersion() < newVersion.getMinorVersion())
-        {
-            if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp")) {
-                String fileName = downloadUpdate(latestRelease, false);
-                if (fileName != null) startProgram(fileName, true);
-                return;
+            //如果版本分支不一样则忽略此版本
+            if (!applicationVersion.getBranch().equals(newVersion.getBranch())) continue;
+
+            //如果当前版本高于仓库最新版本则忽略此版本
+            if (applicationVersion.getBigVersion() > newVersion.getBigVersion() ||
+                applicationVersion.getSubVersion() > newVersion.getSubVersion() ||
+                applicationVersion.getMinorVersion() > newVersion.getMinorVersion())
+            {
+                continue;
             }
-            int operation = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                    String.format("检测到有版本更新 (%s)，您要下载更新吗？", newVersion),
-                    "更新提示",
-                    JOptionPane.YES_NO_OPTION);
 
-            if (operation != JOptionPane.YES_NO_OPTION) return;
+            //版本更新检查
+            if (applicationVersion.getBigVersion() < newVersion.getBigVersion() ||
+                applicationVersion.getSubVersion() < newVersion.getSubVersion() ||
+                applicationVersion.getMinorVersion() < newVersion.getMinorVersion())
+            {
+                if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp"))
+                {
+                    String fileName = downloadUpdate(latestRelease, false);
+                    if (fileName != null) startProgram(fileName, true);
+                    return;
+                }
+                int operation = JOptionPane.showConfirmDialog(MAIN_FRAME,
+                        String.format("检测到有版本更新 (%s)，您要下载更新吗？", newVersion),
+                        "更新提示",
+                        JOptionPane.YES_NO_OPTION);
 
-            downloadUpdate(latestRelease, true);
-        } else {
-            GLOBAL_LOGGER.info("当前版本为最新版本.");
+                if (operation != JOptionPane.YES_NO_OPTION) return;
+
+                downloadUpdate(latestRelease, true);
+            }
         }
     }
 
@@ -68,7 +73,7 @@ public class Checker {
      */
     public static void startProgram(String fileName, boolean exitThisProgram) {
         try {
-            Runtime.getRuntime().exec(String.format(".\\%s", fileName));
+            Runtime.getRuntime().exec(new String[]{".\\%s", fileName});
             if (exitThisProgram) {
                 //如果主服务端正在运行，则打开自动启动服务器（仅一次）选项并保存，下次启动服务端时自动启动服务器
                 if (availableCustomServerInterfaces.get(0).isStarted().get()) {

@@ -26,7 +26,7 @@ public class FileCacheCalculator {
         this.logger = logger;
         this.hashAlgorithm = hashAlgorithm;
     }
-    private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    private final ExecutorService FILE_THREAD_POOL = Executors.newVirtualThreadPerTaskExecutor();
     private final GUILogger logger;
     private final String hashAlgorithm;
     public final AtomicInteger completedFiles = new AtomicInteger(0);

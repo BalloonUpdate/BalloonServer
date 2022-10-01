@@ -243,6 +243,7 @@ public class GUILogger {
 
     private static String buildNormalLogMessage(String threadName, String msg, String logLevel ,String name) {
         //占位符分别为 日期，线程名，名称，消息本体
-        return String.format("[%s][%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, name, threadName, msg);
+//        return String.format("[%s][%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, name, threadName, msg);
+        return String.format("[%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, name, msg);
     }
 }

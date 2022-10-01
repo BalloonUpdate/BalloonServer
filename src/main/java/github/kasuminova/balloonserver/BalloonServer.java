@@ -45,7 +45,7 @@ public final class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.2-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.2-ALPHA");
     public static final String TITLE = "BalloonServer " + VERSION;
     /*
     可执行文件名称。
@@ -67,7 +67,7 @@ public final class BalloonServer {
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
     public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0,1000);
     //全局线程池
-    public static final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
+    public static final ExecutorService GLOBAL_THREAD_POOL = Executors.newVirtualThreadPerTaskExecutor();
     //主面板
     public static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
@@ -118,7 +118,7 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
 
-        Thread serverThread = new Thread(() -> {
+        Thread serverThread = Thread.startVirtualThread(() -> {
             AbstractIntegratedServer abstractIntegratedServer;
             //自动启动服务器检测
             if (CONFIG.isAutoStartServer()) {
@@ -146,7 +146,6 @@ public final class BalloonServer {
             availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
             SERVER_TABBED_PANE.addTab("旧版集成服务端 (4.x.x)", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
         });
-        serverThread.start();
 
         loadStatusBar();
         loadMenuBar();
@@ -212,22 +211,13 @@ public final class BalloonServer {
         //停止所有运行的实例
         for (int i = 0; i < availableCustomServerInterfaces.size(); i++) {
             IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(i);
-            stopIntegratedServer(serverInterface, serverInterface.getServerName(), i, inquireUser);
-            if (i != 0) {
-                SERVER_TABBED_PANE.removeTabAt(i);
-                availableCustomServerInterfaces.remove(i);
-                i--;
+            if (stopIntegratedServer(serverInterface, serverInterface.getServerName(), i, inquireUser)) {
+                if (i != 0) {
+                    SERVER_TABBED_PANE.removeTabAt(i);
+                    availableCustomServerInterfaces.remove(i);
+                    i--;
+                }
             }
-        }
-
-        //删除除主服务端除外的服务端实例标签页
-        for (int i = 1; i < SERVER_TABBED_PANE.getTabCount(); i++) {
-            SERVER_TABBED_PANE.remove(i);
-        }
-        //删除除主服务端除外的服务端实例接口
-        for (int i = 1; i < availableCustomServerInterfaces.size(); i++) {
-            availableCustomServerInterfaces.remove(i);
-            i--;
         }
     }
 
@@ -365,7 +355,7 @@ public final class BalloonServer {
                 String serverName = serverNames[i];
 
                 int panelArrayIndex = i;
-                Thread thread = new Thread(() -> {
+                Thread thread = Thread.startVirtualThread(() -> {
                     long start = System.currentTimeMillis();
                     GLOBAL_LOGGER.info(String.format("正在载入集成服务端实例：%s", serverName));
                     AbstractIntegratedServer customServer;
@@ -378,7 +368,6 @@ public final class BalloonServer {
                     GLOBAL_LOGGER.info(String.format("实例载入耗时 %sms.", System.currentTimeMillis() - start));
                 });
                 threadList.add(thread);
-                thread.start();
             }
 
             //等待所有线程操作完成
@@ -570,7 +559,7 @@ public final class BalloonServer {
                             JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE);
             if (selection == JOptionPane.YES_OPTION) {
-                MAIN_FRAME.setTitle(MAIN_FRAME.getTitle() + " (Unsafe Mode)");
+                MAIN_FRAME.setTitle(TITLE + " (Unsafe Mode)");
             } else {
                 System.exit(1);
             }
