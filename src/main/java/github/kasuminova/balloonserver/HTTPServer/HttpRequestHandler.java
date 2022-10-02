@@ -81,6 +81,13 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
             return;
         }
 
+        //如果使用旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户使用旧版服务端
+        if (hashAlgorithm.contains(HashCalculator.CRC32) && decodedURI.contains(config.getMainDirPath() + ".json")) {
+            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端版本不兼容此版本客户端，请使用旧版服务端.（仅兼容 4.1.14+）\n".repeat(6), clientIP, decodedURI);
+            logger.error("检测到你可能正在使用旧版客户端获取新版服务端缓存文件，请使用旧版服务端。");
+            return;
+        }
+
         //资源结构 JSON 请求监听
         if (decodedURI.contains(config.getMainDirPath() + ".json") || decodedURI.contains(config.getMainDirPath() + "_crc32.json") && hashAlgorithm.contains(HashCalculator.CRC32)) {
             // 经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
@@ -97,13 +104,6 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
             //打印日志
             printLog(String.valueOf(jsonResponse.status().code()), start, clientIP, decodedURI, logger);
-            return;
-        }
-
-        //如果使用旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户使用旧版服务端
-        if (hashAlgorithm.contains(HashCalculator.CRC32) && decodedURI.contains(config.getMainDirPath() + ".json")) {
-            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端版本不兼容此版本客户端，请使用旧版服务端.（仅兼容 4.1.14+）\n".repeat(6), clientIP, decodedURI);
-            logger.error("检测到你可能正在使用旧版客户端获取新版服务端缓存文件，请使用旧版服务端。");
             return;
         }
 
@@ -174,7 +174,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
     /**
      * 创建一个进度条面板记录单独文件的显示
-     * @return Component[] 第一个为面板, 第二个为进度条
+     * @return JProgressBar 进度条
      */
     public JProgressBar createUploadPanel(String IP, String fileName) {
         //单个线程的面板

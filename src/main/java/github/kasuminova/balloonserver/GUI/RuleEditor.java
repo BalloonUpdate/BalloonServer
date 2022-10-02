@@ -25,7 +25,7 @@ import java.util.List;
 public class RuleEditor extends JDialog {
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.4.0-STABLE");
 
-    public RuleEditor(JSONArray jsonArray, ArrayList<String> rules) {
+    public RuleEditor(JSONArray jsonArray, List<String> rules) {
         setTitle("RuleEditor " + VERSION);
         setIconImage(BalloonServer.ICON.getImage());
         setSize(750,840);
@@ -44,9 +44,7 @@ public class RuleEditor extends JDialog {
         JTree tree = new JTree();
         CheckBoxTreeNode rootNode = new CheckBoxTreeNode("res");
 
-        ArrayList<CheckBoxTreeNode> fileList = scanDirAndBuildTree(jsonArray);
-
-        for (CheckBoxTreeNode checkBoxTreeNode : fileList) {
+        for (CheckBoxTreeNode checkBoxTreeNode : scanDirAndBuildTree(jsonArray)) {
             rootNode.add(checkBoxTreeNode);
         }
 
@@ -160,7 +158,7 @@ public class RuleEditor extends JDialog {
     /**
      * 遍历文件树，将匹配更新规则的对象选中
      */
-    private static void compareRules(CheckBoxTreeNode root, ArrayList<String> rules) {
+    private static void compareRules(CheckBoxTreeNode root, List<String> rules) {
         for (String rule : rules) {
             if (rule.equals("**")) {
                 root.setSelected(true);

@@ -388,7 +388,7 @@ public abstract class AbstractIntegratedServer {
         protected void showRuleEditorDialog(JSONArray jsonArray) {
             //锁定窗口，防止用户误操作
             MAIN_FRAME.setEnabled(false);
-            RuleEditor editorDialog = new RuleEditor(jsonArray, (ArrayList<String>) rules);
+            RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
             editorDialog.setModal(true);
 
             MAIN_FRAME.setEnabled(true);

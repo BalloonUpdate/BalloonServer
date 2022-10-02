@@ -8,8 +8,5 @@ abstract class Configuration {
     public int getConfigVersion() {
         return configVersion;
     }
-    public Configuration setConfigVersion(int configVersion) {
-        this.configVersion = configVersion;
-        return this;
-    }
+    public abstract Configuration setConfigVersion(int configVersion);
 }

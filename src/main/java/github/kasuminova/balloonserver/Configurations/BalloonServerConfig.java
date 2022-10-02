@@ -7,6 +7,12 @@ public class BalloonServerConfig extends Configuration {
     public BalloonServerConfig() {
         configVersion = 0;
     }
+
+    @Override
+    public BalloonServerConfig setConfigVersion(int configVersion) {
+        this.configVersion = configVersion;
+        return this;
+    }
     //DEBUG 模式
     private boolean debugMode = false;
     public boolean isDebugMode() {
