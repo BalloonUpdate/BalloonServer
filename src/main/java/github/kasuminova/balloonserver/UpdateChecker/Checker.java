@@ -73,7 +73,7 @@ public class Checker {
      */
     public static void startProgram(String fileName, boolean exitThisProgram) {
         try {
-            Runtime.getRuntime().exec(new String[]{".\\%s", fileName});
+            Runtime.getRuntime().exec(new String[]{String.format(".\\%s", fileName)});
             if (exitThisProgram) {
                 //如果主服务端正在运行，则打开自动启动服务器（仅一次）选项并保存，下次启动服务端时自动启动服务器
                 if (availableCustomServerInterfaces.get(0).isStarted().get()) {
