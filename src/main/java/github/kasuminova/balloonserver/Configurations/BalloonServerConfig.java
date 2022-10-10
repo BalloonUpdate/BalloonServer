@@ -31,6 +31,24 @@ public class BalloonServerConfig extends Configuration {
         this.autoStartServer = autoStartServer;
         return this;
     }
+    private boolean autoStartLegacyServer = false;
+    //自动启动旧版服务器
+    public boolean isAutoStartLegacyServer() {
+        return autoStartLegacyServer;
+    }
+    public BalloonServerConfig setAutoStartLegacyServer(boolean autoStartLegacyServer) {
+        this.autoStartLegacyServer = autoStartLegacyServer;
+        return this;
+    }
+    //自动启动旧版服务器（仅一次）
+    private boolean autoStartLegacyServerOnce = false;
+    public boolean isAutoStartLegacyServerOnce() {
+        return autoStartLegacyServerOnce;
+    }
+    public BalloonServerConfig setAutoStartLegacyServerOnce(boolean autoStartLegacyServerOnce) {
+        this.autoStartLegacyServerOnce = autoStartLegacyServerOnce;
+        return this;
+    }
     //自动启动服务器（仅一次）
     private boolean autoStartServerOnce = false;
     public boolean isAutoStartServerOnce() {

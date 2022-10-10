@@ -29,6 +29,8 @@ public class ConfigurationManager {
         BalloonServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), BalloonServerConfig.class);
         oldConfig.setAutoStartServer(config.isAutoStartServer())
                  .setAutoStartServerOnce(config.isAutoStartServerOnce())
+                 .setAutoStartLegacyServer(config.isAutoStartLegacyServer())
+                 .setAutoStartLegacyServerOnce(config.isAutoStartLegacyServerOnce())
                  .setDebugMode(config.isDebugMode())
                  .setCloseOperation(config.getCloseOperation())
                  .setAutoCheckUpdates(config.isAutoCheckUpdates())

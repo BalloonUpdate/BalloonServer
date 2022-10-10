@@ -45,7 +45,7 @@ public final class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.3-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.4-STABLE");
     public static final String TITLE = "BalloonServer " + VERSION;
     /*
     可执行文件名称。
@@ -102,7 +102,7 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabCloseToolTipText", "关闭这个标签页。且只能关闭自定义服务器实例。");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabCloseCallback", (BiConsumer<JTabbedPane, Integer>) (tabbedPane, tabIndex) -> {
             //检查是否为默认服务端
-            if (tabIndex == 0) {
+            if (tabIndex <= 1) {
                 JOptionPane.showMessageDialog(MAIN_FRAME, "你不可以删除默认服务端！", BalloonServer.TITLE, JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -142,7 +142,23 @@ public final class BalloonServer {
             SERVER_TABBED_PANE.addTab("集成服务端 (4.1.15+)", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
             availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
 
-            abstractIntegratedServer = new LegacyIntegratedServer("littleserver_legacy", false);
+            if (CONFIG.isAutoStartLegacyServer()) {
+                abstractIntegratedServer = new LegacyIntegratedServer("littleserver_legacy", true);
+            } else if (CONFIG.isAutoStartLegacyServerOnce()) {
+                abstractIntegratedServer = new LegacyIntegratedServer("littleserver_legacy", true);
+
+                CONFIG.setAutoStartLegacyServerOnce(false);
+                SettingsPanel.applyConfiguration();
+
+                try {
+                    ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
+                    BalloonServer.GLOBAL_LOGGER.info("已更新主程序配置文件.");
+                } catch (IOException e) {
+                    GLOBAL_LOGGER.error("保存主程序配置文件失败！", e);
+                }
+            } else {
+                abstractIntegratedServer = new LegacyIntegratedServer("littleserver_legacy", false);
+            }
             availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
             SERVER_TABBED_PANE.addTab("旧版集成服务端 (4.x.x)", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
         });
@@ -213,7 +229,7 @@ public final class BalloonServer {
         for (int i = 0; i < availableCustomServerInterfaces.size(); i++) {
             IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(i);
             if (stopIntegratedServer(serverInterface, serverInterface.getServerName(), i, inquireUser)) {
-                if (i != 0) {
+                if (i > 1) {
                     SERVER_TABBED_PANE.removeTabAt(i);
                     availableCustomServerInterfaces.remove(i);
                     i--;
