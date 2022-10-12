@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.JSONWriter;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
@@ -57,18 +58,18 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //index 请求监听
         if (decodedURI.contains("/index.json")) {
-            //构建 index
+            //构建 index, 同时支持配置热修改
             index.clear();
-            index.put("common_mode", config.getCommonMode());
-            index.put("once_mode", config.getOnceMode());
             index.put("update", config.getMainDirPath().replace("/", "").intern());
             index.put("hash_algorithm", hashAlgorithm.intern());
+            index.put("common_mode", config.getCommonMode());
+            index.put("once_mode", config.getOnceMode());
             //因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             //创建完整的响应对象
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
-                    Unpooled.copiedBuffer(index.toJSONString(), CharsetUtil.UTF_8));
+                    Unpooled.copiedBuffer(index.toJSONString(JSONWriter.Feature.PrettyFormat).intern(), CharsetUtil.UTF_8));
 
             //设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");

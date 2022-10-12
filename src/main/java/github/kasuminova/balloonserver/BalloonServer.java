@@ -45,7 +45,7 @@ public final class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.5-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.6-STABLE");
     public static final String TITLE = "BalloonServer " + VERSION;
     /*
     可执行文件名称。

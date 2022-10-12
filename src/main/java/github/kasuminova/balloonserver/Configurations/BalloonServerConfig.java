@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Configurations;
 
+import com.alibaba.fastjson2.annotation.JSONField;
+
 public class BalloonServerConfig extends Configuration {
     public static final CloseOperations QUERY = new CloseOperations(0, "每次询问");
     public static final CloseOperations HIDE_ON_CLOSE = new CloseOperations(1, "最小化至托盘");
@@ -13,8 +15,32 @@ public class BalloonServerConfig extends Configuration {
         this.configVersion = configVersion;
         return this;
     }
+
+    //自动启动服务器
+    @JSONField(ordinal = 1)
+    private boolean autoStartServer = false;
+    //自动启动服务器（仅一次）
+    @JSONField(ordinal = 2)
+    private boolean autoStartServerOnce = false;
+    //自动启动旧版服务器
+    @JSONField(ordinal = 3)
+    private boolean autoStartLegacyServer = false;
+    //自动启动旧版服务器（仅一次）
+    @JSONField(ordinal = 4)
+    private boolean autoStartLegacyServerOnce = false;
+    //自动检查更新
+    @JSONField(ordinal = 5)
+    private boolean autoCheckUpdates = false;
+    //自动更新
+    @JSONField(ordinal = 6)
+    private boolean autoUpdate = false;
+    //关闭窗口的操作
+    @JSONField(ordinal = 7)
+    private int closeOperation = 0;
     //DEBUG 模式
+    @JSONField(ordinal = 8)
     private boolean debugMode = false;
+
     public boolean isDebugMode() {
         return debugMode;
     }
@@ -22,8 +48,6 @@ public class BalloonServerConfig extends Configuration {
         this.debugMode = debugMode;
         return this;
     }
-    //自动启动服务器
-    private boolean autoStartServer = false;
     public boolean isAutoStartServer() {
         return autoStartServer;
     }
@@ -31,8 +55,7 @@ public class BalloonServerConfig extends Configuration {
         this.autoStartServer = autoStartServer;
         return this;
     }
-    private boolean autoStartLegacyServer = false;
-    //自动启动旧版服务器
+
     public boolean isAutoStartLegacyServer() {
         return autoStartLegacyServer;
     }
@@ -40,8 +63,7 @@ public class BalloonServerConfig extends Configuration {
         this.autoStartLegacyServer = autoStartLegacyServer;
         return this;
     }
-    //自动启动旧版服务器（仅一次）
-    private boolean autoStartLegacyServerOnce = false;
+
     public boolean isAutoStartLegacyServerOnce() {
         return autoStartLegacyServerOnce;
     }
@@ -49,8 +71,7 @@ public class BalloonServerConfig extends Configuration {
         this.autoStartLegacyServerOnce = autoStartLegacyServerOnce;
         return this;
     }
-    //自动启动服务器（仅一次）
-    private boolean autoStartServerOnce = false;
+
     public boolean isAutoStartServerOnce() {
         return autoStartServerOnce;
     }
@@ -58,8 +79,7 @@ public class BalloonServerConfig extends Configuration {
         this.autoStartServerOnce = autoStartServerOnce;
         return this;
     }
-    //关闭窗口的操作
-    private int closeOperation = 0;
+
     public int getCloseOperation() {
         return closeOperation;
     }
@@ -67,8 +87,7 @@ public class BalloonServerConfig extends Configuration {
         this.closeOperation = closeOperation;
         return this;
     }
-    //自动更新
-    private boolean autoUpdate = false;
+
     public boolean isAutoUpdate() {
         return autoUpdate;
     }
@@ -76,8 +95,7 @@ public class BalloonServerConfig extends Configuration {
         this.autoUpdate = autoUpdate;
         return this;
     }
-    //自动检查更新
-    private boolean autoCheckUpdates = false;
+
     public boolean isAutoCheckUpdates() {
         return autoCheckUpdates;
     }

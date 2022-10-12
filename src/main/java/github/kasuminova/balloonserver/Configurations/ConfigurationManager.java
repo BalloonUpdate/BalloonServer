@@ -2,6 +2,7 @@ package github.kasuminova.balloonserver.Configurations;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.JSONWriter;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 
 import java.io.IOException;
@@ -38,6 +39,6 @@ public class ConfigurationManager {
     }
 
     public static void saveConfigurationToFile(Configuration configuration, String path, String name) throws IOException {
-        FileUtil.createJsonFile(JSONObject.toJSONString(configuration), path, name);
+        FileUtil.createJsonFile(JSONObject.toJSONString(configuration, JSONWriter.Feature.PrettyFormat), path, name);
     }
 }

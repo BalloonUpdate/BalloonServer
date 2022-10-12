@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'github.kasuminova'
-version '1.2.5-STABLE'
+version '1.2.6-STABLE'
 
 repositories {
     maven {

@@ -1,13 +1,23 @@
 package github.kasuminova.balloonserver.Configurations;
 
+import com.alibaba.fastjson2.annotation.JSONField;
+
 public class IntegratedServerConfig extends Configuration {
+    @JSONField(ordinal = 1)
     private String ip = "127.0.0.1";
+    @JSONField(ordinal = 2)
     private int port = 8080;
+    @JSONField(ordinal = 3)
     private String mainDirPath = "/res";
+    @JSONField(ordinal = 4)
     private boolean fileChangeListener = true;
+    @JSONField(ordinal = 5)
     private String jksFilePath = "";
+    @JSONField(ordinal = 6)
     private String jksSslPassword = "";
+    @JSONField(ordinal = 7)
     private String[] commonMode = new String[0];
+    @JSONField(ordinal = 8)
     private String[] onceMode = new String[0];
     public IntegratedServerConfig() {
         configVersion = 1;

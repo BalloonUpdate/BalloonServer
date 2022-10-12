@@ -32,7 +32,7 @@ public class GUILogger {
     private final ExecutorService loggerThreadPool = Executors.newSingleThreadExecutor();
     private final AtomicInteger prepared = new AtomicInteger(0);
     //日期格式
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
     private static final Color INFO_COLOR  = new Color(30,170,255);
     private static final Color WARN_COLOR  = new Color(255,215,0);
     private static final Color ERROR_COLOR = new Color(255,75,75);
@@ -88,6 +88,8 @@ public class GUILogger {
             if (!logFile.exists()) {
                 if (logFile.createNewFile()) {
                     this.logWriter = new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
+                } else {
+                    logger.warning("创建日志文件失败！");
                 }
             } else {
                 this.logWriter = new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
@@ -217,9 +219,9 @@ public class GUILogger {
         if (logPane == null) return;
         try {
             Document document = logPane.getDocument();
-            if (document.getLength() > 100000) {
+            if (document.getLength() > 200000) {
                 document.remove(0,logPane.getDocument().getLength());
-                info("日志窗口过长，已清空当前服务器实例日志.");
+                info("日志窗口过长，已清空当前服务器实例日志窗口.");
             }
             document.insertString(document.getLength(), str, ATTRIBUTE);
         } catch (BadLocationException e) {
@@ -243,7 +245,6 @@ public class GUILogger {
 
     private static String buildNormalLogMessage(String threadName, String msg, String logLevel ,String name) {
         //占位符分别为 日期，线程名，名称，消息本体
-//        return String.format("[%s][%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, name, threadName, msg);
-        return String.format("[%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, name, msg);
+        return String.format("[%s][%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, name, threadName, msg);
     }
 }

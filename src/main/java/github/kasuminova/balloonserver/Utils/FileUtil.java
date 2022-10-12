@@ -16,6 +16,16 @@ public class FileUtil {
         // 生成json格式文件
         // 保证创建一个新文件
         File file = new File(fullPath);
+        checkAndCreateFile(file);
+
+        // 将格式化后的字符串写入文件
+        Writer write = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8);
+        write.write(jsonString);
+        write.flush();
+        write.close();
+    }
+
+    public static void checkAndCreateFile(File file) throws IOException {
         if (!file.getParentFile().exists()) {
             if (file.getParentFile().mkdirs()) {
                 throw new IOException("父目录创建失败！");
@@ -29,30 +39,6 @@ public class FileUtil {
         if (!file.createNewFile()) {
             throw new IOException("创建文件失败！！");
         }
-
-
-        if(jsonString.contains("'")){
-            //将单引号转义一下，因为JSON串中的字符串类型可以单引号引起来的
-            jsonString = jsonString.replaceAll("'", "\\'");
-        }
-        if(jsonString.contains("\"")){
-            //将双引号转义一下，因为JSON串中的字符串类型可以单引号引起来的
-            jsonString = jsonString.replaceAll("\"", "\\\"");
-        }
-        if(jsonString.contains("\r\n")){
-            //将回车换行转换一下，因为JSON串中字符串不能出现显式的回车换行
-            jsonString = jsonString.replaceAll("\r\n", "\\u000d\\u000a");
-        }
-        if(jsonString.contains("\n")){
-            //将换行转换一下，因为JSON串中字符串不能出现显式的换行
-            jsonString = jsonString.replaceAll("\n", "\\u000a");
-        }
-
-        // 将格式化后的字符串写入文件
-        Writer write = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8);
-        write.write(jsonString);
-        write.flush();
-        write.close();
     }
 
     /**
