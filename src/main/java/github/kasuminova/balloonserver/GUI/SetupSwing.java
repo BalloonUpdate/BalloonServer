@@ -61,11 +61,11 @@ public class SetupSwing {
             long start = System.currentTimeMillis();
             //设置字体
             try {
-                InputStream sarasa_mono = SetupSwing.class.getResourceAsStream("/font/sarasa-mono-sc-regular.ttf");
+                InputStream HMOSSansAndJBMono = SetupSwing.class.getResourceAsStream("/font/HarmonyOS_Sans_SC+JetBrains_Mono.ttf");
                 InputStream saira = AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf");
                 Font font;
-                if (sarasa_mono != null) {
-                    font = Font.createFont(Font.TRUETYPE_FONT, sarasa_mono).deriveFont(13f);
+                if (HMOSSansAndJBMono != null) {
+                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndJBMono).deriveFont(13f);
                     initGlobalFont(font);
                 }
                 if (saira != null) {

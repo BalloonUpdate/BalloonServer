@@ -42,8 +42,8 @@ public class NextFileListUtils {
      * size[0] 为总大小
      * size[1] 为总文件数量
      */
-    public static long[] getDirSize(File dir) {
-        return new FileCounter().getFiles(dir);
+    public static long[] getDirSize(File dir, JProgressBar statusProgressBar) {
+        return new FileCounter().getFiles(dir, statusProgressBar);
     }
 
     /**
@@ -166,18 +166,18 @@ public class NextFileListUtils {
     private static class FileCounter {
         private final AtomicLong totalSize = new AtomicLong(0);
         private final AtomicLong totalFiles = new AtomicLong();
-        private long[] getFiles(File dir) {
+        private long[] getFiles(File dir, JProgressBar statusProgressBar) {
             resetStatusProgressBar();
 
-            GLOBAL_STATUS_PROGRESSBAR.setString("扫描文件夹内容... (0 Byte, 0 文件)");
-            Timer timer = new Timer(250, e -> GLOBAL_STATUS_PROGRESSBAR.setString(
+            statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");
+            Timer timer = new Timer(250, e -> statusProgressBar.setString(
                     String.format("扫描文件夹内容... (%s, %s 文件)",
                             FileUtil.formatFileSizeToStr(totalSize.get()),
                             totalFiles.get())));
             timer.start();
 
-            GLOBAL_STATUS_PROGRESSBAR.setVisible(true);
-            GLOBAL_STATUS_PROGRESSBAR.setIndeterminate(true);
+            statusProgressBar.setVisible(true);
+            statusProgressBar.setIndeterminate(true);
 
             try {
                 new DirCalculatorThread(dir).run();

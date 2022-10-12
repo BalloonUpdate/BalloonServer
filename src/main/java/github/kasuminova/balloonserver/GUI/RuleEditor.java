@@ -23,7 +23,7 @@ import java.util.List;
  * 可视化更新规则编辑器
  */
 public class RuleEditor extends JDialog {
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.4.0-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.5.0-STABLE");
 
     public RuleEditor(JSONArray jsonArray, List<String> rules) {
         setTitle("RuleEditor " + VERSION);

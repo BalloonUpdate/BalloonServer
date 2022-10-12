@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import static github.kasuminova.balloonserver.Utils.ModernColors.*;
+
 /**
  * 一个简易的 Logger，与 GUI 同步
  */
@@ -31,11 +33,8 @@ public class GUILogger {
     private final ExecutorService loggerThreadPool = Executors.newSingleThreadExecutor();
     private final AtomicInteger prepared = new AtomicInteger(0);
     //日期格式
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private static final Color INFO_COLOR  = new Color(30,170,255);
-    private static final Color WARN_COLOR  = new Color(255,215,0);
-    private static final Color ERROR_COLOR = new Color(255,75,75);
-    private static final Color DEBUG_COLOR = new Color(180,70,255);
+    private static final SimpleDateFormat NORMAL_DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
+    private static final SimpleDateFormat FULL_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final SimpleAttributeSet INFO_ATTRIBUTE  = new SimpleAttributeSet();
     private static final SimpleAttributeSet WARN_ATTRIBUTE  = new SimpleAttributeSet();
     private static final SimpleAttributeSet ERROR_ATTRIBUTE = new SimpleAttributeSet();
@@ -57,10 +56,10 @@ public class GUILogger {
         logWriter = createLogFile(name, logger);
 
         //设置颜色
-        StyleConstants.setForeground(INFO_ATTRIBUTE, INFO_COLOR);
-        StyleConstants.setForeground(WARN_ATTRIBUTE, WARN_COLOR);
-        StyleConstants.setForeground(ERROR_ATTRIBUTE, ERROR_COLOR);
-        StyleConstants.setForeground(DEBUG_ATTRIBUTE, DEBUG_COLOR);
+        StyleConstants.setForeground(INFO_ATTRIBUTE, BLUE);
+        StyleConstants.setForeground(WARN_ATTRIBUTE, YELLOW);
+        StyleConstants.setForeground(ERROR_ATTRIBUTE, RED);
+        StyleConstants.setForeground(DEBUG_ATTRIBUTE, PURPLE);
     }
 
     /**
@@ -74,6 +73,10 @@ public class GUILogger {
         logWriter = createLogFile(name, logger);
     }
 
+    /**
+     * 输出 INFO 日志
+     * @param msg 消息
+     */
     public void info(String msg) {
         if (prepared.get() > 100) return;
 
@@ -82,13 +85,39 @@ public class GUILogger {
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.info(msg);
-            String logMessage = buildNormalLogMessage(threadName, msg, INFO);
-            writeAndFlushMessage(logMessage);
-            insertStringToDocument(logMessage, INFO_ATTRIBUTE);
+
+            writeAndFlushMessage(buildFullLogMessage(threadName, msg, INFO));
+            insertStringToDocument(buildNormalLogMessage(msg, INFO), INFO_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
 
+    /**
+     * 输出 INFO 日志
+     * @param msg 消息
+     * @param customForegroundColor 自定义颜色
+     */
+    public void info(String msg, Color customForegroundColor) {
+        if (prepared.get() > 100) return;
+
+        String threadName = Thread.currentThread().getName();
+
+        prepared.getAndIncrement();
+        loggerThreadPool.execute(() -> {
+            logger.info(msg);
+
+            SimpleAttributeSet attributeSet = new SimpleAttributeSet();
+            StyleConstants.setForeground(attributeSet, customForegroundColor);
+            writeAndFlushMessage(buildFullLogMessage(threadName, msg, INFO));
+            insertStringToDocument(buildNormalLogMessage(msg, INFO), attributeSet);
+            prepared.getAndDecrement();
+        });
+    }
+
+    /**
+     * 输出 DEBUG 日志
+     * @param msg 消息
+     */
     public void debug(String msg) {
         if (prepared.get() > 100) return;
         if (!BalloonServer.CONFIG.isDebugMode()) return;
@@ -98,13 +127,17 @@ public class GUILogger {
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.info(msg);
-            String logMessage = buildNormalLogMessage(threadName, msg, DEBUG);
-            writeAndFlushMessage(logMessage);
-            insertStringToDocument(logMessage, DEBUG_ATTRIBUTE);
+
+            writeAndFlushMessage(buildFullLogMessage(threadName, msg, DEBUG));
+            insertStringToDocument(buildNormalLogMessage(msg, DEBUG), DEBUG_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
 
+    /**
+     * 输出 WARN 日志
+     * @param msg 消息
+     */
     public void warn(String msg) {
         if (prepared.get() > 100) return;
 
@@ -113,13 +146,17 @@ public class GUILogger {
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
-            String logMessage = buildNormalLogMessage(threadName, msg, WARN);
-            writeAndFlushMessage(logMessage);
-            insertStringToDocument(logMessage, WARN_ATTRIBUTE);
+
+            writeAndFlushMessage(buildFullLogMessage(threadName, msg, WARN));
+            insertStringToDocument(buildNormalLogMessage(msg, WARN), WARN_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
 
+    /**
+     * 输出 ERROR 日志
+     * @param msg 消息
+     */
     public void error(String msg) {
         if (prepared.get() > 100) return;
 
@@ -127,13 +164,18 @@ public class GUILogger {
 
         loggerThreadPool.execute(() -> {
             logger.warning(msg);
-            String logMessage = buildNormalLogMessage(threadName, msg, ERROR);
-            writeAndFlushMessage(logMessage);
-            insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
+
+            writeAndFlushMessage(buildFullLogMessage(threadName, msg, ERROR));
+            insertStringToDocument(buildNormalLogMessage(msg, ERROR), ERROR_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
 
+    /**
+     * 输出 ERROR 日志
+     * @param msg 消息
+     * @param e 错误信息
+     */
     public void error(String msg, Exception e) {
         if (prepared.get() > 100) return;
 
@@ -141,16 +183,20 @@ public class GUILogger {
 
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
-            logger.warning(msg);
-            logger.warning(stackTraceToString(e));
-            String logMessage = buildNormalLogMessage(threadName,
-                    String.format("%s\n%s", msg, stackTraceToString(e)), ERROR);
-            writeAndFlushMessage(logMessage);
-            insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
+            logger.warning(String.format("%s \n %s", msg, stackTraceToString(e)));
+
+            writeAndFlushMessage(buildFullLogMessage(threadName,
+                    String.format("%s\n%s", msg, stackTraceToString(e)), ERROR));
+            insertStringToDocument(buildNormalLogMessage(
+                    String.format("%s\n%s", msg, stackTraceToString(e)), ERROR), ERROR_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
 
+    /**
+     * 输出 ERROR 日志
+     * @param e 错误信息
+     */
     public void error(Exception e) {
         if (prepared.get() > 100) return;
 
@@ -159,9 +205,9 @@ public class GUILogger {
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
             logger.warning(stackTraceToString(e));
-            String logMessage = buildNormalLogMessage(threadName, stackTraceToString(e), ERROR);
-            writeAndFlushMessage(logMessage);
-            insertStringToDocument(logMessage, ERROR_ATTRIBUTE);
+
+            writeAndFlushMessage(buildFullLogMessage(threadName, stackTraceToString(e), ERROR));
+            insertStringToDocument(buildNormalLogMessage(stackTraceToString(e), ERROR), ERROR_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
@@ -267,8 +313,13 @@ public class GUILogger {
         return null;
     }
 
-    private static String buildNormalLogMessage(String threadName, String msg, String logLevel) {
-        //占位符分别为 日期，线程名，名称，消息本体
-        return String.format("[%s][%s][%s]: %s\n", DATE_FORMAT.format(System.currentTimeMillis()), logLevel, threadName, msg);
+    private static String buildNormalLogMessage(String msg, String logLevel) {
+        //占位符分别为 时间，消息等级，消息本体
+        return String.format("[%s][%s]: %s\n", NORMAL_DATE_FORMAT.format(System.currentTimeMillis()), logLevel, msg);
+    }
+    
+    private static String buildFullLogMessage(String threadName, String msg, String logLevel) {
+        //占位符分别为 日期+时间，消息等级，线程名，消息本体
+        return String.format("[%s][%s][%s]: %s\n", FULL_DATE_FORMAT.format(System.currentTimeMillis()), logLevel, threadName, msg);
     }
 }

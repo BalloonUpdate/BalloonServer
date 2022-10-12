@@ -1,7 +1,5 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
-import com.alibaba.fastjson2.JSONObject;
-import com.alibaba.fastjson2.JSONWriter;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
@@ -34,13 +32,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
     private final GUILogger logger;
     private final JPanel requestListPanel;
     private final String hashAlgorithm;
-    private final JSONObject index = new JSONObject();
+    private final String indexJsonString;
     public HttpRequestHandler(IntegratedServerInterface serverInterface) {
         this.resJson = serverInterface.getResJson();
         this.config = serverInterface.getConfig();
         this.logger = serverInterface.getLogger();
         this.requestListPanel = serverInterface.getRequestListPanel();
         this.hashAlgorithm = serverInterface.getHashAlgorithm();
+        this.indexJsonString = serverInterface.getIndexJson();
     }
 
     @Override
@@ -54,22 +53,17 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         long start = System.currentTimeMillis();
 
         String clientIP = getClientIP(ctx,req);
+        //转义后的 URI
         String decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
 
         //index 请求监听
-        if (decodedURI.contains("/index.json")) {
-            //构建 index, 同时支持配置热修改
-            index.clear();
-            index.put("update", config.getMainDirPath().replace("/", "").intern());
-            index.put("hash_algorithm", hashAlgorithm.intern());
-            index.put("common_mode", config.getCommonMode());
-            index.put("once_mode", config.getOnceMode());
+        if (decodedURI.equals("/index.json")) {
             //因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             //创建完整的响应对象
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
                     HttpResponseStatus.OK,
-                    Unpooled.copiedBuffer(index.toJSONString(JSONWriter.Feature.PrettyFormat).intern(), CharsetUtil.UTF_8));
+                    Unpooled.copiedBuffer(indexJsonString, CharsetUtil.UTF_8));
 
             //设置头信息
             jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
@@ -83,14 +77,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         }
 
         //如果使用旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户使用旧版服务端
-        if (hashAlgorithm.contains(HashCalculator.CRC32) && decodedURI.contains(config.getMainDirPath() + ".json")) {
+        if (hashAlgorithm.equals(HashCalculator.CRC32) && decodedURI.equals(config.getMainDirPath() + ".json")) {
             sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端版本不兼容此版本客户端，请使用旧版服务端.（仅兼容 4.1.14+）\n".repeat(6), clientIP, decodedURI);
             logger.error("检测到你可能正在使用旧版客户端获取新版服务端缓存文件，请使用旧版服务端。");
             return;
         }
 
         //资源结构 JSON 请求监听
-        if (decodedURI.contains(config.getMainDirPath() + ".json") || decodedURI.contains(config.getMainDirPath() + "_crc32.json") && hashAlgorithm.contains(HashCalculator.CRC32)) {
+        if (decodedURI.equals(config.getMainDirPath() + ".json") || decodedURI.equals(config.getMainDirPath() + "_crc32.json") && hashAlgorithm.contains(HashCalculator.CRC32)) {
             // 经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
             // 创建完整的响应对象
             FullHttpResponse jsonResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
@@ -110,25 +104,27 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //安全性检查
         if (!decodedURI.startsWith(config.getMainDirPath())) {
-            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, clientIP, decodedURI);
+            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "", clientIP, decodedURI);
             return;
         }
 
         //文件请求监听
         File file = new File("." + decodedURI);
-        if (file.isHidden()||!file.exists()) {
-            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, clientIP, decodedURI);
+        if (file.isHidden() || !file.exists()) {
+            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
             return;
         }
         if (!file.isFile()){
-            sendError(ctx, logger, HttpResponseStatus.BAD_REQUEST, clientIP, decodedURI);
+            sendError(ctx, logger, HttpResponseStatus.BAD_REQUEST, "", clientIP, decodedURI);
             return;
         }
+
         RandomAccessFile randomAccessFile;
+
         try {
             randomAccessFile = new RandomAccessFile(file,"r");  //只读模式
-        } catch (FileNotFoundException e){
-            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, clientIP, decodedURI);
+        } catch (FileNotFoundException e) {
+            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
             return;
         }
         long fileLength = randomAccessFile.length();    //文件大小
@@ -228,17 +224,9 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         }
     }
 
-    private static void sendError(ChannelHandlerContext ctx, GUILogger logger, HttpResponseStatus status, String clientIP, String decodedURI){
-        long start = System.currentTimeMillis();
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,status,Unpooled.copiedBuffer("Failure: " + status + "\r\n", CharsetUtil.UTF_8));
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE,HttpHeaderValues.TEXT_PLAIN);
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-        printLog(String.valueOf(status.code()), start, clientIP, decodedURI, logger);
-    }
-
     private static void sendError(ChannelHandlerContext ctx, GUILogger logger, HttpResponseStatus status, String message, String clientIP, String decodedURI){
         long start = System.currentTimeMillis();
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,status,Unpooled.copiedBuffer(status + ": " + message + "\r\n", CharsetUtil.UTF_8));
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,status,Unpooled.copiedBuffer(String.format("Failure %s: %s \r\n", status, message), CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE,HttpHeaderValues.TEXT_PLAIN);
         ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
         printLog(String.valueOf(status.code()), start, clientIP, decodedURI, logger);

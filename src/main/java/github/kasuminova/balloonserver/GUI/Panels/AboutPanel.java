@@ -2,12 +2,12 @@ package github.kasuminova.balloonserver.GUI.Panels;
 
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
+import github.kasuminova.balloonserver.Utils.MiscUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.InputStream;
-import java.net.URI;
 
 public class AboutPanel {
     static final int GLOBAL_BUTTON_WIDTH = 170;
@@ -43,44 +43,17 @@ public class AboutPanel {
         JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10,5));
         //仓库链接
         JButton openProjectLink = new JButton("点击打开仓库链接");
-        openProjectLink.addActionListener(e -> {
-            Desktop desktop = Desktop.getDesktop();
-            if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                try {
-                    desktop.browse(URI.create("https://github.com/BalloonUpdate/BalloonServer"));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
+        openProjectLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate/BalloonServer"));
         openProjectLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
         linkPanel.add(openProjectLink);
         //项目链接
         JButton openOrganizationLink = new JButton("点击打开项目链接");
-        openOrganizationLink.addActionListener(e -> {
-            Desktop desktop = Desktop.getDesktop();
-            if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                try {
-                    desktop.browse(URI.create("https://github.com/BalloonUpdate"));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
+        openOrganizationLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate"));
         openOrganizationLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
         linkPanel.add(openOrganizationLink);
         //Issues 链接
         JButton openIssuesLink = new JButton("戳我提交 Issue!");
-        openIssuesLink.addActionListener(e -> {
-            Desktop desktop = Desktop.getDesktop();
-            if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                try {
-                    desktop.browse(URI.create("https://github.com/BalloonUpdate/BalloonServer/issues/new"));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
+        openIssuesLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate/BalloonServer/issues/new"));
         openIssuesLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
         linkPanel.add(openIssuesLink);
         descPanel.add(linkPanel);

@@ -77,7 +77,7 @@ public final class BalloonServer {
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);
     private static void init() {
         //大小设置
-        MAIN_FRAME.setSize(1375,780);
+        MAIN_FRAME.setSize(1375,815);
         MAIN_FRAME.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.8), MAIN_FRAME.getHeight()));
 
         //标签页配置
@@ -504,20 +504,20 @@ public final class BalloonServer {
      */
     private static void loadStatusBar() {
         //状态栏
-        STATUS_PANEL.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(2, 4, 2, 4)));
+        STATUS_PANEL.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(3, 4, 2, 4)));
         JLabel threadCount = new JLabel("当前运行的线程数量：0");
         STATUS_PANEL.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
-        JProgressBar memBar = new JProgressBar(0,200);
+        JProgressBar memBar = new JProgressBar(0,250);
         memBar.setPreferredSize(new Dimension(memBar.getMaximum(),memBar.getHeight()));
-        memBar.setBorder(new EmptyBorder(0,0,0,5));
+        memBar.setBorder(new EmptyBorder(1,0,0,5));
         memBar.setStringPainted(true);
         memBarBox.add(new JLabel("JVM 内存使用情况："));
         memBarBox.add(memBar);
         //内存清理
         JButton GC = new JButton("清理");
-        GC.setPreferredSize(new Dimension(65,22));
+        GC.setPreferredSize(new Dimension(65,21));
         GC.addActionListener(e -> System.gc());
         memBarBox.add(GC);
         STATUS_PANEL.add(memBarBox, BorderLayout.EAST);
@@ -526,7 +526,7 @@ public final class BalloonServer {
         GLOBAL_STATUS_PROGRESSBAR.setBorder(new EmptyBorder(0, 25, 0, 25));
         STATUS_PANEL.add(GLOBAL_STATUS_PROGRESSBAR);
         mainPanel.add(STATUS_PANEL, BorderLayout.SOUTH);
-        //新建任务，每 0.5 秒更新内存和线程信息
+        //新建循环任务，每 500ms 更新一次内存占用和线程数量
         GLOBAL_QUERY_TIMER.schedule(new TimerTask() {
             @Override
             public void run() {

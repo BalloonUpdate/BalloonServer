@@ -2,6 +2,7 @@ package github.kasuminova.balloonserver.HTTPServer;
 
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
+import github.kasuminova.balloonserver.Utils.ModernColors;
 import github.kasuminova.balloonserver.Utils.FileListener;
 import github.kasuminova.balloonserver.Utils.FileListener.FileMonitor;
 import github.kasuminova.balloonserver.Utils.GUILogger;
@@ -26,12 +27,18 @@ import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
  */
 public class HttpServer {
     private Timer fileChangeListener;
+    private String apiAddress;
     private final GUILogger logger;
     private final AtomicBoolean isGenerating;
     private final AtomicBoolean isFileChanged = new AtomicBoolean(false);
     private final IntegratedServerConfig config;
     private final AtomicBoolean isStarted;
     private final IntegratedServerInterface serverInterface;
+
+    public String getAPIAddress() {
+        return apiAddress;
+    }
+
     /**
      * 新建一个 HTTP 服务器实例
      * @param serverInterface 服务器实例接口
@@ -66,38 +73,45 @@ public class HttpServer {
             future = bootstrap.bind(new InetSocketAddress(ip, port)).sync();
             String addressType = IPAddressUtil.checkAddress(ip);
             assert addressType != null;
+            logger.info(String.format("服务器已启动! (%sms)", System.currentTimeMillis() - start), ModernColors.GREEN);
 
             if ("v6".equals(addressType)) {
                 if (httpServerInitializer.isUseSsl()) {
-                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",
-                            System.currentTimeMillis() - start,
+                    apiAddress = String.format("http://%s:%s/index.json",
                             httpServerInitializer.jks.getName().replace(".jks",""),
-                            port));
+                            port);
+
+                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
                     logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址，如果上方输出的域名不正确，请自行将 IP 更换为域名。");
                 } else {
-                    logger.info(String.format("服务器已启动 (%sms)，API 地址：https://[%s]:%s/index.json",
-                            System.currentTimeMillis() - start,
+                    apiAddress = String.format("API 地址：https://[%s]:%s/index.json",
                             ip,
-                            port));
+                            port);
+
+                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
                 }
             } else {
                 if (httpServerInitializer.isUseSsl()) {
-                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",
-                            System.currentTimeMillis() - start,
+                    apiAddress = String.format("http://%s:%s/index.json",
                             httpServerInitializer.jks.getName().replace(".jks",""),
-                            port));
+                            port);
+
+                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
                     logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址。");
                 } else if (ip.equals("0.0.0.0")) {
-                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://localhost:%s/index.json",
-                            System.currentTimeMillis() - start,
-                            port));
+                    apiAddress = String.format("http://localhost:%s/index.json",
+                            port);
+
+                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
                 } else {
-                    logger.info(String.format("服务器已启动 (%sms)，API 地址：http://%s:%s/index.json",
-                            System.currentTimeMillis() - start,
+                    apiAddress = String.format("http://%s:%s/index.json",
                             ip,
-                            port));
+                            port);
+
+                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
                 }
             }
+            serverInterface.setStatusLabelText("状态：已启动", ModernColors.GREEN);
         } catch (Exception e) {
             isStarted.set(false);
             logger.error("无法启动服务器", e);
@@ -136,22 +150,28 @@ public class HttpServer {
         work.shutdownGracefully();
         boss.shutdownGracefully();
         future.channel().close();
+
+        apiAddress = null;
+
         //关闭文件监听器
         if (fileChangeListener != null && fileChangeListener.isRunning()) {
             fileChangeListener.stop();
             fileChangeListener = null;
         }
-
         if (fileMonitor != null) {
             GLOBAL_THREAD_POOL.execute(() -> {
                 try {
+                    serverInterface.setStatusLabelText("状态：正在关闭实时文件监听器.", ModernColors.RED);
                     fileMonitor.stop();
                     logger.info("实时文件监听器已停止.");
                 } catch (Exception e) {
                     logger.error("关闭文件监听器的时候出现了一些问题...", e);
                 }
                 fileMonitor = null;
+                serverInterface.setStatusLabelText("状态：就绪", ModernColors.BLUE);
             });
+        } else {
+            serverInterface.setStatusLabelText("状态：就绪", ModernColors.BLUE);
         }
 
         System.gc();

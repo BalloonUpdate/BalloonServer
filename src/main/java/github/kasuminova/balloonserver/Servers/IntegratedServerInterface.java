@@ -4,6 +4,7 @@ import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -18,8 +19,12 @@ public interface IntegratedServerInterface {
     AtomicBoolean isStarted();
     //获取文件结构 JSON
     String getResJson();
+    //获取 index.json 字符串
+    String getIndexJson();
     String getServerName();
     String getResJsonFileExtensionName();
+    //获取状态栏进度条
+    JProgressBar getStatusProgressBar();
     //设置新的文件结构 JSON
     void setResJson(String newResJson);
 
@@ -43,4 +48,8 @@ public interface IntegratedServerInterface {
      * 获取 Hash 算法
      */
     String getHashAlgorithm();
+
+    void setStatusLabelText(String text, Color fg);
+
+    void resetStatusProgressBar();
 }
