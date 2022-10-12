@@ -71,7 +71,7 @@ public final class BalloonServer {
     //主面板
     public static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
-    //可用服务端接口列表，与 Tab 同步
+    //可用服务端接口列表，与 SERVER_TABBED_PANE 中的标签页同步
     public static final List<IntegratedServerInterface> availableCustomServerInterfaces = Collections.synchronizedList(new ArrayList<>());
     //支持放入多个任务的 Timer
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);

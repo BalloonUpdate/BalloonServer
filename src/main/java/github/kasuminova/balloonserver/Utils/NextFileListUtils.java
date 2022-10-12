@@ -73,15 +73,15 @@ public class NextFileListUtils {
             }
         }
 
-        for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
-            try {
-                abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
-            } catch (Exception ignored) {}
-        }
-
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : direCounterTaskList) {
             try {
                 abstractSimpleFileObjectList.add(simpleDirectoryObjectFutureTask.get());
+            } catch (Exception ignored) {}
+        }
+
+        for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
+            try {
+                abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
             } catch (Exception ignored) {}
         }
 
@@ -122,15 +122,15 @@ public class NextFileListUtils {
                 }
             }
 
-            for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
-                try {
-                    abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
-                } catch (Exception ignored) {}
-            }
-
             for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : direCounterTaskList) {
                 try {
                     abstractSimpleFileObjectList.add(simpleDirectoryObjectFutureTask.get());
+                } catch (Exception ignored) {}
+            }
+
+            for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
+                try {
+                    abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
                 } catch (Exception ignored) {}
             }
 

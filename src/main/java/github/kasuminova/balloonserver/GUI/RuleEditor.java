@@ -210,7 +210,11 @@ public class RuleEditor extends JDialog {
             jsonObject.clear();
             jsonObject.putAll(jsonArray.getJSONObject(i));
 
-            if (jsonObject.getString("children") != null) {
+            if (jsonObject.getString("children") == null) {
+                CheckBoxTreeNode file = new CheckBoxTreeNode(jsonObject.getString("name"));
+                file.setAllowsChildren(false);
+                treeNodes.add(file);
+            } else {
                 CheckBoxTreeNode directory = new CheckBoxTreeNode(jsonObject.getString("name"));
 
                 for (CheckBoxTreeNode checkBoxTreeNode : scanDirAndBuildTree(jsonObject.getJSONArray("children"))) {
@@ -218,13 +222,8 @@ public class RuleEditor extends JDialog {
                 }
 
                 treeNodes.add(directory);
-            } else {
-                CheckBoxTreeNode file = new CheckBoxTreeNode(jsonObject.getString("name"));
-                file.setAllowsChildren(false);
-                treeNodes.add(file);
             }
         }
-
         return treeNodes;
     }
 }
