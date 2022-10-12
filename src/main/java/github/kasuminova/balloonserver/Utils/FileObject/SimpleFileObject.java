@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Utils.FileObject;
 
+import com.alibaba.fastjson2.annotation.JSONField;
+
 public class SimpleFileObject extends AbstractSimpleFileObject {
     public SimpleFileObject(String name, long length, String hash, long modified) {
         this.name = name;
@@ -8,9 +10,12 @@ public class SimpleFileObject extends AbstractSimpleFileObject {
         this.modified = modified;
     }
 
-    long length;
-    String hash;
+    @JSONField(ordinal = 1)
     long modified;
+    @JSONField(ordinal = 2)
+    String hash;
+    @JSONField(ordinal = 3)
+    long length;
 
     public long getLength() {
         return length;

@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Utils.FileObject;
 
+import com.alibaba.fastjson2.annotation.JSONField;
+
 import java.util.List;
 
 public class SimpleDirectoryObject extends AbstractSimpleFileObject {
@@ -8,6 +10,7 @@ public class SimpleDirectoryObject extends AbstractSimpleFileObject {
         this.children = children;
     }
 
+    @JSONField(ordinal = 1)
     List<AbstractSimpleFileObject> children;
 
     public void setChildren(List<AbstractSimpleFileObject> children) {
