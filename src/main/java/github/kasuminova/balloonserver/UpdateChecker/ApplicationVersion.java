@@ -40,4 +40,8 @@ public class ApplicationVersion {
     public String toString() {
         return String.format("%s.%s.%s-%s", bigVersion, subVersion, minorVersion, branch);
     }
+
+    public int toInt() {
+        return (bigVersion * 100000) + (subVersion * 1000) + minorVersion;
+    }
 }

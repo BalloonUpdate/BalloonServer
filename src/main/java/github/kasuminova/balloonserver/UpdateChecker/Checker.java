@@ -37,13 +37,7 @@ public class Checker {
             if (!applicationVersion.getBranch().equals(newVersion.getBranch())) continue;
 
             //版本更新检查
-            if (applicationVersion.getBigVersion() >= newVersion.getBigVersion()) {
-                if (applicationVersion.getSubVersion() >= newVersion.getSubVersion()) {
-                    if (applicationVersion.getMinorVersion() >= newVersion.getMinorVersion()) {
-                        continue;
-                    }
-                }
-            }
+            if (applicationVersion.toInt() >= newVersion.toInt()) continue;
 
             if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp"))
             {
@@ -51,6 +45,7 @@ public class Checker {
                 return;
             }
             showUpdateConfirmDialog(latestRelease);
+            return;
         }
     }
 
