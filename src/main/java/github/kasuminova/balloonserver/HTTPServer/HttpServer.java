@@ -81,14 +81,14 @@ public class HttpServer {
                             httpServerInitializer.jks.getName().replace(".jks",""),
                             port);
 
-                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
-                    logger.info("注意：已启用 HTTPS 协议, 你只能通过域名来访问 API 地址, 如果上方输出的域名不正确, 请自行将 IP 更换为域名。");
+                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
+                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址, 如果上方输出的域名不正确, 请自行将 IP 更换为域名。");
                 } else {
                     apiAddress = String.format("https://[%s]:%s/index.json",
                             ip,
                             port);
 
-                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
+                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
                 }
             } else {
                 if (httpServerInitializer.isUseSsl()) {
@@ -96,19 +96,19 @@ public class HttpServer {
                             httpServerInitializer.jks.getName().replace(".jks",""),
                             port);
 
-                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
-                    logger.info("注意：已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。");
+                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
+                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。");
                 } else if (ip.equals("0.0.0.0")) {
                     apiAddress = String.format("http://localhost:%s/index.json",
                             port);
 
-                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
+                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
                 } else {
                     apiAddress = String.format("http://%s:%s/index.json",
                             ip,
                             port);
 
-                    logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
+                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
                 }
             }
             serverInterface.setStatusLabelText("已启动", ModernColors.GREEN);

@@ -76,7 +76,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
             //如果服务端未启用旧版兼容模式，且使用了旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户启用旧版兼容模式
             if (!config.isCompatibleMode() || legacyResJson == null) {
                 sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端未启用兼容模式.（仅兼容 4.1.15+）\n".repeat(6), clientIP, decodedURI);
-                logger.error("警告：检测到你可能正在使用旧版客户端获取服务端缓存文件.");
+                logger.error("警告: 检测到你可能正在使用旧版客户端获取服务端缓存文件.");
                 logger.error("如果你想要兼容旧版客户端, 请按照下方描述进行操作:");
                 logger.error("打开 “启用旧版兼容”, 然后保存并重载配置, 最后点击 “重新生成资源文件夹缓存”.");
                 return;
@@ -167,7 +167,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         uploadPanel.setBorder(BorderFactory.createTitledBorder(fileName));
         uploadPanel.add(new JLabel(IP));
         //状态
-        box.add(new JLabel("进度："), BorderLayout.WEST);
+        box.add(new JLabel("进度: "), BorderLayout.WEST);
         //进度条
         JProgressBar progressBar = new JProgressBar(0,200);
         progressBar.setStringPainted(true);

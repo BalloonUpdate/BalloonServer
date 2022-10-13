@@ -4,6 +4,8 @@ import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
+import github.kasuminova.balloonserver.Utils.FileCacheUtils.CacheCalculator;
+import github.kasuminova.balloonserver.Utils.FileCalculatorUtils.FileCalculator;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 
 import javax.swing.*;
@@ -41,7 +43,7 @@ public class CacheUtils {
     //公用定时器
     private Timer timer;
     private Thread counterThread;
-    private NextFileListUtils fileListUtils;
+    private FileCalculator fileListUtils;
 
     /**
      * 更新资源缓存结构
@@ -151,10 +153,10 @@ public class CacheUtils {
     private boolean genDirCache(JSONArray jsonCache, String hashAlgorithm) {
         File dir = new File("." + config.getMainDirPath());
         if (!dir.exists()) {
-            logger.warn(String.format("设定中的资源目录：%s 不存在, 使用默认路径", dir.getPath()));
+            logger.warn(String.format("设定中的资源目录: %s 不存在, 使用默认路径", dir.getPath()));
             dir = new File("./res");
             if (!dir.exists()) {
-                logger.warn(String.format("默认资源目录不存在：%s, 正在创建文件夹", dir.getPath()));
+                logger.warn(String.format("默认资源目录不存在: %s, 正在创建文件夹", dir.getPath()));
                 if (!dir.mkdir()) {
                     logger.error("默认资源目录创建失败！请检查你的资源目录文件夹是否被占用或非文件夹。");
                 }
@@ -175,12 +177,12 @@ public class CacheUtils {
 
         isGenerating.set(true);
         //计算文件夹内的文件和总大小（文件夹不计入），用于进度条显示
-        long[] dirSize = NextFileListUtils.getDirSize(dir, statusProgressBar);
+        long[] dirSize = FileCalculator.getDirSize(dir, statusProgressBar);
 
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
 
-        FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger, hashAlgorithm);
-        logger.info(String.format("文件夹大小：%s, 文件数量：%s", totalSize,dirSize[1]));
+        CacheCalculator cacheCalculator = new CacheCalculator(logger, hashAlgorithm);
+        logger.info(String.format("文件夹大小: %s, 文件数量: %s", totalSize,dirSize[1]));
         if (jsonCache != null) {
             logger.info("检测到已缓存的 JSON, 正在检查变化...");
 
@@ -188,22 +190,22 @@ public class CacheUtils {
             File finalDir = dir;
             counterThread = new Thread(() -> {
                 jsonArray.clear();
-                jsonArray.addAll(fileCacheCalculator.scanDir(jsonCache, finalDir));
+                jsonArray.addAll(cacheCalculator.scanDir(jsonCache, finalDir));
             });
             counterThread.start();
 
             serverInterface.resetStatusProgressBar();
-            statusProgressBar.setString(String.format("检查变化中：0 文件 / %s 文件", dirSize[1]));
+            statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件", dirSize[1]));
             timer = new Timer(25, e -> {
-                int completedFiles = fileCacheCalculator.completedFiles.get();
+                int completedFiles = cacheCalculator.completedFiles.get();
                 statusProgressBar.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
-                statusProgressBar.setString(String.format("检查变化中：%s 文件 / %s 文件", completedFiles, dirSize[1]));
+                statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles, dirSize[1]));
             });
         } else {
             logger.info("正在生成资源目录缓存...");
             File finalDir = dir;
             //新建资源计算器实例
-            fileListUtils = new NextFileListUtils(hashAlgorithm);
+            fileListUtils = new FileCalculator(hashAlgorithm);
             //创建新线程实例并执行
             counterThread = new Thread(() -> {
                 fileObjList.clear();
@@ -218,7 +220,7 @@ public class CacheUtils {
                 long completedFiles = fileListUtils.getCompletedFiles();
                 String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
                 statusProgressBar.setValue((int) ((double) completedBytes * 1000 / dirSize[0]));
-                statusProgressBar.setString(String.format("生成缓存中：%s / %s - %s 文件 / %s 文件",
+                statusProgressBar.setString(String.format("生成缓存中: %s / %s - %s 文件 / %s 文件",
                         completedSize,
                         totalSize,
                         completedFiles,

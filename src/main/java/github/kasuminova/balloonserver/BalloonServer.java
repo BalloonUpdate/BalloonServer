@@ -272,7 +272,7 @@ public final class BalloonServer {
 
             GLOBAL_THREAD_POOL.execute(() -> {
                 long start = System.currentTimeMillis();
-                GLOBAL_LOGGER.info(String.format("正在创建新的集成服务端实例：%s", serverName));
+                GLOBAL_LOGGER.info(String.format("正在创建新的集成服务端实例: %s", serverName));
 
                 IntegratedServer customServer = new IntegratedServer(serverName, false);
 
@@ -324,7 +324,7 @@ public final class BalloonServer {
                 int panelArrayIndex = i;
                 Thread thread = new Thread(() -> {
                     long start = System.currentTimeMillis();
-                    GLOBAL_LOGGER.info(String.format("正在载入集成服务端实例：%s", serverName));
+                    GLOBAL_LOGGER.info(String.format("正在载入集成服务端实例: %s", serverName));
                     IntegratedServer customServer;
                     customServer = new IntegratedServer(serverName, false);
                     customServers[panelArrayIndex] = customServer;
@@ -446,7 +446,7 @@ public final class BalloonServer {
     private static void loadStatusBar() {
         //状态栏
         STATUS_PANEL.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(3, 4, 2, 4)));
-        JLabel threadCount = new JLabel("当前运行的线程数量：0");
+        JLabel threadCount = new JLabel("当前运行的线程数量: 0");
         STATUS_PANEL.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
@@ -454,7 +454,7 @@ public final class BalloonServer {
         memBar.setPreferredSize(new Dimension(memBar.getMaximum(),memBar.getHeight()));
         memBar.setBorder(new EmptyBorder(1,0,0,5));
         memBar.setStringPainted(true);
-        memBarBox.add(new JLabel("JVM 内存使用情况："));
+        memBarBox.add(new JLabel("JVM 内存使用情况: "));
         memBarBox.add(memBar);
         //内存清理
         JButton GC = new JButton("清理");
@@ -475,7 +475,7 @@ public final class BalloonServer {
                 long memoryUsed = memoryMXBean.getHeapMemoryUsage().getUsed();
                 long memoryTotal = memoryMXBean.getHeapMemoryUsage().getCommitted();
 
-                threadCount.setText(String.format("当前运行的线程数量：%s", Thread.activeCount()));
+                threadCount.setText(String.format("当前运行的线程数量: %s", Thread.activeCount()));
 
                 memBar.setValue((int) ((double) memoryUsed * memBar.getMaximum() / memoryTotal));
                 memBar.setString(String.format("%s M / %s M - Max: %s M",

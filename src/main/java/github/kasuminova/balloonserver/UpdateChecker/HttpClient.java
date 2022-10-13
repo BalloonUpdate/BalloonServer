@@ -91,7 +91,7 @@ public class HttpClient {
         downloadingFrame.setResizable(false);
 
         JPanel mainPanel = new JPanel(new VFlowLayout(0,10,5,true,false));
-        mainPanel.add(new JLabel("进度："));
+        mainPanel.add(new JLabel("进度: "));
 
         JProgressBar progressBar = new JProgressBar();
         progressBar.setValue(progressBar.getMaximum());

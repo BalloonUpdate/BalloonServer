@@ -34,7 +34,7 @@ import static github.kasuminova.balloonserver.BalloonServer.*;
 import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
 
 /**
- * 可继承 IntegratedServer 面板实例
+ * IntegratedServer 集成服务端面板实例
  */
 public class IntegratedServer {
     protected HttpServer server;
@@ -549,7 +549,6 @@ public class IntegratedServer {
             logger.error("保存配置文件的时候出现了问题...", ex);
         }
     }
-
 
     /**
      * 从文件加载配置文件

@@ -37,8 +37,8 @@ public class AboutPanel {
         JPanel descPanel = new JPanel(new VFlowLayout(0, VFlowLayout.MIDDLE, 5, 5, 5, 5, false, false));
         descPanel.setBorder(new EmptyBorder(10,0,0,0));
         descPanel.add(new JLabel("BalloonServer 是 LittleServer 的衍生图形化版本, 基于 Netty-IO 的增强实现.", JLabel.CENTER));
-        descPanel.add(new JLabel("提示：BalloonServer 内嵌了可视化更新规则编辑器, 你可以通过右键更新模式列表打开.", JLabel.CENTER));
-        descPanel.add(new JLabel("提示：BalloonServer 支持启动多个服务端, 你可以使用窗口左上角菜单来管理多个实例.", JLabel.CENTER));
+        descPanel.add(new JLabel("提示: BalloonServer 内嵌了可视化更新规则编辑器, 你可以通过右键更新模式列表打开.", JLabel.CENTER));
+        descPanel.add(new JLabel("提示: BalloonServer 支持启动多个服务端, 你可以使用窗口左上角菜单来管理多个实例.", JLabel.CENTER));
         //链接
         JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10,5));
         //仓库链接
@@ -58,7 +58,7 @@ public class AboutPanel {
         linkPanel.add(openIssuesLink);
         descPanel.add(linkPanel);
 
-        descPanel.add(new JLabel("BalloonServer 的诞生离不开这些贡献：", JLabel.CENTER));
+        descPanel.add(new JLabel("BalloonServer 的诞生离不开这些贡献: ", JLabel.CENTER));
         descPanel.add(new JLabel("Netty 为 BalloonServer 提供了高性能的并发网络框架；", JLabel.CENTER));
         descPanel.add(new JLabel("Alibaba FastJson2 为 BalloonServer 提供了高性能的 JSON 解析功能；", JLabel.CENTER));
         descPanel.add(new JLabel("FlatLaf, FlatLaf-Extra 为 BalloonServer 提供了一套完美的用户界面体验；", JLabel.CENTER));

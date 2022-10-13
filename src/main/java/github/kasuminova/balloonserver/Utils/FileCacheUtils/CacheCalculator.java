@@ -1,28 +1,25 @@
-package github.kasuminova.balloonserver.Utils;
+package github.kasuminova.balloonserver.Utils.FileCacheUtils;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
+import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import java.io.File;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
-import static github.kasuminova.balloonserver.Utils.HashCalculator.getCRC32;
-import static github.kasuminova.balloonserver.Utils.HashCalculator.getSHA1;
 
 /**
  * 一个多线程计算文件缓存差异的工具类
  * @author Kasumi_Nova
  */
-public class FileCacheCalculator {
-    public FileCacheCalculator(GUILogger logger, String hashAlgorithm) {
+public class CacheCalculator {
+    public CacheCalculator(GUILogger logger, String hashAlgorithm) {
         this.logger = logger;
         this.hashAlgorithm = hashAlgorithm;
     }
@@ -55,11 +52,11 @@ public class FileCacheCalculator {
                 }
                 if (!isExist) {
                     if (resDirFile.isFile()) {
-                        FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(resDirFile));
+                        FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(resDirFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
                         FILE_THREAD_POOL.submit(fileCounterThread);
                     } else {
-                        FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile));
+                        FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile, FILE_THREAD_POOL, hashAlgorithm));
                         dirThreadList.add(dirCounterThread);
                         GLOBAL_THREAD_POOL.submit(dirCounterThread);
                     }
@@ -75,7 +72,7 @@ public class FileCacheCalculator {
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : dirThreadList) {
             try {
                 directoryObject = simpleDirectoryObjectFutureTask.get();
-                logger.info("检测到资源目录下有新文件夹：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
+                logger.info("检测到资源目录下有新文件夹: " + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
                 addObjectObjectToJsonArray(jsonArray,directoryObject);
             } catch (Exception e) {
@@ -86,7 +83,7 @@ public class FileCacheCalculator {
         for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileThreadList) {
             try {
                 fileObject = simpleFileObjectFutureTask.get();
-                logger.info("检测到资源目录下有新文件：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
+                logger.info("检测到资源目录下有新文件: " + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
                 addObjectObjectToJsonArray(jsonArray,fileObject);
             } catch (Exception e) {
@@ -116,7 +113,7 @@ public class FileCacheCalculator {
                     if (childFile.isFile()) {
                         removeObjectFromJsonArray(jsonArray,obj);
 
-                        FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
+                        FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
                         FILE_THREAD_POOL.submit(fileCounterThread);
                     } else {
@@ -129,7 +126,7 @@ public class FileCacheCalculator {
                     if (childFile.lastModified() / 1000 != obj.getLong("modified")) {
                         removeObjectFromJsonArray(jsonArray,obj);
 
-                        FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile));
+                        FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
                         FILE_THREAD_POOL.submit(fileCounterThread);
                     } else {
@@ -139,7 +136,7 @@ public class FileCacheCalculator {
                 } else if (childFile.isDirectory()) {
                     removeObjectFromJsonArray(jsonArray,obj);
 
-                    FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile));
+                    FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile, FILE_THREAD_POOL, hashAlgorithm));
                     dirThreadList.add(dirCounterThread);
                     GLOBAL_THREAD_POOL.execute(dirCounterThread);
                 }
@@ -154,7 +151,7 @@ public class FileCacheCalculator {
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : dirThreadList) {
             try {
                 directoryObject = simpleDirectoryObjectFutureTask.get();
-                logger.info("检测到文件夹变动：" + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
+                logger.info("检测到文件夹变动: " + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
                 completedFiles.getAndAdd(directoryObject.getChildren().size());
                 addObjectObjectToJsonArray(jsonArray,directoryObject);
@@ -165,7 +162,7 @@ public class FileCacheCalculator {
         for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileThreadList) {
             try {
                 fileObject = simpleFileObjectFutureTask.get();
-                logger.info("检测到文件变动：" + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
+                logger.info("检测到文件变动: " + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
                 addObjectObjectToJsonArray(jsonArray,fileObject);
                 completedFiles.getAndIncrement();
@@ -185,74 +182,4 @@ public class FileCacheCalculator {
         jsonArray.add(object);
     }
 
-    /**
-     * 计算一个文件夹的 MD5 类/线程
-     * 以 Callable 实现，返回对应的类型
-     */
-    public class DirCounterThread implements Callable<SimpleDirectoryObject> {
-        private final ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
-        private final ArrayList<FutureTask<SimpleDirectoryObject>> dirThreadList = new ArrayList<>();
-        private final File dir;
-        public DirCounterThread(File dir) {
-            this.dir = dir;
-        }
-        @Override
-        public SimpleDirectoryObject call() {
-            File[] fileList = dir.listFiles();
-            if (fileList != null) {
-                ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
-                for (File file : fileList) {
-                    if (file.isFile()) {
-                        FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(file));
-                        fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.submit(fileCounterThread);
-                    } else if (file.isDirectory()) {
-                        FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file));
-                        GLOBAL_THREAD_POOL.submit(dirCounterThread);
-                        dirThreadList.add(dirCounterThread);
-                    }
-                }
-                for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileThreadList) {
-                    try {
-                        fileObjList.add(simpleFileObjectFutureTask.get());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : dirThreadList) {
-                    try {
-                        fileObjList.add(simpleDirectoryObjectFutureTask.get());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-                return new SimpleDirectoryObject(dir.getName(), fileObjList);
-            } else {
-                return new SimpleDirectoryObject(dir.getName(), new ArrayList<>());
-            }
-        }
-    }
-
-    /**
-     * 计算单个文件的 MD5 的 类/线程.
-     * 传入 File 文件
-     * 创建一个线程, 计算文件信息
-     * 计算完毕后, 返回 SimpleFileObject
-     */
-    public class FileCounterThread implements Callable<SimpleFileObject> {
-        private final File file;
-        public FileCounterThread(File file) {
-            this.file = file;
-        }
-        @Override
-        public SimpleFileObject call() throws IOException, NoSuchAlgorithmException {
-            String hash;
-            if (hashAlgorithm.equals(HashCalculator.SHA1)) {
-                hash = getSHA1(file);
-            } else {
-                hash = getCRC32(file);
-            }
-            return new SimpleFileObject(file.getName(),file.length(),hash,file.lastModified() / 1000);
-        }
-    }
 }

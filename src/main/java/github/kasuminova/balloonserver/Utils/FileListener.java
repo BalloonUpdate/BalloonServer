@@ -20,37 +20,37 @@ public class FileListener extends FileAlterationListenerAdaptor {
     }
     @Override
     public void onDirectoryCreate(File directory) {
-        logger.info("新建：" + directory.getPath());
+        logger.info("新建: " + directory.getPath());
         isFileChanged.set(true);
     }
 
     @Override
     public void onDirectoryChange(File directory) {
-        logger.info("修改：" + directory.getPath());
+        logger.info("修改: " + directory.getPath());
         isFileChanged.set(true);
     }
 
     @Override
     public void onDirectoryDelete(File directory) {
-        logger.info("删除：" + directory.getPath());
+        logger.info("删除: " + directory.getPath());
         isFileChanged.set(true);
     }
 
     @Override
     public void onFileCreate(File file) {
-        logger.info("新建：" + file.getPath());
+        logger.info("新建: " + file.getPath());
         isFileChanged.set(true);
     }
 
     @Override
     public void onFileChange(File file) {
-        logger.info("修改：" + file.getPath());
+        logger.info("修改: " + file.getPath());
         isFileChanged.set(true);
     }
 
     @Override
     public void onFileDelete(File file) {
-        logger.info("删除：" + file.getPath());
+        logger.info("删除: " + file.getPath());
         isFileChanged.set(true);
     }
 

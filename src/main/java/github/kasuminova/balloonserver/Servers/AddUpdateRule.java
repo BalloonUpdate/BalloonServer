@@ -22,7 +22,7 @@ public class AddUpdateRule implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         String newRule = JOptionPane.showInputDialog(container,
-                "请输入更新规则：", RuleEditor.TITLE,
+                "请输入更新规则: ", RuleEditor.TITLE,
                 JOptionPane.INFORMATION_MESSAGE);
         if (newRule != null && !newRule.isEmpty()) {
             //防止插入相同内容

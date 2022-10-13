@@ -67,7 +67,7 @@ public class SettingsPanel {
 
         Box closeOperationBox = Box.createHorizontalBox();
         closeOperationComboBox.setMaximumRowCount(3);
-        closeOperationBox.add(new JLabel("窗口关闭选项："));
+        closeOperationBox.add(new JLabel("窗口关闭选项: "));
         closeOperationBox.add(closeOperationComboBox);
         JLabel closeOperationsDesc = new JLabel("此项决定点击 BalloonServer 窗口右上角关闭按钮后程序的操作.");
 
