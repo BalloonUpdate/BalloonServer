@@ -41,6 +41,7 @@ public class IntegratedServer {
     protected String indexJson = null;
     protected String resJson = null;
     protected String legacyResJson = null;
+    protected final JSONObject index = new JSONObject();
     protected final String resJsonFileExtensionName = "res-cache";
     protected final String legacyResJsonFileExtensionName = "legacy_res-cache";
     protected final String configFileSuffix = ".lscfg.json";
@@ -253,14 +254,8 @@ public class IntegratedServer {
         logger.debug(String.format("载入服务器耗时 %sms.", System.currentTimeMillis() - start));
 
         if (autoStart) {
-            logger.info("检测到自动启动服务器选项已开启, 3 秒后启动启动服务器...");
-            GLOBAL_THREAD_POOL.execute(() -> {
-                isStarting.set(true);
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException ignored) {}
-                startServer();
-            });
+            logger.info("检测到自动启动服务器选项已开启, 正在启动服务器...");
+            startServer();
         }
     }
 
@@ -555,6 +550,7 @@ public class IntegratedServer {
         }
     }
 
+
     /**
      * 从文件加载配置文件
      */
@@ -608,10 +604,11 @@ public class IntegratedServer {
         onceModeList.addAll(Arrays.asList(config.getOnceMode()));
         onceMode.setListData(config.getOnceMode());
 
+        reloadIndexJson();
+
         logger.info("已载入配置文件.");
     }
 
-    protected final JSONObject index = new JSONObject();
     /**
      * 以面板当前配置重载配置
      */
@@ -634,16 +631,22 @@ public class IntegratedServer {
                 .setOnceMode(onceModeList.toArray(new String[0])) //设置补全模式
                 .setIp(IP);
 
+        reloadIndexJson();
+
+        logger.info("已加载配置.");
+    }
+
+    /**
+     * 重新构建 index.json 字符串缓存
+     */
+    protected void reloadIndexJson() {
         index.clear();
         index.put("update", config.getMainDirPath().replace("/", "").intern());
         index.put("hash_algorithm", HashCalculator.CRC32);
         index.put("common_mode", config.getCommonMode());
         index.put("once_mode", config.getOnceMode());
 
-        //重新构建 index.json 字符串缓存
         indexJson = index.toJSONString(JSONWriter.Feature.PrettyFormat);
-
-        logger.info("已加载配置.");
     }
 
     protected JPanel loadStatusBar() {
