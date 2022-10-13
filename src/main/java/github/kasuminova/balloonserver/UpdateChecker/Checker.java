@@ -36,35 +36,38 @@ public class Checker {
             //如果版本分支不一样则忽略此版本
             if (!applicationVersion.getBranch().equals(newVersion.getBranch())) continue;
 
-            //如果当前版本高于仓库最新版本则忽略此版本
-            if (applicationVersion.getBigVersion() > newVersion.getBigVersion() ||
-                applicationVersion.getSubVersion() > newVersion.getSubVersion() ||
-                applicationVersion.getMinorVersion() > newVersion.getMinorVersion())
-            {
-                continue;
-            }
-
             //版本更新检查
-            if (applicationVersion.getBigVersion() < newVersion.getBigVersion() ||
-                applicationVersion.getSubVersion() < newVersion.getSubVersion() ||
-                applicationVersion.getMinorVersion() < newVersion.getMinorVersion())
-            {
-                if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp"))
-                {
-                    String fileName = downloadUpdate(latestRelease, false);
-                    if (fileName != null) startProgram(fileName, true);
-                    return;
+            if (applicationVersion.getBigVersion() >= newVersion.getBigVersion()) {
+                if (applicationVersion.getSubVersion() >= newVersion.getSubVersion()) {
+                    if (applicationVersion.getMinorVersion() >= newVersion.getMinorVersion()) {
+                        return;
+                    }
                 }
-                int operation = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                        String.format("检测到有版本更新 (%s), 您要下载更新吗？", newVersion),
-                        "更新提示",
-                        JOptionPane.YES_NO_OPTION);
-
-                if (operation != JOptionPane.YES_NO_OPTION) return;
-
-                downloadUpdate(latestRelease, true);
             }
+
+            if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp"))
+            {
+                startAutoUpdate(latestRelease);
+                return;
+            }
+            showUpdateConfirmDialog(latestRelease);
         }
+    }
+
+    private static void showUpdateConfirmDialog(JSONObject latestRelease) {
+        int operation = JOptionPane.showConfirmDialog(MAIN_FRAME,
+                String.format("检测到有版本更新 (%s), 您要下载更新吗？", latestRelease.getString("tag_name")),
+                "更新提示",
+                JOptionPane.YES_NO_OPTION);
+
+        if (operation != JOptionPane.YES_NO_OPTION) return;
+
+        downloadUpdate(latestRelease, true);
+    }
+
+    private static void startAutoUpdate(JSONObject latestRelease) {
+        String fileName = downloadUpdate(latestRelease, false);
+        if (fileName != null) startProgram(fileName, true);
     }
 
     /**

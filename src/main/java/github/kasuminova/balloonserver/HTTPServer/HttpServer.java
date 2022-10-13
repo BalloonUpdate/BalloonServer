@@ -77,14 +77,14 @@ public class HttpServer {
 
             if ("v6".equals(addressType)) {
                 if (httpServerInitializer.isUseSsl()) {
-                    apiAddress = String.format("http://%s:%s/index.json",
+                    apiAddress = String.format("https://%s:%s/index.json",
                             httpServerInitializer.jks.getName().replace(".jks",""),
                             port);
 
                     logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
                     logger.info("注意：已启用 HTTPS 协议, 你只能通过域名来访问 API 地址, 如果上方输出的域名不正确, 请自行将 IP 更换为域名。");
                 } else {
-                    apiAddress = String.format("API 地址：https://[%s]:%s/index.json",
+                    apiAddress = String.format("https://[%s]:%s/index.json",
                             ip,
                             port);
 
@@ -92,7 +92,7 @@ public class HttpServer {
                 }
             } else {
                 if (httpServerInitializer.isUseSsl()) {
-                    apiAddress = String.format("http://%s:%s/index.json",
+                    apiAddress = String.format("https://%s:%s/index.json",
                             httpServerInitializer.jks.getName().replace(".jks",""),
                             port);
 
