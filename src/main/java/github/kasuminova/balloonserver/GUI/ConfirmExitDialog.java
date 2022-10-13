@@ -8,21 +8,23 @@ import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_LOGGER;
-import static github.kasuminova.balloonserver.BalloonServer.stopAllServers;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 
 public class ConfirmExitDialog extends JDialog {
     public ConfirmExitDialog(JFrame frame, BalloonServerConfig config) {
         setTitle(BalloonServer.TITLE);
         setIconImage(BalloonServer.ICON.getImage());
-        setSize(360,160);
+        setSize(360,165);
         setResizable(false);
         setLocationRelativeTo(null);
 
         JPanel contentPane = (JPanel) getContentPane();
         contentPane.setLayout(new VFlowLayout());
-        contentPane.add(new JLabel("请选择点击关闭按钮时程序的操作："));
+        contentPane.setBorder(new EmptyBorder(0,10,0,10));
+        contentPane.add(new JLabel("请选择点击关闭按钮时程序的操作:"));
 
         //选择 退出程序 或 最小化任务栏
         ButtonGroup selections = new ButtonGroup();
@@ -30,14 +32,14 @@ public class ConfirmExitDialog extends JDialog {
         JRadioButton exit = new JRadioButton("退出程序");
         selections.add(miniSizeToTray);
         selections.add(exit);
-        JPanel radioButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,10,5));
+        JPanel radioButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,5));
         radioButtonsPanel.add(miniSizeToTray);
         radioButtonsPanel.add(exit);
         contentPane.add(radioButtonsPanel);
 
         //始终保存选项
         JCheckBox saveSelection = new JCheckBox("保存选项, 下次不再提醒");
-        saveSelection.setBorder(new EmptyBorder(0,10,0,0));
+        saveSelection.setBorder(new EmptyBorder(0,5,0,0));
         contentPane.add(saveSelection);
 
         Box buttonBox = new Box(BoxLayout.LINE_AXIS);
@@ -76,11 +78,24 @@ public class ConfirmExitDialog extends JDialog {
                     }
                 }
             }
-            setVisible(false);
+
+            frame.setEnabled(true);
+            dispose();
         });
         JButton cancel = new JButton("取消");
-        cancel.addActionListener(e -> setVisible(false));
+        cancel.addActionListener(e -> {
+            frame.setEnabled(true);
+            dispose();
+        });
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                frame.setEnabled(true);
+            }
+        });
+
         buttonBox.add(cancel);
+        buttonBox.add(new JLabel(" "));
         buttonBox.add(yes);
         contentPane.add(buttonBox);
     }

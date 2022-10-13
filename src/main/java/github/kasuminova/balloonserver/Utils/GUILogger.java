@@ -34,7 +34,7 @@ public class GUILogger {
     private final AtomicInteger prepared = new AtomicInteger(0);
     //日期格式
     private static final SimpleDateFormat NORMAL_DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
-    private static final SimpleDateFormat FULL_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat FULL_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     private static final SimpleAttributeSet INFO_ATTRIBUTE  = new SimpleAttributeSet();
     private static final SimpleAttributeSet WARN_ATTRIBUTE  = new SimpleAttributeSet();
     private static final SimpleAttributeSet ERROR_ATTRIBUTE = new SimpleAttributeSet();

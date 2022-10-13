@@ -153,6 +153,7 @@ public final class BalloonServer {
                 public void windowClosing(WindowEvent e) {
                     if (CONFIG.getCloseOperation() == BalloonServerConfig.QUERY.getOperation()) {
                         ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(MAIN_FRAME, CONFIG);
+                        MAIN_FRAME.setEnabled(false);
                         confirmExitDialog.setVisible(true);
                     } else if (CONFIG.getCloseOperation() == BalloonServerConfig.HIDE_ON_CLOSE.getOperation()){
                         MAIN_FRAME.setVisible(false);
