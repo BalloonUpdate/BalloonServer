@@ -253,8 +253,14 @@ public class IntegratedServer {
         logger.debug(String.format("载入服务器耗时 %sms.", System.currentTimeMillis() - start));
 
         if (autoStart) {
-            logger.info("检测到自动启动服务器选项已开启, 正在启动服务器...");
-            startServer();
+            logger.info("检测到自动启动服务器选项已开启, 3 秒后启动启动服务器...");
+            GLOBAL_THREAD_POOL.execute(() -> {
+                isStarting.set(true);
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ignored) {}
+                startServer();
+            });
         }
     }
 

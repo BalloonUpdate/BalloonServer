@@ -203,10 +203,11 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
     private static void print200Log(long usedTime, String clientIP, String decodedURI, GUILogger logger) {
         //格式为 IP, 额外信息, 转义后的 URI, 耗时
         logger.info(
-                String.format("%s 200 | %s (%sms)",
+                String.format("%s\t| 200 | %s | %s",
                         clientIP,
-                        decodedURI,
-                        usedTime),
+                        formatTime(usedTime),
+                        decodedURI
+                ),
                 ModernColors.GREEN);
     }
 
@@ -219,11 +220,23 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
      */
     private static void printWarnLog(String msg, long usedTime, String clientIP, String decodedURI, GUILogger logger) {
         //格式为 IP, 额外信息, 转义后的 URI, 耗时
-        logger.warn(String.format("%s %s | %s (%sms)",
+        logger.warn(String.format("%s\t| %s | %s | %s",
                 clientIP,
                 msg,
-                decodedURI,
-                usedTime));
+                formatTime(usedTime),
+                decodedURI));
+    }
+
+    private static String formatTime(long time) {
+        if (time < 1000) {
+            return String.format("%.3fs", (double) time / 1000);
+        } else if (time < 1000 * 10) {
+            return String.format("%.2fs", (double) time / 1000);
+        } else if (time < 1000 * 100) {
+            return String.format("%.1fs", (double) time / 1000);
+        } else {
+            return String.format("%ss", time / 1000);
+        }
     }
 
     /**

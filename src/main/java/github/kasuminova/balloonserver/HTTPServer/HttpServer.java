@@ -121,7 +121,7 @@ public class HttpServer {
         //文件监听器
         if (config.isFileChangeListener()) {
             long start1 = System.currentTimeMillis();
-            logger.info("正在启动实时文件监听器.");
+            logger.info("正在启动实时文件监听器...");
             fileMonitor = new FileMonitor(5000);
             fileMonitor.monitor("." + config.getMainDirPath(), new FileListener(logger,isFileChanged));
 

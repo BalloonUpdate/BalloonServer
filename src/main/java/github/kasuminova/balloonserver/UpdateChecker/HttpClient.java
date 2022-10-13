@@ -85,7 +85,7 @@ public class HttpClient {
             throw new IOException("Could Not Create File " + file.getPath());
         }
 
-        JFrame downloadingFrame = new JFrame("下载更新中");
+        JFrame downloadingFrame = new JFrame(BalloonServer.TITLE);
         downloadingFrame.setIconImage(BalloonServer.ICON.getImage());
         downloadingFrame.setSize(new Dimension(350,145));
         downloadingFrame.setResizable(false);

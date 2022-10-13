@@ -52,7 +52,7 @@ public class Checker {
     private static void showUpdateConfirmDialog(JSONObject latestRelease) {
         int operation = JOptionPane.showConfirmDialog(MAIN_FRAME,
                 String.format("检测到有版本更新 (%s), 您要下载更新吗？", latestRelease.getString("tag_name")),
-                "更新提示",
+                BalloonServer.TITLE,
                 JOptionPane.YES_NO_OPTION);
 
         if (operation != JOptionPane.YES_NO_OPTION) return;
