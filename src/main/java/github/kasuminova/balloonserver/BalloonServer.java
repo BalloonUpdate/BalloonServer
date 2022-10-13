@@ -6,8 +6,6 @@ import github.kasuminova.balloonserver.GUI.*;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.GUI.Panels.AboutPanel;
 import github.kasuminova.balloonserver.GUI.Panels.SettingsPanel;
-import github.kasuminova.balloonserver.Servers.AbstractIntegratedServer;
-import github.kasuminova.balloonserver.Servers.LegacyIntegratedServer;
 import github.kasuminova.balloonserver.Servers.IntegratedServer;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.UpdateChecker.ApplicationVersion;
@@ -45,7 +43,7 @@ public final class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.2.6-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.0-STABLE");
     public static final String TITLE = "BalloonServer " + VERSION;
     /*
     可执行文件名称。
@@ -102,7 +100,7 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabCloseToolTipText", "关闭这个标签页。且只能关闭自定义服务器实例。");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabCloseCallback", (BiConsumer<JTabbedPane, Integer>) (tabbedPane, tabIndex) -> {
             //检查是否为默认服务端
-            if (tabIndex <= 1) {
+            if (tabIndex == 0) {
                 JOptionPane.showMessageDialog(MAIN_FRAME, "你不可以删除默认服务端！", BalloonServer.TITLE, JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -119,7 +117,7 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
 
         Thread serverThread = new Thread(() -> {
-            AbstractIntegratedServer abstractIntegratedServer;
+            IntegratedServer abstractIntegratedServer;
             //自动启动服务器检测
             if (CONFIG.isAutoStartServer()) {
                 abstractIntegratedServer = new IntegratedServer("littleserver", true);
@@ -139,28 +137,8 @@ public final class BalloonServer {
             } else {
                 abstractIntegratedServer = new IntegratedServer("littleserver", false);
             }
-            SERVER_TABBED_PANE.addTab("集成服务端 (4.1.15+)", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
+            SERVER_TABBED_PANE.addTab("集成服务端", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
             availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
-
-            if (CONFIG.isAutoStartLegacyServer()) {
-                abstractIntegratedServer = new LegacyIntegratedServer("littleserver_legacy", true);
-            } else if (CONFIG.isAutoStartLegacyServerOnce()) {
-                abstractIntegratedServer = new LegacyIntegratedServer("littleserver_legacy", true);
-
-                CONFIG.setAutoStartLegacyServerOnce(false);
-                SettingsPanel.applyConfiguration();
-
-                try {
-                    ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
-                    BalloonServer.GLOBAL_LOGGER.info("已更新主程序配置文件.");
-                } catch (IOException e) {
-                    GLOBAL_LOGGER.error("保存主程序配置文件失败！", e);
-                }
-            } else {
-                abstractIntegratedServer = new LegacyIntegratedServer("littleserver_legacy", false);
-            }
-            availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
-            SERVER_TABBED_PANE.addTab("旧版集成服务端 (4.x.x)", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
         });
         serverThread.start();
 
@@ -247,7 +225,7 @@ public final class BalloonServer {
                 ConfigurationManager.loadBalloonServerConfigFromFile("./balloonserver.json", CONFIG);
                 GLOBAL_LOGGER.info("成功载入主程序配置文件.");
             } else {
-                GLOBAL_LOGGER.info("主程序配置文件不存在，正在创建文件...");
+                GLOBAL_LOGGER.info("主程序配置文件不存在, 正在创建文件...");
                 ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
                 GLOBAL_LOGGER.info("成功生成主程序配置文件.");
             }
@@ -277,7 +255,7 @@ public final class BalloonServer {
         newMenu.setIcon(PLUS_ICON);
         menuBar.add(newMenu);
 
-        JMenuItem createNewLittleServer = new JMenuItem("创建集成服务端实例 (兼容 4.1.15+ 版本客户端)", PLUS_ICON);
+        JMenuItem createNewLittleServer = new JMenuItem("创建集成服务端实例", PLUS_ICON);
         newMenu.add(createNewLittleServer);
         createNewLittleServer.addActionListener(e -> {
             String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务器实例名称", BalloonServer.TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -305,35 +283,6 @@ public final class BalloonServer {
             });
         });
 
-        JMenuItem createNewLegacyLittleServer = new JMenuItem("创建旧版集成服务端实例 (兼容 4.x.x 版本客户端)", PLUS_ICON);
-        newMenu.add(createNewLegacyLittleServer);
-        createNewLegacyLittleServer.addActionListener(e -> {
-            String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务端实例名称", BalloonServer.TITLE, JOptionPane.INFORMATION_MESSAGE);
-            if (Security.stringIsUnsafe(MAIN_FRAME, serverName, new String[]{"balloonserver","littleserver","res-cache",".lscfg",".json"})) return;
-
-            if (new File(String.format("./%s.legacy.lscfg.json", serverName)).exists() || new File(String.format("./%s.lscfg.json", serverName)).exists()) {
-                JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "已存在此服务器名，请使用载入服务器.", BalloonServer.TITLE,
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (checkSameServer(serverName + ".legacy")) return;
-            if (checkSameServer(serverName)) return;
-
-            GLOBAL_THREAD_POOL.execute(() -> {
-                long start = System.currentTimeMillis();
-                GLOBAL_LOGGER.info(String.format("正在创建新的集成服务端实例：%s", serverName));
-
-                LegacyIntegratedServer customServer = new LegacyIntegratedServer(serverName, false);
-
-                availableCustomServerInterfaces.add(customServer.getServerInterface());
-                SERVER_TABBED_PANE.addTab(serverName, CUSTOM_SERVER_ICON, customServer.getPanel());
-                SERVER_TABBED_PANE.setSelectedIndex(SERVER_TABBED_PANE.getTabCount() - 1);
-
-                GLOBAL_LOGGER.info(String.format("实例创建耗时 %sms.", System.currentTimeMillis() - start));
-            });
-        });
-
         JMenu loadMenu = new JMenu("实例管理");
         loadMenu.setIcon(RESOURCE_ICON);
         menuBar.add(loadMenu);
@@ -343,7 +292,7 @@ public final class BalloonServer {
         loadLittleServer.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setMultiSelectionEnabled(true);
-            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json", "legacy.lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"} ,"LittleServer 配置文件 (*.lscfg.json, *.legacy.lscfg.json)"));
+            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"} ,"LittleServer 配置文件 (*.lscfg.json)"));
 
             if (!(fileChooser.showDialog(MAIN_FRAME, "载入选中实例") == JFileChooser.APPROVE_OPTION)) {
                 return;
@@ -356,7 +305,7 @@ public final class BalloonServer {
                 serverNames[i] = selectedFiles[i].getName().replace(".lscfg.json", "");
             }
 
-            AbstractIntegratedServer[] customServers = new AbstractIntegratedServer[serverNames.length];
+            IntegratedServer[] customServers = new IntegratedServer[serverNames.length];
             ArrayList<Thread> threadList = new ArrayList<>();
             //检查是否存在非法名称或已存在的名称
             for (String serverName : serverNames) {
@@ -375,12 +324,8 @@ public final class BalloonServer {
                 Thread thread = new Thread(() -> {
                     long start = System.currentTimeMillis();
                     GLOBAL_LOGGER.info(String.format("正在载入集成服务端实例：%s", serverName));
-                    AbstractIntegratedServer customServer;
-                    if (serverName.endsWith(".legacy")) {
-                        customServer = new LegacyIntegratedServer(serverName.replace(".legacy", ""), false);
-                    } else {
-                        customServer = new IntegratedServer(serverName, false);
-                    }
+                    IntegratedServer customServer;
+                    customServer = new IntegratedServer(serverName, false);
                     customServers[panelArrayIndex] = customServer;
                     GLOBAL_LOGGER.info(String.format("实例载入耗时 %sms.", System.currentTimeMillis() - start));
                 });
@@ -399,7 +344,7 @@ public final class BalloonServer {
 
             //按顺序添加面板和接口
             for (int i = 0; i < customServers.length; i++) {
-                SERVER_TABBED_PANE.addTab(serverNames[i].replace(".legacy", ""), CUSTOM_SERVER_ICON, customServers[i].getPanel());
+                SERVER_TABBED_PANE.addTab(serverNames[i], CUSTOM_SERVER_ICON, customServers[i].getPanel());
                 availableCustomServerInterfaces.add(customServers[i].getServerInterface());
             }
 
@@ -486,12 +431,7 @@ public final class BalloonServer {
      */
     private static boolean checkSameServer(String serverName) {
         for (int i = 0; i < SERVER_TABBED_PANE.getTabCount(); i++) {
-            if (serverName.endsWith(".legacy")) {
-                if (SERVER_TABBED_PANE.getTitleAt(i).equals(serverName.replace(".legacy", ""))) {
-                    JOptionPane.showMessageDialog(MAIN_FRAME, String.format("名为 %s 的配置文件已经载入到服务器中了!", serverName), BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
-                    return true;
-                }
-            } else if (SERVER_TABBED_PANE.getTitleAt(i).equals(serverName)) {
+            if (SERVER_TABBED_PANE.getTitleAt(i).equals(serverName)) {
                 JOptionPane.showMessageDialog(MAIN_FRAME, String.format("名为 %s 的配置文件已经载入到服务器中了!", serverName), BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
                 return true;
             }
@@ -575,8 +515,8 @@ public final class BalloonServer {
                     请不要将此版本投入生产环境
                     请不要将此版本投入生产环境
                     请不要将此版本投入生产环境
-                    在阅读上方提示后，请点击“是”启动程序并代表你愿意承担因不稳定版本造成的程序崩溃后果，
-                    选择“否”退出程序。""",
+                    在阅读上方提示后，请点击 “是” 启动程序并代表你愿意承担因不稳定版本造成的程序崩溃后果，
+                    选择 “否” 退出程序。""",
                     "WARNING", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (!(selection == JOptionPane.YES_OPTION)) {
                 System.exit(0);

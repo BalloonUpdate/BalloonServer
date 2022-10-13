@@ -24,13 +24,11 @@ import java.util.Vector;
 import static github.kasuminova.balloonserver.BalloonServer.*;
 
 /**
- * 设置面板类，一个主程序只能有一个设置面板。
+ * 设置面板类, 一个主程序只能有一个设置面板。
  */
 public class SettingsPanel {
     private static final JCheckBox autoStartDefaultServer = new JCheckBox("自动启动主服务端");
     private static final JCheckBox autoStartDefaultServerOnce = new JCheckBox("自动启动主服务端（单次）");
-    private static final JCheckBox autoStartDefaultLegacyServer = new JCheckBox("自动启动旧版主服务端");
-    private static final JCheckBox autoStartDefaultLegacyServerOnce = new JCheckBox("自动启动旧版主服务端（单次）");
     private static final JCheckBox autoCheckUpdates = new JCheckBox("自动检查更新");
     private static final JCheckBox autoUpdate = new JCheckBox("自动更新");
     private static final Vector<CloseOperations> operations = new Vector<>();
@@ -46,26 +44,20 @@ public class SettingsPanel {
         JPanel settingsPanel = new JPanel(new VFlowLayout(VFlowLayout.TOP,VFlowLayout.LEFT,5,10,5,5,false,false));
 
         //自动启动主服务端
-        JLabel autoStartDefaultServerDesc = new JLabel("此项选中后，BalloonServer 在启动时会自动启动主服务端的服务器，无需手动开启服务端.");
+        JLabel autoStartDefaultServerDesc = new JLabel("此项选中后, BalloonServer 在启动时会自动启动主服务端的服务器, 无需手动开启服务端.");
 
         //自动启动主服务端（单次）
-        JLabel autoStartDefaultServerOnceDesc = new JLabel("此项选中后，BalloonServer 在启动时会自动启动主服务端的服务器，仅生效一次，生效后自动关闭.");
-
-        //自动启动旧版主服务端
-        JLabel autoStartDefaultLegacyServerDesc = new JLabel("此项选中后，BalloonServer 在启动时会自动启动旧版主服务端的服务器，无需手动开启服务端.");
-
-        //自动启动旧版主服务端（单次）
-        JLabel autoStartDefaultLegacyServerOnceDesc = new JLabel("此项选中后，BalloonServer 在启动时会自动启动旧版主服务端的服务器，仅生效一次，生效后自动关闭.");
+        JLabel autoStartDefaultServerOnceDesc = new JLabel("此项选中后, BalloonServer 在启动时会自动启动主服务端的服务器, 仅生效一次, 生效后自动关闭.");
 
         //自动检查更新
-        JLabel autoCheckUpdatesDesc = new JLabel("此项选中后，BalloonServer 在会在启动时检查最新更新.");
+        JLabel autoCheckUpdatesDesc = new JLabel("此项选中后, BalloonServer 在会在启动时检查最新更新.");
 
         //自动更新
-        JLabel autoUpdateDesc = new JLabel("此项及“自动检查更新”项选中后，BalloonServer 在检查到更新后，会自动下载并自动重启应用更新，如果主服务端正在运行，则下次启动会自动启动服务器.");
+        JLabel autoUpdateDesc = new JLabel("此项及 “自动检查更新” 项选中后, BalloonServer 在检查到更新后, 会自动下载并自动重启应用更新, 如果主服务端正在运行, 则下次启动会自动启动服务器.");
         //如果程序非 exe 格式则设置为禁用
         if (!ARCHIVE_NAME.contains("e4j")) {
             autoUpdate.setEnabled(false);
-            autoUpdate.setText("自动更新（不支持，目前仅支持 exe 格式服务端）");
+            autoUpdate.setText("自动更新（不支持, 目前仅支持 exe 格式服务端）");
         }
 
         //关闭选项
@@ -80,7 +72,7 @@ public class SettingsPanel {
         JLabel closeOperationsDesc = new JLabel("此项决定点击 BalloonServer 窗口右上角关闭按钮后程序的操作.");
 
         //Debug Mode
-        JLabel enableDebugModeDesc = new JLabel("此项仅为开发人员提供，普通用户请勿开启.");
+        JLabel enableDebugModeDesc = new JLabel("此项仅为开发人员提供, 普通用户请勿开启.");
 
         applyConfiguration();
 
@@ -89,10 +81,6 @@ public class SettingsPanel {
         settingsPanel.add(autoStartDefaultServerDesc);
         settingsPanel.add(autoStartDefaultServerOnce);
         settingsPanel.add(autoStartDefaultServerOnceDesc);
-        settingsPanel.add(autoStartDefaultLegacyServer);
-        settingsPanel.add(autoStartDefaultLegacyServerDesc);
-        settingsPanel.add(autoStartDefaultLegacyServerOnce);
-        settingsPanel.add(autoStartDefaultLegacyServerOnceDesc);
         settingsPanel.add(autoCheckUpdates);
         settingsPanel.add(autoCheckUpdatesDesc);
         settingsPanel.add(autoUpdate);
@@ -112,7 +100,7 @@ public class SettingsPanel {
 
         JPanel saveConfigPanel = new JPanel(new VFlowLayout());
         //保存提示
-        JLabel tipLabel = new JLabel("上方配置修改后，请点击保存配置按钮来应用配置.", SwingConstants.CENTER);
+        JLabel tipLabel = new JLabel("上方配置修改后, 请点击保存配置按钮来应用配置.", SwingConstants.CENTER);
         tipLabel.setForeground(new Color(255,75,75));
         saveConfigPanel.add(tipLabel);
 
@@ -136,8 +124,6 @@ public class SettingsPanel {
     {
         autoStartDefaultServer.setSelected(CONFIG.isAutoStartServer());
         autoStartDefaultServerOnce.setSelected(CONFIG.isAutoStartServerOnce());
-        autoStartDefaultLegacyServer.setSelected(CONFIG.isAutoStartLegacyServer());
-        autoStartDefaultLegacyServerOnce.setSelected(CONFIG.isAutoStartLegacyServerOnce());
         autoCheckUpdates.setSelected(CONFIG.isAutoCheckUpdates());
         autoUpdate.setSelected(CONFIG.isAutoUpdate());
         closeOperationComboBox.setSelectedIndex(CONFIG.getCloseOperation());
@@ -151,8 +137,6 @@ public class SettingsPanel {
     {
         CONFIG.setAutoStartServer(autoStartDefaultServer.isSelected());
         CONFIG.setAutoStartServerOnce(autoStartDefaultServerOnce.isSelected());
-        CONFIG.setAutoStartLegacyServer(autoStartDefaultLegacyServer.isSelected());
-        CONFIG.setAutoStartLegacyServerOnce(autoStartDefaultLegacyServerOnce.isSelected());
         CONFIG.setAutoCheckUpdates(autoCheckUpdates.isSelected());
         CONFIG.setAutoUpdate(autoUpdate.isSelected());
         CONFIG.setCloseOperation(closeOperationComboBox.getSelectedIndex());

@@ -19,14 +19,18 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static github.kasuminova.balloonserver.Utils.SvgIcons.PLUS_ICON;
+import static github.kasuminova.balloonserver.Utils.SvgIcons.REMOVE_ICON;
+
 /**
  * 可视化更新规则编辑器
  */
 public class RuleEditor extends JDialog {
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.5.0-STABLE");
+    public static final String TITLE = "RuleEditor " + VERSION;
 
     public RuleEditor(JSONArray jsonArray, List<String> rules) {
-        setTitle("RuleEditor " + VERSION);
+        setTitle(TITLE);
         setIconImage(BalloonServer.ICON.getImage());
         setSize(750,840);
         setResizable(false);
@@ -35,9 +39,9 @@ public class RuleEditor extends JDialog {
         JPanel contentPane = (JPanel) getContentPane();
         contentPane.setLayout(new VFlowLayout());
 
-        contentPane.add(new JLabel("更新规则编辑器是为不熟悉正则表达式的小白用户准备的，能够兼容大部分情况下的应用场景。"));
-        contentPane.add(new JLabel("如果您对正则表达式稍有理解，请使用“添加更新规则”。"));
-        contentPane.add(new JLabel("下方为资源文件夹结构列表，如打勾即为添加至规则，未打勾即忽略。"));
+        contentPane.add(new JLabel("更新规则编辑器是为不熟悉正则表达式的小白用户准备的, 能够兼容大部分情况下的应用场景。"));
+        contentPane.add(new JLabel("如果您对正则表达式稍有理解, 请使用 “添加更新规则”。"));
+        contentPane.add(new JLabel("下方为资源文件夹结构列表, 如打勾即为添加至规则, 未打勾即忽略。"));
 
         JPanel treePanel = new JPanel(new VFlowLayout(VFlowLayout.TOP, VFlowLayout.MIDDLE, 5, 5, 5, 5, true, false));
         treePanel.setBorder(new TitledBorder("资源文件夹结构表"));
@@ -58,7 +62,7 @@ public class RuleEditor extends JDialog {
         treePanel.add(treeScroll);
         contentPane.add(treePanel);
 
-        contentPane.add(new JLabel("下方为额外更新规则列表，这些内容会与上方规则一同加入服务器规则列表中。"));
+        contentPane.add(new JLabel("下方为额外更新规则列表, 这些内容会与上方规则一同加入服务器规则列表中。"));
         JPanel ruleListPanel = new JPanel(new VFlowLayout());
         ruleListPanel.setBorder(new TitledBorder("额外更新规则"));
         JList<String> ruleList = new JList<>();
@@ -67,10 +71,12 @@ public class RuleEditor extends JDialog {
         //添加更新规则
         JMenuItem addRule = new JMenuItem("添加更新规则");
         addRule.addActionListener(new AddUpdateRule(ruleList,rules,contentPane));
+        addRule.setIcon(PLUS_ICON);
         ruleListMenu.add(addRule);
         //删除更新规则
         JMenuItem removeRule = new JMenuItem("删除选定的规则");
         removeRule.addActionListener(new DeleteUpdateRule(ruleList,rules,contentPane));
+        removeRule.setIcon(REMOVE_ICON);
         ruleListMenu.add(removeRule);
         //鼠标监听
         ruleList.addMouseListener(new MouseAdapter() {

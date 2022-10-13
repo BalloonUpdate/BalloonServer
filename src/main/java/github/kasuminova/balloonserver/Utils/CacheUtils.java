@@ -47,11 +47,11 @@ public class CacheUtils {
      * 更新资源缓存结构
      * 传入的参数如果为 null，则完整生成一次缓存
      */
-    public void updateDirCache(JSONArray jsonCache) {
+    public void updateDirCache(JSONArray jsonCache, String hashAlgorithm) {
         long start = System.currentTimeMillis();
 
         if (jsonCache != null) {
-            if (!genDirCache(jsonCache)) {
+            if (!genDirCache(jsonCache, hashAlgorithm)) {
                 return;
             }
             try {
@@ -62,10 +62,7 @@ public class CacheUtils {
                 logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
 
                 //输出并向服务器设置 JSON
-                generateJsonToDiskAndSetServerJson(jsonArray);
-
-                System.gc();
-                logger.info("内存已完成回收.");
+                generateJsonToDiskAndSetServerJson(jsonArray, hashAlgorithm);
 
                 //隐藏状态栏进度条
                 statusProgressBar.setVisible(false);
@@ -74,7 +71,7 @@ public class CacheUtils {
             } catch (InterruptedException e) {
                 logger.error("计算资源缓存的时候出现了问题...", e);
             }
-        } else if (genDirCache(null)) {
+        } else if (genDirCache(null, hashAlgorithm)) {
             try {
                 //等待线程结束
                 counterThread.join();
@@ -85,10 +82,7 @@ public class CacheUtils {
                 //输出并向服务器设置 JSON
                 jsonArray.clear();
                 jsonArray.addAll(fileObjList);
-                generateJsonToDiskAndSetServerJson(jsonArray);
-
-                System.gc();
-                logger.info("内存已完成回收.");
+                generateJsonToDiskAndSetServerJson(jsonArray, hashAlgorithm);
 
                 //隐藏状态栏进度条
                 statusProgressBar.setVisible(false);
@@ -101,12 +95,21 @@ public class CacheUtils {
     }
 
     /**
-     * 更新资源缓存结构并启动服务器
-     * 传入的参数如果为 null，则完整生成一次缓存
+     * <p>
+     *     更新资源缓存结构并启动服务器。
+     * </p>
+     * <p>
+     *     传入的参数如果为 null，则完整生成一次缓存。
+     * </p>
+     *
      */
-    public void updateDirCacheAndStartServer(JSONArray jsonCache) {
-        updateDirCache(jsonCache);
+    public void updateDirCacheAndStartServer(JSONArray jsonCache, String hashAlgorithm) {
+        updateDirCache(jsonCache, hashAlgorithm);
 
+        System.gc();
+        logger.info("内存已完成回收.");
+
+        serverInterface.setStatusLabelText("启动中", ModernColors.YELLOW);
         //启动服务器
         if (httpServerInterface.startServer()) {
             startOrStop.setText("关闭服务器");
@@ -118,11 +121,20 @@ public class CacheUtils {
      * 向磁盘生成 JSON 缓存，并设置服务端 JSON
      * @param jsonArray JSON 缓存
      */
-    private void generateJsonToDiskAndSetServerJson(JSONArray jsonArray) {
+    private void generateJsonToDiskAndSetServerJson(JSONArray jsonArray, String hashAlgorithm) {
         String resJSONStr = jsonArray.toJSONString();
-        serverInterface.setResJson(resJSONStr);
         try {
-            FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.%s", serverInterface.getServerName(), serverInterface.getResJsonFileExtensionName()));
+            if (hashAlgorithm.equals(HashCalculator.SHA1)) {
+                serverInterface.setLegacyResJson(resJSONStr);
+                FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.%s",
+                                serverInterface.getServerName(),
+                                serverInterface.getLegacyResJsonFileExtensionName()));
+            } else {
+                serverInterface.setResJson(resJSONStr);
+                FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.%s",
+                        serverInterface.getServerName(),
+                        serverInterface.getResJsonFileExtensionName()));
+            }
             logger.info("JSON 缓存生成完毕.");
         } catch (IOException ex) {
             logger.error("生成 JSON 缓存的时候出现了问题...", ex);
@@ -136,7 +148,7 @@ public class CacheUtils {
      * </p>
      * @return 如果资源文件夹为空返回 false, 否则返回 true
      */
-    private boolean genDirCache(JSONArray jsonCache) {
+    private boolean genDirCache(JSONArray jsonCache, String hashAlgorithm) {
         File dir = new File("." + config.getMainDirPath());
         if (!dir.exists()) {
             logger.warn(String.format("设定中的资源目录：%s 不存在, 使用默认路径", dir.getPath()));
@@ -167,7 +179,7 @@ public class CacheUtils {
 
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
 
-        FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger, serverInterface.getHashAlgorithm());
+        FileCacheCalculator fileCacheCalculator = new FileCacheCalculator(logger, hashAlgorithm);
         logger.info(String.format("文件夹大小：%s, 文件数量：%s", totalSize,dirSize[1]));
         if (jsonCache != null) {
             logger.info("检测到已缓存的 JSON, 正在检查变化...");
@@ -191,7 +203,7 @@ public class CacheUtils {
             logger.info("正在生成资源目录缓存...");
             File finalDir = dir;
             //新建资源计算器实例
-            fileListUtils = new NextFileListUtils(serverInterface.getHashAlgorithm());
+            fileListUtils = new NextFileListUtils(hashAlgorithm);
             //创建新线程实例并执行
             counterThread = new Thread(() -> {
                 fileObjList.clear();

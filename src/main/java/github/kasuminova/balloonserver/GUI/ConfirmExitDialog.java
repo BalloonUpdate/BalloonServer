@@ -36,7 +36,7 @@ public class ConfirmExitDialog extends JDialog {
         contentPane.add(radioButtonsPanel);
 
         //始终保存选项
-        JCheckBox saveSelection = new JCheckBox("保存选项，下次不再提醒");
+        JCheckBox saveSelection = new JCheckBox("保存选项, 下次不再提醒");
         saveSelection.setBorder(new EmptyBorder(0,10,0,0));
         contentPane.add(saveSelection);
 

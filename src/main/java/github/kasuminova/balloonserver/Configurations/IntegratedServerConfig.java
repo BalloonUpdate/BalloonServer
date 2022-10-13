@@ -12,12 +12,14 @@ public class IntegratedServerConfig extends Configuration {
     @JSONField(ordinal = 4)
     private boolean fileChangeListener = true;
     @JSONField(ordinal = 5)
-    private String jksFilePath = "";
+    private boolean compatibleMode = false;
     @JSONField(ordinal = 6)
-    private String jksSslPassword = "";
+    private String jksFilePath = "";
     @JSONField(ordinal = 7)
-    private String[] commonMode = new String[0];
+    private String jksSslPassword = "";
     @JSONField(ordinal = 8)
+    private String[] commonMode = new String[0];
+    @JSONField(ordinal = 9)
     private String[] onceMode = new String[0];
     public IntegratedServerConfig() {
         configVersion = 1;
@@ -114,6 +116,15 @@ public class IntegratedServerConfig extends Configuration {
 
     public IntegratedServerConfig setFileChangeListener(boolean fileChangeListener) {
         this.fileChangeListener = fileChangeListener;
+        return this;
+    }
+
+    public boolean isCompatibleMode() {
+        return compatibleMode;
+    }
+
+    public IntegratedServerConfig setCompatibleMode(boolean compatibleMode) {
+        this.compatibleMode = compatibleMode;
         return this;
     }
 }

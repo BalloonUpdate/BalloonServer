@@ -19,14 +19,19 @@ public interface IntegratedServerInterface {
     AtomicBoolean isStarted();
     //获取文件结构 JSON
     String getResJson();
+    //获取旧版文件结构 JSON
+    String getLegacyResJson();
     //获取 index.json 字符串
     String getIndexJson();
     String getServerName();
     String getResJsonFileExtensionName();
+    String getLegacyResJsonFileExtensionName();
     //获取状态栏进度条
     JProgressBar getStatusProgressBar();
     //设置新的文件结构 JSON
     void setResJson(String newResJson);
+    //设置新的旧版文件结构 JSON
+    void setLegacyResJson(String newLegacyResJson);
 
     /**
      * 重新生成缓存
@@ -43,11 +48,6 @@ public interface IntegratedServerInterface {
      * 保存配置
      */
     void saveConfig();
-
-    /**
-     * 获取 Hash 算法
-     */
-    String getHashAlgorithm();
 
     void setStatusLabelText(String text, Color fg);
 

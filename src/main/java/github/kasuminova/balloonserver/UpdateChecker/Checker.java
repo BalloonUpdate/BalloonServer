@@ -56,7 +56,7 @@ public class Checker {
                     return;
                 }
                 int operation = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                        String.format("检测到有版本更新 (%s)，您要下载更新吗？", newVersion),
+                        String.format("检测到有版本更新 (%s), 您要下载更新吗？", newVersion),
                         "更新提示",
                         JOptionPane.YES_NO_OPTION);
 
@@ -78,9 +78,6 @@ public class Checker {
                 //如果主服务端正在运行，则打开自动启动服务器（仅一次）选项并保存，下次启动服务端时自动启动服务器
                 if (availableCustomServerInterfaces.get(0).isStarted().get()) {
                     CONFIG.setAutoStartServerOnce(true);
-                }
-                if (availableCustomServerInterfaces.get(1).isStarted().get()) {
-                    CONFIG.setAutoStartLegacyServerOnce(true);
                 }
                 BalloonServer.saveConfig();
                 //停止所有正在运行的服务器并保存配置

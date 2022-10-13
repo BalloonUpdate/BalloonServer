@@ -22,23 +22,17 @@ public class BalloonServerConfig extends Configuration {
     //自动启动服务器（仅一次）
     @JSONField(ordinal = 2)
     private boolean autoStartServerOnce = false;
-    //自动启动旧版服务器
-    @JSONField(ordinal = 3)
-    private boolean autoStartLegacyServer = false;
-    //自动启动旧版服务器（仅一次）
-    @JSONField(ordinal = 4)
-    private boolean autoStartLegacyServerOnce = false;
     //自动检查更新
-    @JSONField(ordinal = 5)
+    @JSONField(ordinal = 3)
     private boolean autoCheckUpdates = false;
     //自动更新
-    @JSONField(ordinal = 6)
+    @JSONField(ordinal = 4)
     private boolean autoUpdate = false;
     //关闭窗口的操作
-    @JSONField(ordinal = 7)
+    @JSONField(ordinal = 5)
     private int closeOperation = 0;
     //DEBUG 模式
-    @JSONField(ordinal = 8)
+    @JSONField(ordinal = 6)
     private boolean debugMode = false;
 
     public boolean isDebugMode() {
@@ -53,22 +47,6 @@ public class BalloonServerConfig extends Configuration {
     }
     public BalloonServerConfig setAutoStartServer(boolean autoStartServer) {
         this.autoStartServer = autoStartServer;
-        return this;
-    }
-
-    public boolean isAutoStartLegacyServer() {
-        return autoStartLegacyServer;
-    }
-    public BalloonServerConfig setAutoStartLegacyServer(boolean autoStartLegacyServer) {
-        this.autoStartLegacyServer = autoStartLegacyServer;
-        return this;
-    }
-
-    public boolean isAutoStartLegacyServerOnce() {
-        return autoStartLegacyServerOnce;
-    }
-    public BalloonServerConfig setAutoStartLegacyServerOnce(boolean autoStartLegacyServerOnce) {
-        this.autoStartLegacyServerOnce = autoStartLegacyServerOnce;
         return this;
     }
 

@@ -82,7 +82,7 @@ public class HttpServer {
                             port);
 
                     logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
-                    logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址，如果上方输出的域名不正确，请自行将 IP 更换为域名。");
+                    logger.info("注意：已启用 HTTPS 协议, 你只能通过域名来访问 API 地址, 如果上方输出的域名不正确, 请自行将 IP 更换为域名。");
                 } else {
                     apiAddress = String.format("API 地址：https://[%s]:%s/index.json",
                             ip,
@@ -97,7 +97,7 @@ public class HttpServer {
                             port);
 
                     logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
-                    logger.info("注意：已启用 HTTPS 协议，你只能通过域名来访问 API 地址。");
+                    logger.info("注意：已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。");
                 } else if (ip.equals("0.0.0.0")) {
                     apiAddress = String.format("http://localhost:%s/index.json",
                             port);
@@ -111,7 +111,7 @@ public class HttpServer {
                     logger.info(String.format("API 地址：%s", apiAddress), ModernColors.GREEN);
                 }
             }
-            serverInterface.setStatusLabelText("状态：已启动", ModernColors.GREEN);
+            serverInterface.setStatusLabelText("已启动", ModernColors.GREEN);
         } catch (Exception e) {
             isStarted.set(false);
             logger.error("无法启动服务器", e);
@@ -161,17 +161,17 @@ public class HttpServer {
         if (fileMonitor != null) {
             GLOBAL_THREAD_POOL.execute(() -> {
                 try {
-                    serverInterface.setStatusLabelText("状态：正在关闭实时文件监听器.", ModernColors.RED);
+                    serverInterface.setStatusLabelText("正在关闭实时文件监听器.", ModernColors.RED);
                     fileMonitor.stop();
                     logger.info("实时文件监听器已停止.");
                 } catch (Exception e) {
                     logger.error("关闭文件监听器的时候出现了一些问题...", e);
                 }
                 fileMonitor = null;
-                serverInterface.setStatusLabelText("状态：就绪", ModernColors.BLUE);
+                serverInterface.setStatusLabelText("就绪", ModernColors.BLUE);
             });
         } else {
-            serverInterface.setStatusLabelText("状态：就绪", ModernColors.BLUE);
+            serverInterface.setStatusLabelText("就绪", ModernColors.BLUE);
         }
 
         System.gc();

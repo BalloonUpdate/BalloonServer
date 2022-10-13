@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver.Servers;
 
-import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.GUI.RuleEditor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,13 +22,13 @@ public class AddUpdateRule implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         String newRule = JOptionPane.showInputDialog(container,
-                "请输入更新规则：", "提示",
+                "请输入更新规则：", RuleEditor.TITLE,
                 JOptionPane.INFORMATION_MESSAGE);
         if (newRule != null && !newRule.isEmpty()) {
             //防止插入相同内容
             if (rules.contains(newRule)) {
                 JOptionPane.showMessageDialog(container,
-                        "重复的更新规则", BalloonServer.TITLE,
+                        "重复的更新规则", RuleEditor.TITLE,
                         JOptionPane.ERROR_MESSAGE);
             } else {
                 rules.add(newRule);

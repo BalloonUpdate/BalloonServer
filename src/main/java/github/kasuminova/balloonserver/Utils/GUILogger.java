@@ -233,7 +233,7 @@ public class GUILogger {
         } catch (IOException ignored) {}
     }
 
-    /*
+    /**
      * 向 logPane 输出信息
      */
     private void insertStringToDocument(String str, SimpleAttributeSet ATTRIBUTE) {
@@ -242,7 +242,7 @@ public class GUILogger {
             Document document = logPane.getDocument();
             if (document.getLength() > 200000) {
                 document.remove(0,logPane.getDocument().getLength());
-                info("日志窗口过长，已清空当前服务器实例日志窗口.");
+                info("日志窗口过长, 已清空当前服务器实例日志窗口.");
             }
             document.insertString(document.getLength(), str, ATTRIBUTE);
         } catch (BadLocationException e) {
@@ -251,8 +251,12 @@ public class GUILogger {
     }
 
     /**
-     * 将错误打印成字符串
-     * 输出类似 printStackTrace() 的内容
+     * <p>
+     *     将错误打印成字符串。
+     * </p>
+     * <p>
+     *     类似 printStackTrace()。
+     * </p>
      * @param e Exception
      * @return 字符串
      */

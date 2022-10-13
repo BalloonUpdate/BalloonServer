@@ -37,7 +37,6 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
 
         if (config.getJksFilePath().isEmpty() || config.getJksSslPassword().isEmpty()) {
             useSsl = false;
-            logger.info("未检测到 JKS 证书，使用 HTTP 协议。");
             return;
         }
 
@@ -47,14 +46,14 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         if (jks.exists()) {
             if (jksPasswd != null && jksPasswd.length != 0) {
                 useSsl = true;
-                logger.info("成功载入 JKS 证书与密码，使用 HTTPS 协议。");
+                logger.info("成功载入 JKS 证书与密码, 使用 HTTPS 协议。");
             } else {
                 useSsl = false;
-                logger.warn("检测到 JKS 证书，但未检测到 JKS 证书密码，使用 HTTP 协议。");
+                logger.warn("检测到 JKS 证书, 但是 JKS 证书密码为空, 使用 HTTP 协议。");
             }
         } else {
             useSsl = false;
-            logger.info("未检测到 JKS 证书，使用 HTTP 协议。");
+            logger.info("未检测到 JKS 证书, 使用 HTTP 协议。");
         }
     }
 
