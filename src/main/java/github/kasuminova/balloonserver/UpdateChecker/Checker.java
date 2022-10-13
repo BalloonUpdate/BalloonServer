@@ -40,7 +40,7 @@ public class Checker {
             if (applicationVersion.getBigVersion() >= newVersion.getBigVersion()) {
                 if (applicationVersion.getSubVersion() >= newVersion.getSubVersion()) {
                     if (applicationVersion.getMinorVersion() >= newVersion.getMinorVersion()) {
-                        return;
+                        continue;
                     }
                 }
             }
