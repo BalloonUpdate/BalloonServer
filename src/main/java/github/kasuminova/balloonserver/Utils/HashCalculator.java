@@ -26,6 +26,7 @@ public class HashCalculator {
      * @return SHA1 值
      **/
     public static String getSHA1(File file) throws IOException, NoSuchAlgorithmException {
+
         FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
         ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
         int len;

@@ -1,5 +1,10 @@
 package github.kasuminova.balloonserver.Servers;
 
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.file.FileReader;
+import cn.hutool.core.net.NetUtil;
+import cn.hutool.core.swing.clipboard.ClipboardUtil;
+import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
@@ -297,9 +302,9 @@ public class IntegratedServer {
                 if (!(selection == JOptionPane.YES_OPTION)) return;
 
                 try {
-                    String json = FileUtil.readStringFromFile(file);
+                    String json = new FileReader(file).readString();
                     showRuleEditorDialog(JSONArray.parseArray(json));
-                } catch (IOException ex) {
+                } catch (IORuntimeException ex) {
                     JOptionPane.showMessageDialog(MAIN_FRAME,
                             "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
                             JOptionPane.ERROR_MESSAGE);
@@ -312,14 +317,14 @@ public class IntegratedServer {
                     BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
             if (!(selection == JOptionPane.YES_OPTION)) return;
 
-            GLOBAL_THREAD_POOL.execute(() -> {
+            ThreadUtil.execAsync(() -> {
                 new CacheUtils(serverInterface,httpServerInterface,startOrStop).updateDirCache(null, HashCalculator.CRC32);
                 if (file.exists()) {
                     try {
-                        String json = FileUtil.readStringFromFile(file);
+                        String json = new FileReader(file).readString();
                         showRuleEditorDialog(JSONArray.parseArray(json));
 
-                    } catch (IOException ex) {
+                    } catch (IORuntimeException ex) {
                         JOptionPane.showMessageDialog(MAIN_FRAME,
                                 "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
                                 JOptionPane.ERROR_MESSAGE);
@@ -333,7 +338,17 @@ public class IntegratedServer {
      * 启动服务器
      */
     protected void startServer() {
-        GLOBAL_THREAD_POOL.execute(() -> {
+        ThreadUtil.execAsync(() -> {
+            //检查当前端口是否被占用
+            if (!NetUtil.isUsableLocalPort(config.getPort())) {
+                JOptionPane.showMessageDialog(MAIN_FRAME, """
+                        当前配置的端口已被占用.
+                        请检查是否有程序占用端口或更换端口.""",
+                        TITLE,
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             isStarting.set(true);
             serverInterface.setStatusLabelText("生成缓存结构中", ModernColors.YELLOW);
 
@@ -467,7 +482,7 @@ public class IntegratedServer {
      * 重新生成缓存
      */
     protected void regenResCache() {
-        GLOBAL_THREAD_POOL.execute(() -> {
+        ThreadUtil.execAsync(() -> {
             serverInterface.setStatusLabelText("生成缓存结构中", ModernColors.YELLOW);
 
             CacheUtils cacheUtil = new CacheUtils(serverInterface, httpServerInterface, startOrStop);
@@ -506,9 +521,9 @@ public class IntegratedServer {
 
         if (jsonCache.exists()) {
             try {
-                String jsonString = FileUtil.readStringFromFile(jsonCache);
+                String jsonString = new FileReader(jsonCache).readString();
                 jsonArray = JSONArray.parseArray(jsonString);
-            } catch (IOException e) {
+            } catch (IORuntimeException e) {
                 logger.error("读取缓存文件的时候出现了一些问题...", e);
                 logger.warn("缓存文件读取失败, 重新生成缓存...");
             }
@@ -676,7 +691,7 @@ public class IntegratedServer {
         //复制 API 地址
         copyAddressButton.setVisible(false);
         copyAddressButton.addActionListener(e -> {
-            MiscUtils.setClipboardString(server.getAPIAddress());
+            ClipboardUtil.setStr(server.getAPIAddress());
             JOptionPane.showMessageDialog(MAIN_FRAME,
                     "已成功复制到剪贴板！", TITLE,
                     JOptionPane.INFORMATION_MESSAGE);

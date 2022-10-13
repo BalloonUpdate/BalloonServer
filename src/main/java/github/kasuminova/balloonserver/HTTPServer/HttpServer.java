@@ -1,12 +1,9 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
+import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
-import github.kasuminova.balloonserver.Utils.ModernColors;
-import github.kasuminova.balloonserver.Utils.FileListener;
-import github.kasuminova.balloonserver.Utils.FileListener.FileMonitor;
-import github.kasuminova.balloonserver.Utils.GUILogger;
-import github.kasuminova.balloonserver.Utils.IPAddressUtil;
+import github.kasuminova.balloonserver.Utils.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
@@ -18,8 +15,6 @@ import io.netty.handler.logging.LoggingHandler;
 import javax.swing.*;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
 
 /**
  * @author Kasumi_Nova
@@ -54,7 +49,7 @@ public class HttpServer {
     EventLoopGroup boss;
     EventLoopGroup work;
     ChannelFuture future;
-    FileMonitor fileMonitor;
+    NextFileListener fileListener;
     public boolean start() {
         long start = System.currentTimeMillis();
         //载入配置
@@ -78,7 +73,7 @@ public class HttpServer {
             if ("v6".equals(addressType)) {
                 if (httpServerInitializer.isUseSsl()) {
                     apiAddress = String.format("https://%s:%s/index.json",
-                            httpServerInitializer.jks.getName().replace(".jks",""),
+                            StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
 
                     logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
@@ -93,7 +88,7 @@ public class HttpServer {
             } else {
                 if (httpServerInitializer.isUseSsl()) {
                     apiAddress = String.format("https://%s:%s/index.json",
-                            httpServerInitializer.jks.getName().replace(".jks",""),
+                            StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
 
                     logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
@@ -121,27 +116,18 @@ public class HttpServer {
         //文件监听器
         if (config.isFileChangeListener()) {
             long start1 = System.currentTimeMillis();
-            logger.info("正在启动实时文件监听器...");
-            fileMonitor = new FileMonitor(5000);
-            fileMonitor.monitor("." + config.getMainDirPath(), new FileListener(logger,isFileChanged));
 
-            GLOBAL_THREAD_POOL.execute(() -> {
-                try {
-                    fileMonitor.start();
-                    fileChangeListener = new Timer(2000, e -> {
-                        if (isFileChanged.get() && !isGenerating.get()) {
-                            logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
-                            serverInterface.regenCache();
-                            isFileChanged.set(false);
-                        }
-                    });
-                    fileChangeListener.start();
-                    logger.info("实时文件监听器已启动." + String.format(" (%sms)", System.currentTimeMillis() - start1));
-                } catch (Exception e) {
-                    fileMonitor = null;
-                    logger.error("启动文件监听器的时候出现了一些问题...",e);
+            fileListener = new NextFileListener(String.format(".%s", config.getMainDirPath()), isFileChanged, logger, 10);
+            fileListener.start();
+            fileChangeListener = new Timer(5000, e -> {
+                if (isFileChanged.get() && !isGenerating.get()) {
+                    logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
+                    serverInterface.regenCache();
+                    isFileChanged.set(false);
                 }
             });
+            fileChangeListener.start();
+            logger.info(String.format("实时文件监听器已启动. (%sms)", System.currentTimeMillis() - start1));
         }
         return true;
     }
@@ -158,21 +144,14 @@ public class HttpServer {
             fileChangeListener.stop();
             fileChangeListener = null;
         }
-        if (fileMonitor != null) {
-            GLOBAL_THREAD_POOL.execute(() -> {
-                try {
-                    serverInterface.setStatusLabelText("正在关闭实时文件监听器.", ModernColors.RED);
-                    fileMonitor.stop();
-                    logger.info("实时文件监听器已停止.");
-                } catch (Exception e) {
-                    logger.error("关闭文件监听器的时候出现了一些问题...", e);
-                }
-                fileMonitor = null;
-                serverInterface.setStatusLabelText("就绪", ModernColors.BLUE);
-            });
-        } else {
-            serverInterface.setStatusLabelText("就绪", ModernColors.BLUE);
+
+        if (fileListener != null) {
+                fileListener.stop();
+                logger.info("实时文件监听器已停止.");
+                fileListener = null;
         }
+
+        serverInterface.setStatusLabelText("就绪", ModernColors.BLUE);
 
         System.gc();
         logger.info("内存已完成回收.");

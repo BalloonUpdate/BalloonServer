@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.GUI;
 
+import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.log.StaticLog;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
 import github.kasuminova.balloonserver.GUI.Panels.AboutPanel;
 
@@ -52,7 +54,7 @@ public class SetupSwing {
             //提示框
             UIManager.put("ToolTip.border", new LineBorder(new Color(55,60,70), 2, true));
 
-            System.out.printf("UIThread Completed, Used %sms%n", System.currentTimeMillis() - start);
+            StaticLog.info("UIThread Completed, Used {}ms", System.currentTimeMillis() - start);
         });
         uiThread.start();
 
@@ -75,7 +77,7 @@ public class SetupSwing {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.out.printf("FontThread Completed, Used %sms%n", System.currentTimeMillis() - start);
+            StaticLog.info("FontThread Completed, Used {}ms", System.currentTimeMillis() - start);
         });
         fontThread.start();
 
@@ -88,17 +90,15 @@ public class SetupSwing {
                 System.err.println("Failed to initialize LaF");
                 e.printStackTrace();
             }
-            System.out.printf("ThemeThread Completed, Used %sms%n", System.currentTimeMillis() - start);
+            StaticLog.info("ThemeThread Completed, Used {}ms", System.currentTimeMillis() - start);
         });
         themeThread.start();
 
-        try {
-            uiThread.join();
-            fontThread.join();
-            themeThread.join();
-        } catch (InterruptedException ignored) {}
+        ThreadUtil.waitForDie(uiThread);
+        ThreadUtil.waitForDie(fontThread);
+        ThreadUtil.waitForDie(themeThread);
 
-        System.out.printf("Swing Setup Completed, Used %sms%n", System.currentTimeMillis() - start1);
+        StaticLog.info("Swing Setup Completed, Used {}ms", System.currentTimeMillis() - start1);
     }
 
     /**

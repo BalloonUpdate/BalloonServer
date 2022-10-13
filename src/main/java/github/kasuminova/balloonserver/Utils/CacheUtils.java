@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Utils;
 
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
@@ -10,7 +12,6 @@ import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -56,43 +57,35 @@ public class CacheUtils {
             if (!genDirCache(jsonCache, hashAlgorithm)) {
                 return;
             }
-            try {
-                //等待线程结束
-                counterThread.join();
+            //等待线程结束
+            ThreadUtil.waitForDie(counterThread);
 
-                timer.stop();
-                logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
+            timer.stop();
+            logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
 
-                //输出并向服务器设置 JSON
-                generateJsonToDiskAndSetServerJson(jsonArray, hashAlgorithm);
+            //输出并向服务器设置 JSON
+            generateJsonToDiskAndSetServerJson(jsonArray, hashAlgorithm);
 
-                //隐藏状态栏进度条
-                statusProgressBar.setVisible(false);
-                //重置变量
-                isGenerating.set(false);
-            } catch (InterruptedException e) {
-                logger.error("计算资源缓存的时候出现了问题...", e);
-            }
+            //隐藏状态栏进度条
+            statusProgressBar.setVisible(false);
+            //重置变量
+            isGenerating.set(false);
         } else if (genDirCache(null, hashAlgorithm)) {
-            try {
-                //等待线程结束
-                counterThread.join();
+            //等待线程结束
+            ThreadUtil.waitForDie(counterThread);
 
-                timer.stop();
-                logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
+            timer.stop();
+            logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
 
-                //输出并向服务器设置 JSON
-                jsonArray.clear();
-                jsonArray.addAll(fileObjList);
-                generateJsonToDiskAndSetServerJson(jsonArray, hashAlgorithm);
+            //输出并向服务器设置 JSON
+            jsonArray.clear();
+            jsonArray.addAll(fileObjList);
+            generateJsonToDiskAndSetServerJson(jsonArray, hashAlgorithm);
 
-                //隐藏状态栏进度条
-                statusProgressBar.setVisible(false);
-                //重置变量
-                isGenerating.set(false);
-            } catch (InterruptedException e) {
-                logger.error("计算资源缓存的时候出现了问题...", e);
-            }
+            //隐藏状态栏进度条
+            statusProgressBar.setVisible(false);
+            //重置变量
+            isGenerating.set(false);
         }
     }
 
@@ -138,7 +131,7 @@ public class CacheUtils {
                         serverInterface.getResJsonFileExtensionName()));
             }
             logger.info("JSON 缓存生成完毕.");
-        } catch (IOException ex) {
+        } catch (IORuntimeException ex) {
             logger.error("生成 JSON 缓存的时候出现了问题...", ex);
         }
     }

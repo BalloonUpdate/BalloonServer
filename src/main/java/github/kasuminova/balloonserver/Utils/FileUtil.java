@@ -1,44 +1,24 @@
 package github.kasuminova.balloonserver.Utils;
 
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.file.FileWriter;
+
 import javax.swing.filechooser.FileFilter;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 public class FileUtil {
     /**
      * 生成.json格式文件
      */
-    public static void createJsonFile(String jsonString, String filePath, String fileName) throws IOException {
-        // 拼接文件完整路径
+    public static void createJsonFile(String jsonString, String filePath, String fileName) throws IORuntimeException {
+        //拼接文件完整路径
         String fullPath = filePath + File.separator + fileName + ".json";
-
-        // 生成json格式文件
-        // 保证创建一个新文件
         File file = new File(fullPath);
-        checkAndCreateFile(file);
+        //保证创建一个新文件
+        cn.hutool.core.io.FileUtil.touch(file);
 
-        // 将格式化后的字符串写入文件
-        Writer write = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8);
-        write.write(jsonString);
-        write.flush();
-        write.close();
-    }
-
-    public static void checkAndCreateFile(File file) throws IOException {
-        if (!file.getParentFile().exists()) {
-            if (file.getParentFile().mkdirs()) {
-                throw new IOException("父目录创建失败！");
-            }
-        }
-        if (file.exists()) {
-            if (!file.delete()) {
-                throw new IOException("旧文件删除失败！");
-            }
-        }
-        if (!file.createNewFile()) {
-            throw new IOException("创建文件失败！！");
-        }
+        FileWriter writer = new FileWriter(file);
+        writer.write(jsonString);
     }
 
     /**
@@ -59,20 +39,6 @@ public class FileUtil {
         } else {
             return new byte[1024 * 1024 * 8];
         }
-    }
-
-    public static String readStringFromFile(File file) throws IOException {
-        FileReader fileReader = new FileReader(file);
-        Reader reader = new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8);
-        StringBuilder sb = new StringBuilder();
-        int ch;
-        while ((ch = reader.read()) != -1) {
-            sb.append((char) ch);
-        }
-        fileReader.close();
-        reader.close();
-
-        return sb.toString();
     }
 
     /**

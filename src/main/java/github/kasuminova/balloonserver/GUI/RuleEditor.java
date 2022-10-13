@@ -154,7 +154,7 @@ public class RuleEditor extends JDialog {
                 childPath.append(root.getPath()[i].toString().intern()).append("/");
             }
             //去除最后一个斜杠
-            childPath.delete(childPath.length() - 1, childPath.length());
+            childPath.setLength(childPath.length() - 1);
             rules.add(childPath.toString());
         }
 

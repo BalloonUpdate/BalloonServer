@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Utils;
 
+import cn.hutool.log.Log;
+import cn.hutool.log.LogFactory;
 import github.kasuminova.balloonserver.BalloonServer;
 
 import javax.swing.*;
@@ -15,7 +17,6 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 import static github.kasuminova.balloonserver.Utils.ModernColors.*;
 
@@ -24,7 +25,7 @@ import static github.kasuminova.balloonserver.Utils.ModernColors.*;
  */
 public class GUILogger {
     private final JTextPane logPane;
-    private final Logger logger;
+    private final Log logger;
     private final Writer logWriter;
     /**
      * logger 线程池
@@ -50,7 +51,7 @@ public class GUILogger {
      * @param logPane 要同步的 JTextPane
      */
     public GUILogger(String name, JTextPane logPane) {
-        logger = Logger.getLogger(name);
+        logger = LogFactory.get(name);
         this.logPane = logPane;
 
         logWriter = createLogFile(name, logger);
@@ -67,7 +68,7 @@ public class GUILogger {
      * @param name log 文件名
      */
     public GUILogger(String name) {
-        logger = Logger.getLogger(name);
+        logger = LogFactory.get(name);
         logPane = null;
 
         logWriter = createLogFile(name, logger);
@@ -145,7 +146,7 @@ public class GUILogger {
 
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
-            logger.warning(msg);
+            logger.warn(msg);
 
             writeAndFlushMessage(buildFullLogMessage(threadName, msg, WARN));
             insertStringToDocument(buildNormalLogMessage(msg, WARN), WARN_ATTRIBUTE);
@@ -163,7 +164,7 @@ public class GUILogger {
         String threadName = Thread.currentThread().getName();
 
         loggerThreadPool.execute(() -> {
-            logger.warning(msg);
+            logger.warn(msg);
 
             writeAndFlushMessage(buildFullLogMessage(threadName, msg, ERROR));
             insertStringToDocument(buildNormalLogMessage(msg, ERROR), ERROR_ATTRIBUTE);
@@ -183,7 +184,7 @@ public class GUILogger {
 
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
-            logger.warning(String.format("%s \n %s", msg, stackTraceToString(e)));
+            logger.warn(String.format("%s \n %s", msg, stackTraceToString(e)));
 
             writeAndFlushMessage(buildFullLogMessage(threadName,
                     String.format("%s\n%s", msg, stackTraceToString(e)), ERROR));
@@ -204,7 +205,7 @@ public class GUILogger {
 
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
-            logger.warning(stackTraceToString(e));
+            logger.warn(stackTraceToString(e));
 
             writeAndFlushMessage(buildFullLogMessage(threadName, stackTraceToString(e), ERROR));
             insertStringToDocument(buildNormalLogMessage(stackTraceToString(e), ERROR), ERROR_ATTRIBUTE);
@@ -246,7 +247,7 @@ public class GUILogger {
             }
             document.insertString(document.getLength(), str, ATTRIBUTE);
         } catch (BadLocationException e) {
-            logger.warning(stackTraceToString(e));
+            logger.warn(stackTraceToString(e));
         }
     }
 
@@ -279,7 +280,7 @@ public class GUILogger {
      * @param logger 如果出现问题, 则使用此 logger 警告
      * @return 一个对应文件名的 Writer, 如果出现问题, 则返回 null
      */
-    public static Writer createLogFile(String name, Logger logger) {
+    public static Writer createLogFile(String name, Log logger) {
         File logFile = new File(String.format("./logs/%s.log", name));
         try {
             if (logFile.exists()) {
@@ -290,7 +291,7 @@ public class GUILogger {
                         count++;
                     } else {
                         if (!logFile.renameTo(oldLogFile)) {
-                            logger.warning("无法正确转移旧日志文件！");
+                            logger.warn("无法正确转移旧日志文件！");
                         }
                         break;
                     }
@@ -301,7 +302,7 @@ public class GUILogger {
             //检查父文件夹
             if (!logFile.getParentFile().exists()) {
                 if (!logFile.mkdirs()) {
-                    logger.warning("日志文件夹创建失败！");
+                    logger.warn("日志文件夹创建失败！");
                     return null;
                 }
             }
@@ -309,10 +310,10 @@ public class GUILogger {
             if (logFile.createNewFile()) {
                 return new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
             } else {
-                logger.warning("创建日志文件失败！");
+                logger.warn("创建日志文件失败！");
             }
         } catch (Exception e) {
-            logger.warning(stackTraceToString(e));
+            logger.warn(stackTraceToString(e));
         }
         return null;
     }

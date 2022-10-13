@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.Utils.FileCacheUtils;
 
+import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
@@ -11,8 +12,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
 
 /**
  * 一个多线程计算文件缓存差异的工具类
@@ -54,11 +53,11 @@ public class CacheCalculator {
                     if (resDirFile.isFile()) {
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(resDirFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.submit(fileCounterThread);
+                        ThreadUtil.execAsync(fileCounterThread);
                     } else {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile, FILE_THREAD_POOL, hashAlgorithm));
                         dirThreadList.add(dirCounterThread);
-                        GLOBAL_THREAD_POOL.submit(dirCounterThread);
+                        ThreadUtil.execAsync(dirCounterThread);
                     }
                 }
             }
@@ -138,7 +137,7 @@ public class CacheCalculator {
 
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile, FILE_THREAD_POOL, hashAlgorithm));
                     dirThreadList.add(dirCounterThread);
-                    GLOBAL_THREAD_POOL.execute(dirCounterThread);
+                    ThreadUtil.execAsync(dirCounterThread);
                 }
             } else {
                 removeObjectFromJsonArray(jsonArray,obj);

@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import cn.hutool.core.thread.ThreadUtil;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
@@ -67,7 +68,7 @@ public class FileCalculator {
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirCounterTask(file, FILE_THREAD_POOL, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
-                GLOBAL_THREAD_POOL.execute(dirCounterTask);
+                ThreadUtil.execAsync(dirCounterTask);
             }
         }
 
@@ -84,7 +85,7 @@ public class FileCalculator {
         }
 
         //回收线程池
-        GLOBAL_THREAD_POOL.execute(() -> {
+        ThreadUtil.execAsync(() -> {
             FILE_THREAD_POOL.shutdown();
             logger.info("已回收所有闲置线程.");
         });

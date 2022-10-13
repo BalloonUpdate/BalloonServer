@@ -21,7 +21,7 @@ public class Checker {
     public static void checkUpdates() {
         String apiURL = "https://gitee.com/api/v5/repos/hikari_nova/BalloonServer/releases";
         String giteeAPIJson = HttpClient.getStringWithURL(apiURL);
-        if (giteeAPIJson.startsWith("ERROR:")) {
+        if (giteeAPIJson.equals("ERROR")) {
             return;
         }
         JSONArray jsonArray = JSONArray.parseArray(giteeAPIJson);

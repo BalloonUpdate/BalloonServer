@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.Utils.FileCacheUtils;
 
+import cn.hutool.core.thread.ThreadUtil;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
@@ -9,8 +10,6 @@ import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
-
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
 
 /**
  * 计算一个文件夹的 SHA1/CRC32 类/线程
@@ -35,7 +34,7 @@ record DirCounterThread(
                     FILE_THREAD_POOL.submit(fileCounterThread);
                 } else if (file.isDirectory()) {
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file, FILE_THREAD_POOL, hashAlgorithm));
-                    GLOBAL_THREAD_POOL.submit(dirCounterThread);
+                    ThreadUtil.execAsync(dirCounterThread);
                     dirThreadList.add(dirCounterThread);
                 }
             }

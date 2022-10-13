@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.Utils.FileCalculatorUtils;
 
+import cn.hutool.core.thread.ThreadUtil;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -27,10 +29,7 @@ record DirCalculatorThread(File dir, AtomicLong totalSize, AtomicLong totalFiles
             }
         }
         for (Thread thread : threadList) {
-            try {
-                thread.join();
-            } catch (Exception ignored) {
-            }
+            ThreadUtil.waitForDie(thread);
         }
     }
 }

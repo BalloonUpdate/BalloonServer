@@ -1,5 +1,8 @@
 package github.kasuminova.balloonserver;
 
+import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.system.SystemUtil;
 import github.kasuminova.balloonserver.Configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.GUI.*;
@@ -23,13 +26,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
 import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
@@ -64,8 +63,6 @@ public final class BalloonServer {
     //主窗口 Logger
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
     public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0,1000);
-    //全局线程池
-    public static final ExecutorService GLOBAL_THREAD_POOL = Executors.newCachedThreadPool();
     //主面板
     public static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
@@ -75,7 +72,7 @@ public final class BalloonServer {
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);
     private static void init() {
         //大小设置
-        MAIN_FRAME.setSize(1375,815);
+        MAIN_FRAME.setSize(1400,815);
         MAIN_FRAME.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.8), MAIN_FRAME.getHeight()));
 
         //标签页配置
@@ -145,7 +142,7 @@ public final class BalloonServer {
         loadStatusBar();
         loadMenuBar();
 
-        GLOBAL_THREAD_POOL.execute(() -> {
+        ThreadUtil.execAsync(() -> {
             long start = System.currentTimeMillis();
             SwingSystemTray.initSystemTrayAndFrame(MAIN_FRAME);
             MAIN_FRAME.addWindowListener(new WindowAdapter() {
@@ -168,9 +165,7 @@ public final class BalloonServer {
         });
 
         //等待主服务器面板完成创建
-        try {
-            serverThread.join();
-        } catch (InterruptedException ignored) {}
+        ThreadUtil.waitForDie(serverThread);
 
         //主窗口
         MAIN_FRAME.add(mainPanel);
@@ -190,7 +185,7 @@ public final class BalloonServer {
                 if (CONFIG.isAutoCheckUpdates() && !isCheckingUpdate.get()) {
                     GLOBAL_LOGGER.info("开始检查更新...");
                     isCheckingUpdate.set(true);
-                    GLOBAL_THREAD_POOL.execute(() -> {
+                    ThreadUtil.execAsync(() -> {
                         Checker.checkUpdates();
                         isCheckingUpdate.set(false);
                     });
@@ -270,7 +265,7 @@ public final class BalloonServer {
             }
             if (checkSameServer(serverName)) return;
 
-            GLOBAL_THREAD_POOL.execute(() -> {
+            ThreadUtil.execAsync(() -> {
                 long start = System.currentTimeMillis();
                 GLOBAL_LOGGER.info(String.format("正在创建新的集成服务端实例: %s", serverName));
 
@@ -303,7 +298,7 @@ public final class BalloonServer {
             String[] serverNames = new String[selectedFiles.length];
 
             for (int i = 0; i < selectedFiles.length; i++) {
-                serverNames[i] = selectedFiles[i].getName().replace(".lscfg.json", "");
+                serverNames[i] = StrUtil.removeSuffix(selectedFiles[i].getName(), ".lscfg.json");
             }
 
             IntegratedServer[] customServers = new IntegratedServer[serverNames.length];
@@ -336,11 +331,7 @@ public final class BalloonServer {
 
             //等待所有线程操作完成
             for (Thread thread : threadList) {
-                try {
-                    thread.join();
-                } catch (Exception ex) {
-                    GLOBAL_LOGGER.error(ex);
-                }
+                ThreadUtil.waitForDie(thread);
             }
 
             //按顺序添加面板和接口
@@ -362,7 +353,7 @@ public final class BalloonServer {
             String serverName = serverInterface.getServerName();
 
             if (stopIntegratedServer(serverInterface, serverName, selected, true)) {
-                GLOBAL_THREAD_POOL.execute(() -> {
+                ThreadUtil.execAsync(() -> {
                     IntegratedServer littleServer;
                     if (serverName.equals("littleserver")) {
                         littleServer = new IntegratedServer("littleserver", false);
@@ -471,17 +462,16 @@ public final class BalloonServer {
         GLOBAL_QUERY_TIMER.schedule(new TimerTask() {
             @Override
             public void run() {
-                MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-                long memoryUsed = memoryMXBean.getHeapMemoryUsage().getUsed();
-                long memoryTotal = memoryMXBean.getHeapMemoryUsage().getCommitted();
+                long memoryFree = SystemUtil.getFreeMemory();
+                long memoryTotal = SystemUtil.getTotalMemory();
 
                 threadCount.setText(String.format("当前运行的线程数量: %s", Thread.activeCount()));
 
-                memBar.setValue((int) ((double) memoryUsed * memBar.getMaximum() / memoryTotal));
+                memBar.setValue((int) ((double) (memoryTotal - memoryFree) * memBar.getMaximum() / memoryTotal));
                 memBar.setString(String.format("%s M / %s M - Max: %s M",
-                        memoryUsed / (1024 * 1024),
+                        (memoryTotal - memoryFree) / (1024 * 1024),
                         memoryTotal / (1024 * 1024),
-                        memoryMXBean.getHeapMemoryUsage().getMax() / (1024 * 1024)
+                        SystemUtil.getMaxMemory() / (1024 * 1024)
                 ));
             }
         }, 0, 500);
