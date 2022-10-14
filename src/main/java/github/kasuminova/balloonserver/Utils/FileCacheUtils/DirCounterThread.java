@@ -15,10 +15,8 @@ import java.util.concurrent.FutureTask;
  * 计算一个文件夹的 SHA1/CRC32 类/线程
  * 以 Callable 实现，返回对应的类型
  */
-record DirCounterThread(
-        File dir,
-        ExecutorService FILE_THREAD_POOL,
-        String hashAlgorithm) implements Callable<SimpleDirectoryObject> {
+record DirCounterThread(File dir, ExecutorService fileThreadPool, String hashAlgorithm)
+        implements Callable<SimpleDirectoryObject> {
     @Override
     public SimpleDirectoryObject call() {
         ArrayList<FutureTask<SimpleFileObject>> fileThreadList = new ArrayList<>();
@@ -31,9 +29,9 @@ record DirCounterThread(
                 if (file.isFile()) {
                     FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(file, hashAlgorithm));
                     fileThreadList.add(fileCounterThread);
-                    FILE_THREAD_POOL.submit(fileCounterThread);
+                    fileThreadPool.submit(fileCounterThread);
                 } else if (file.isDirectory()) {
-                    FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file, FILE_THREAD_POOL, hashAlgorithm));
+                    FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file, fileThreadPool, hashAlgorithm));
                     ThreadUtil.execute(dirCounterThread);
                     dirThreadList.add(dirCounterThread);
                 }

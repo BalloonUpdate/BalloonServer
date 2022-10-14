@@ -16,7 +16,7 @@ public class FileUtil {
         File file = new File(fullPath);
         //保证创建一个新文件
         cn.hutool.core.io.FileUtil.touch(file);
-
+        //写入文件
         FileWriter writer = new FileWriter(file);
         writer.write(jsonString);
     }

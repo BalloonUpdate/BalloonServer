@@ -78,25 +78,6 @@ public class GUILogger {
 
     /**
      * <p>
-     * 将错误打印成字符串。
-     * </p>
-     * <p>
-     * 类似 printStackTrace()。
-     * </p>
-     *
-     * @param e Exception
-     * @return 字符串
-     */
-    public static String stackTraceToString(Throwable e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        pw.flush();
-        return sw.toString();
-    }
-
-    /**
-     * <p>
      * 创建一个日志文件。
      * </p>
      * <p>
@@ -140,7 +121,7 @@ public class GUILogger {
                 logger.warn("创建日志文件失败！");
             }
         } catch (Exception e) {
-            logger.warn(stackTraceToString(e));
+            logger.warn(MiscUtils.stackTraceToString(e));
         }
         return null;
     }
@@ -271,12 +252,12 @@ public class GUILogger {
 
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
-            logger.warn(String.format("%s \n %s", msg, stackTraceToString(e)));
+            logger.warn(String.format("%s \n %s", msg, MiscUtils.stackTraceToString(e)));
 
             writeAndFlushMessage(buildFullLogMessage(threadName,
-                    String.format("%s\n%s", msg, stackTraceToString(e)), ERROR));
+                    String.format("%s\n%s", msg, MiscUtils.stackTraceToString(e)), ERROR));
             insertStringToDocument(buildNormalLogMessage(
-                    String.format("%s\n%s", msg, stackTraceToString(e)), ERROR), ERROR_ATTRIBUTE);
+                    String.format("%s\n%s", msg, MiscUtils.stackTraceToString(e)), ERROR), ERROR_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
@@ -293,10 +274,10 @@ public class GUILogger {
 
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
-            logger.warn(stackTraceToString(e));
+            logger.warn(MiscUtils.stackTraceToString(e));
 
-            writeAndFlushMessage(buildFullLogMessage(threadName, stackTraceToString(e), ERROR));
-            insertStringToDocument(buildNormalLogMessage(stackTraceToString(e), ERROR), ERROR_ATTRIBUTE);
+            writeAndFlushMessage(buildFullLogMessage(threadName, MiscUtils.stackTraceToString(e), ERROR));
+            insertStringToDocument(buildNormalLogMessage(MiscUtils.stackTraceToString(e), ERROR), ERROR_ATTRIBUTE);
             prepared.getAndDecrement();
         });
     }
@@ -337,7 +318,7 @@ public class GUILogger {
             }
             document.insertString(document.getLength(), str, ATTRIBUTE);
         } catch (BadLocationException e) {
-            logger.warn(stackTraceToString(e));
+            logger.warn(MiscUtils.stackTraceToString(e));
         }
     }
 }

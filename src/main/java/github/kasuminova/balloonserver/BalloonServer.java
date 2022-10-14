@@ -63,7 +63,7 @@ public final class BalloonServer {
     public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     //主窗口 Logger
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
-    public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0, 1000);
+    public static final SmoothProgressBar GLOBAL_STATUS_PROGRESSBAR = new SmoothProgressBar(1000, 250);
     //主面板
     public static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();

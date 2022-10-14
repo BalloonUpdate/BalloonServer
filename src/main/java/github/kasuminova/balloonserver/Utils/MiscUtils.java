@@ -2,9 +2,8 @@ package github.kasuminova.balloonserver.Utils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 
 import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
@@ -12,19 +11,9 @@ import static github.kasuminova.balloonserver.BalloonServer.TITLE;
 
 public class MiscUtils {
     /**
-     * 把指定文本复制到剪贴板
-     */
-    public static void setClipboardString(String text) {
-        //获取系统剪贴板
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        //封装文本内容
-        Transferable trans = new StringSelection(text);
-        //把文本内容设置到系统剪贴板
-        clipboard.setContents(trans, null);
-    }
-
-    /**
      * 使用系统默认浏览器打开指定链接
+     *
+     * @param url 链接
      */
     public static void openLinkInBrowser(String url) {
         Desktop desktop = Desktop.getDesktop();
@@ -39,5 +28,24 @@ public class MiscUtils {
                     "当前系统没有默认浏览器或不支持！", TITLE,
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * <p>
+     * 将错误打印成字符串。
+     * </p>
+     * <p>
+     * 类似 printStackTrace()。
+     * </p>
+     *
+     * @param e Exception
+     * @return 字符串
+     */
+    public static String stackTraceToString(Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        pw.flush();
+        return sw.toString();
     }
 }

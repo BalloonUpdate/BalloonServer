@@ -13,7 +13,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-record DirCounterTask(File directory, ExecutorService FILE_THREAD_POOL, String hashAlgorithm, AtomicLong completedBytes,
+record DirCounterTask(File directory, ExecutorService fileThreadPool, String hashAlgorithm, AtomicLong completedBytes,
                       AtomicInteger completedFiles)
         implements Callable<SimpleDirectoryObject> {
 
@@ -32,10 +32,10 @@ record DirCounterTask(File directory, ExecutorService FILE_THREAD_POOL, String h
                 FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(
                         new FileCounterTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileCounterTask);
-                FILE_THREAD_POOL.execute(fileCounterTask);
+                fileThreadPool.execute(fileCounterTask);
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(
-                        new DirCounterTask(file, FILE_THREAD_POOL, hashAlgorithm, completedBytes, completedFiles));
+                        new DirCounterTask(file, fileThreadPool, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
                 ThreadUtil.execute(dirCounterTask);
             }

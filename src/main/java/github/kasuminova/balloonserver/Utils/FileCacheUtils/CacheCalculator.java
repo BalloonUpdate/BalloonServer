@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class CacheCalculator {
     public final AtomicInteger completedFiles = new AtomicInteger(0);
-    private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    private final ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     private final GUILogger logger;
     private final String hashAlgorithm;
     /**
@@ -65,7 +65,7 @@ public class CacheCalculator {
                         fileThreadList.add(fileCounterThread);
                         ThreadUtil.execute(fileCounterThread);
                     } else {
-                        FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile, FILE_THREAD_POOL, hashAlgorithm));
+                        FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile, fileThreadPool, hashAlgorithm));
                         dirThreadList.add(dirCounterThread);
                         ThreadUtil.execute(dirCounterThread);
                     }
@@ -124,7 +124,7 @@ public class CacheCalculator {
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.submit(fileCounterThread);
+                        fileThreadPool.submit(fileCounterThread);
                     } else {
                         JSONArray children = obj.getJSONArray("children");
                         obj.put("children", scanDir(children, childFile));
@@ -137,7 +137,7 @@ public class CacheCalculator {
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
-                        FILE_THREAD_POOL.submit(fileCounterThread);
+                        fileThreadPool.submit(fileCounterThread);
                     } else {
                         completedFiles.getAndIncrement();
                     }
@@ -145,7 +145,7 @@ public class CacheCalculator {
                 } else if (childFile.isDirectory()) {
                     removeObjectFromJsonArray(jsonArray, obj);
 
-                    FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile, FILE_THREAD_POOL, hashAlgorithm));
+                    FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile, fileThreadPool, hashAlgorithm));
                     dirThreadList.add(dirCounterThread);
                     ThreadUtil.execute(dirCounterThread);
                 }

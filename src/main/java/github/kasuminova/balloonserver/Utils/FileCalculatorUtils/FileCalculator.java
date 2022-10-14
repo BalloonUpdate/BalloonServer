@@ -17,8 +17,6 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static github.kasuminova.balloonserver.BalloonServer.resetStatusProgressBar;
-
 /**
  * 计算资源缓存的公用类
  */
@@ -26,7 +24,7 @@ public class FileCalculator {
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
     private final String hashAlgorithm;
-    private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    private final ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     public FileCalculator(String hashAlgorithm) {
         this.hashAlgorithm = hashAlgorithm;
     }
@@ -69,9 +67,9 @@ public class FileCalculator {
             if (file.isFile()) {
                 FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(new FileCounterTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileCounterTask);
-                FILE_THREAD_POOL.execute(fileCounterTask);
+                fileThreadPool.execute(fileCounterTask);
             } else {
-                FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirCounterTask(file, FILE_THREAD_POOL, hashAlgorithm, completedBytes, completedFiles));
+                FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirCounterTask(file, fileThreadPool, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
                 ThreadUtil.execute(dirCounterTask);
             }
@@ -93,7 +91,7 @@ public class FileCalculator {
 
         //回收线程池
         ThreadUtil.execute(() -> {
-            FILE_THREAD_POOL.shutdown();
+            fileThreadPool.shutdown();
             logger.info("已回收所有闲置线程.");
         });
 
@@ -108,8 +106,6 @@ public class FileCalculator {
         private final AtomicLong totalFiles = new AtomicLong();
 
         private long[] getFiles(File dir, SmoothProgressBar statusProgressBar) {
-            resetStatusProgressBar();
-
             statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");
             Timer timer = new Timer(250, e -> statusProgressBar.setString(
                     String.format("扫描文件夹内容... (%s, %s 文件)",

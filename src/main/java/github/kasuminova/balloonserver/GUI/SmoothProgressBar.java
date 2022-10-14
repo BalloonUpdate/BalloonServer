@@ -31,9 +31,15 @@ public class SmoothProgressBar extends JProgressBar {
     }
 
     /**
+     * <p>
      * 以平滑方式设置进度
+     * </p>
+     * <p>
+     * 注意：此方法会阻塞当前线程以设置进度，如果需要非阻塞，请自行创建一个线程或使用 setValueAsync(int value) 方法
+     * </p>
      *
      * @param value 新进度
+     * @see #setValueAsync(int value)
      */
     @Override
     public synchronized void setValue(int value) {
@@ -47,10 +53,10 @@ public class SmoothProgressBar extends JProgressBar {
 
     /**
      * <p>
-     *     以平滑方式设置进度
+     * 以平滑方式设置进度
      * </p>
      * <p>
-     *     非同步模式
+     * 此方法不会阻塞线程。
      * </p>
      *
      * @param value 新进度
@@ -111,11 +117,11 @@ public class SmoothProgressBar extends JProgressBar {
 
     /**
      * <p>
-     *     将进度条进度增长指定数值, 使用平滑方式
+     * 将进度条进度增长指定数值, 使用平滑方式
      * </p>
      *
      * <p>
-     *     非同步模式
+     * 非同步模式
      * </p>
      *
      * @param value 增长的数值
@@ -137,11 +143,11 @@ public class SmoothProgressBar extends JProgressBar {
 
     /**
      * <p>
-     *     将进度条进度减少指定数值, 使用平滑方式
+     * 将进度条进度减少指定数值, 使用平滑方式
      * </p>
      *
      * <p>
-     *     非同步模式
+     * 非同步模式
      * </p>
      *
      * @param value 减少的数值

@@ -3,7 +3,7 @@ package github.kasuminova.balloonserver.UpdateChecker;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.BalloonServer;
-import github.kasuminova.balloonserver.Utils.GUILogger;
+import github.kasuminova.balloonserver.Utils.MiscUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -83,7 +83,7 @@ public class Checker {
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(MAIN_FRAME,
-                    String.format("无法启动服务端。\n%s", GUILogger.stackTraceToString(e)), BalloonServer.TITLE,
+                    String.format("无法启动服务端。\n%s", MiscUtils.stackTraceToString(e)), BalloonServer.TITLE,
                     JOptionPane.ERROR_MESSAGE);
         }
     }

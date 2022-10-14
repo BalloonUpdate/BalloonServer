@@ -7,6 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 文件监听器
+ */
 public class NextFileListener {
     WatchMonitor monitor;
 
