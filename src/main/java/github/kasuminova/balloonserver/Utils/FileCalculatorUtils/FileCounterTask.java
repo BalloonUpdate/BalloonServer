@@ -14,8 +14,7 @@ import static github.kasuminova.balloonserver.Utils.HashCalculator.getCRC32;
 import static github.kasuminova.balloonserver.Utils.HashCalculator.getSHA1;
 
 record FileCounterTask(File file, String hashAlgorithm, AtomicLong completedBytes, AtomicInteger completedFiles)
-        implements Callable<SimpleFileObject>
-{
+        implements Callable<SimpleFileObject> {
     @Override
     public SimpleFileObject call() throws IOException, NoSuchAlgorithmException {
         String hash;

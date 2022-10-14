@@ -18,24 +18,25 @@ public class ConfigurationManager {
         IntegratedServerConfig newConfig = JSON.parseObject(Files.newInputStream(Paths.get(path)), IntegratedServerConfig.class);
 
         oldConfig.setConfigVersion(newConfig.getConfigVersion())
-                 .setIp(newConfig.getIp())
-                 .setPort(newConfig.getPort())
-                 .setMainDirPath(newConfig.getMainDirPath())
-                 .setFileChangeListener(newConfig.isFileChangeListener())
-                 .setCompatibleMode(newConfig.isCompatibleMode())
-                 .setJksFilePath(newConfig.getJksFilePath())
-                 .setJksSslPassword(newConfig.getJksSslPassword())
-                 .setCommonMode(newConfig.getCommonMode())
-                 .setOnceMode(newConfig.getOnceMode());
+                .setIp(newConfig.getIp())
+                .setPort(newConfig.getPort())
+                .setMainDirPath(newConfig.getMainDirPath())
+                .setFileChangeListener(newConfig.isFileChangeListener())
+                .setCompatibleMode(newConfig.isCompatibleMode())
+                .setJksFilePath(newConfig.getJksFilePath())
+                .setJksSslPassword(newConfig.getJksSslPassword())
+                .setCommonMode(newConfig.getCommonMode())
+                .setOnceMode(newConfig.getOnceMode());
     }
+
     public static void loadBalloonServerConfigFromFile(String path, BalloonServerConfig oldConfig) throws IOException {
         BalloonServerConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), BalloonServerConfig.class);
         oldConfig.setAutoStartServer(config.isAutoStartServer())
-                 .setAutoStartServerOnce(config.isAutoStartServerOnce())
-                 .setDebugMode(config.isDebugMode())
-                 .setCloseOperation(config.getCloseOperation())
-                 .setAutoCheckUpdates(config.isAutoCheckUpdates())
-                 .setAutoUpdate(config.isAutoUpdate());
+                .setAutoStartServerOnce(config.isAutoStartServerOnce())
+                .setDebugMode(config.isDebugMode())
+                .setCloseOperation(config.getCloseOperation())
+                .setAutoCheckUpdates(config.isAutoCheckUpdates())
+                .setAutoUpdate(config.isAutoUpdate());
     }
 
     public static void saveConfigurationToFile(Configuration configuration, String path, String name) throws IORuntimeException {

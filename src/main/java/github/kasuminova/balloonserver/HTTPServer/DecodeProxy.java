@@ -19,32 +19,35 @@ public class DecodeProxy extends ByteToMessageDecoder {
      */
     public static final AttributeKey<String> key = AttributeKey.valueOf("IP");
     final GUILogger logger;
+
     public DecodeProxy(GUILogger logger) {
         this.logger = logger;
     }
+
     /**
      * decode() 会根据接收的数据，被调用多次，直到确定没有新的元素添加到list,
      * 或者是 ByteBuf 没有更多的可读字节为止。
      * 如果 list 不为空，就会将 list 的内容传递给下一个 handler
-     * @param ctx 上下文对象
+     *
+     * @param ctx     上下文对象
      * @param byteBuf 入站后的 ByteBuf
-     * @param out 将解码后的数据传递给下一个 handler
+     * @param out     将解码后的数据传递给下一个 handler
      */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) {
         byte[] bytes = printSz(byteBuf);
         String message = new String(bytes, StandardCharsets.UTF_8);
 
-        if (bytes.length > 0){
+        if (bytes.length > 0) {
             //判断是否有代理
-            if (message.contains("PROXY")){
-                logger.info("PROXY MSG: " + message.substring(0,message.length()-2));
-                if (message.contains("\n")){
-                    String[] str =  message.split("\n")[0].split(" ");
+            if (message.contains("PROXY")) {
+                logger.info("PROXY MSG: " + message.substring(0, message.length() - 2));
+                if (message.contains("\n")) {
+                    String[] str = message.split("\n")[0].split(" ");
                     logger.info("Real Client IP: " + str[2]);
                     Attribute<String> channelAttr = ctx.channel().attr(key);
                     //基于channel的属性
-                    if(null == channelAttr.get()){
+                    if (null == channelAttr.get()) {
                         channelAttr.set(str[2]);
                     }
                 }
@@ -53,7 +56,7 @@ public class DecodeProxy extends ByteToMessageDecoder {
                 byteBuf.clear();
             }
 
-            if (byteBuf.readableBytes() > 0){
+            if (byteBuf.readableBytes() > 0) {
                 out.add(byteBuf.readBytes(byteBuf.readableBytes()));
             }
         }
@@ -62,7 +65,7 @@ public class DecodeProxy extends ByteToMessageDecoder {
     /**
      * 打印 byte 数组
      */
-    public byte[] printSz(ByteBuf newBuf){
+    public byte[] printSz(ByteBuf newBuf) {
         ByteBuf copy = newBuf.copy();
         byte[] bytes = new byte[copy.readableBytes()];
         copy.readBytes(bytes);

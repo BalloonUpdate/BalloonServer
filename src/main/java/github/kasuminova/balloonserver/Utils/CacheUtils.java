@@ -3,10 +3,10 @@ package github.kasuminova.balloonserver.Utils;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson2.JSONArray;
+import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
-import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Utils.FileCacheUtils.CacheCalculator;
 import github.kasuminova.balloonserver.Utils.FileCalculatorUtils.FileCalculator;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
@@ -23,16 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CacheUtils {
     private final HttpServerInterface httpServerInterface;
     private final IntegratedServerInterface serverInterface;
-    public CacheUtils(IntegratedServerInterface serverInterface, HttpServerInterface httpServerInterface, JButton startOrStop) {
-        this.serverInterface = serverInterface;
-        this.httpServerInterface = httpServerInterface;
-        this.startOrStop = startOrStop;
-
-        logger = serverInterface.getLogger();
-        isGenerating = serverInterface.isGenerating();
-        config = serverInterface.getConfig();
-        statusProgressBar = serverInterface.getStatusProgressBar();
-    }
     private final JButton startOrStop;
     private final SmoothProgressBar statusProgressBar;
     private final GUILogger logger;
@@ -46,6 +36,16 @@ public class CacheUtils {
     private Timer timer;
     private Thread counterThread;
     private FileCalculator fileListUtils;
+    public CacheUtils(IntegratedServerInterface serverInterface, HttpServerInterface httpServerInterface, JButton startOrStop) {
+        this.serverInterface = serverInterface;
+        this.httpServerInterface = httpServerInterface;
+        this.startOrStop = startOrStop;
+
+        logger = serverInterface.getLogger();
+        isGenerating = serverInterface.isGenerating();
+        config = serverInterface.getConfig();
+        statusProgressBar = serverInterface.getStatusProgressBar();
+    }
 
     /**
      * 更新资源缓存结构
@@ -93,12 +93,11 @@ public class CacheUtils {
 
     /**
      * <p>
-     *     更新资源缓存结构并启动服务器。
+     * 更新资源缓存结构并启动服务器。
      * </p>
      * <p>
-     *     传入的参数如果为 null，则完整生成一次缓存。
+     * 传入的参数如果为 null，则完整生成一次缓存。
      * </p>
-     *
      */
     public void updateDirCacheAndStartServer(JSONArray jsonCache, String hashAlgorithm) {
         updateDirCache(jsonCache, hashAlgorithm);
@@ -116,6 +115,7 @@ public class CacheUtils {
 
     /**
      * 向磁盘生成 JSON 缓存，并设置服务端 JSON
+     *
      * @param jsonArray JSON 缓存
      */
     private void generateJsonToDiskAndSetServerJson(JSONArray jsonArray, String hashAlgorithm) {
@@ -124,8 +124,8 @@ public class CacheUtils {
             if (hashAlgorithm.equals(HashCalculator.SHA1)) {
                 serverInterface.setLegacyResJson(resJSONStr);
                 FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.%s",
-                                serverInterface.getServerName(),
-                                serverInterface.getLegacyResJsonFileExtensionName()));
+                        serverInterface.getServerName(),
+                        serverInterface.getLegacyResJsonFileExtensionName()));
             } else {
                 serverInterface.setResJson(resJSONStr);
                 FileUtil.createJsonFile(resJSONStr, "./", String.format("%s.%s",
@@ -143,6 +143,7 @@ public class CacheUtils {
      * <p>
      * 使用配置文件中的资源文件夹路径
      * </p>
+     *
      * @return 如果资源文件夹为空返回 false, 否则返回 true
      */
     private boolean genDirCache(JSONArray jsonCache, String hashAlgorithm) {
@@ -177,7 +178,7 @@ public class CacheUtils {
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
 
         CacheCalculator cacheCalculator = new CacheCalculator(logger, hashAlgorithm);
-        logger.info(String.format("文件夹大小: %s, 文件数量: %s", totalSize,dirSize[1]));
+        logger.info(String.format("文件夹大小: %s, 文件数量: %s", totalSize, dirSize[1]));
         if (jsonCache != null) {
             logger.info("检测到已缓存的 JSON, 正在检查变化...");
 

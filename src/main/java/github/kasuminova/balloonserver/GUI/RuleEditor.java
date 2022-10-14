@@ -4,8 +4,8 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeCellRenderer;
-import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNodeSelectionListener;
 import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNode;
+import github.kasuminova.balloonserver.GUI.CheckBoxTree.CheckBoxTreeNodeSelectionListener;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.Servers.AddUpdateRule;
 import github.kasuminova.balloonserver.Servers.DeleteUpdateRule;
@@ -29,11 +29,16 @@ import static github.kasuminova.balloonserver.Utils.SvgIcons.REMOVE_ICON;
 public class RuleEditor extends JDialog {
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.5.0-STABLE");
     public static final String TITLE = "RuleEditor " + VERSION;
+    /**
+     * 可复用变量（降低内存使用率）
+     */
+    private static final StringBuilder childPath = new StringBuilder();
+    private static final JSONObject jsonObject = new JSONObject();
 
     public RuleEditor(JSONArray jsonArray, List<String> rules) {
         setTitle(TITLE);
         setIconImage(BalloonServer.ICON.getImage());
-        setSize(750,840);
+        setSize(750, 840);
         setResizable(false);
         setLocationRelativeTo(null);
 
@@ -71,20 +76,20 @@ public class RuleEditor extends JDialog {
         JPopupMenu ruleListMenu = new JPopupMenu();
         //添加更新规则
         JMenuItem addRule = new JMenuItem("添加更新规则");
-        addRule.addActionListener(new AddUpdateRule(ruleList,rules,contentPane));
+        addRule.addActionListener(new AddUpdateRule(ruleList, rules, contentPane));
         addRule.setIcon(PLUS_ICON);
         ruleListMenu.add(addRule);
         //删除更新规则
         JMenuItem removeRule = new JMenuItem("删除选定的规则");
-        removeRule.addActionListener(new DeleteUpdateRule(ruleList,rules,contentPane));
+        removeRule.addActionListener(new DeleteUpdateRule(ruleList, rules, contentPane));
         removeRule.setIcon(REMOVE_ICON);
         ruleListMenu.add(removeRule);
         //鼠标监听
         ruleList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()){
-                    ruleListMenu.show(ruleList,e.getX(),e.getY());
+                if (e.isPopupTrigger()) {
+                    ruleListMenu.show(ruleList, e.getX(), e.getY());
                 }
             }
         });
@@ -120,12 +125,8 @@ public class RuleEditor extends JDialog {
     }
 
     /**
-     * 可复用变量（降低内存使用率）
-     */
-    private static final StringBuilder childPath = new StringBuilder();
-
-    /**
      * 获取选中的文件，自动获取父节点
+     *
      * @param root 节点
      * @return 选中的文件
      */
@@ -204,9 +205,9 @@ public class RuleEditor extends JDialog {
         }
     }
 
-    private static final JSONObject jsonObject = new JSONObject();
     /**
      * 根据传入的 JSONArray 构建 JTree 的子节点
+     *
      * @param jsonArray JSONArray
      * @return JTree 子节点
      */

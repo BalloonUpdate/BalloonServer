@@ -1,8 +1,8 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
-import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 import github.kasuminova.balloonserver.Utils.GUILogger;
@@ -34,6 +34,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
     private final GUILogger logger;
     private final JPanel requestListPanel;
     private final String indexJsonString;
+
     public HttpRequestHandler(IntegratedServerInterface serverInterface) {
         resJson = serverInterface.getResJson();
         legacyResJson = serverInterface.getLegacyResJson();
@@ -41,6 +42,102 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         logger = serverInterface.getLogger();
         requestListPanel = serverInterface.getRequestListPanel();
         indexJsonString = serverInterface.getIndexJson();
+    }
+
+    private static void sendJson(String jsonString, ChannelHandlerContext ctx) {
+        //因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
+        //创建完整的响应对象
+        FullHttpResponse jsonResponse = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                Unpooled.copiedBuffer(jsonString, CharsetUtil.UTF_8));
+
+        //设置头信息
+        jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
+
+        //响应写回给客户端,并在协会后断开这个连接
+        ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
+    }
+
+    /**
+     * 打印 200 OK 日志
+     *
+     * @param usedTime   耗时
+     * @param clientIP   客户端 IP
+     * @param decodedURI 转义后的 URI
+     */
+    private static void print200Log(long usedTime, String clientIP, String decodedURI, GUILogger logger) {
+        //格式为 IP, 额外信息, 转义后的 URI, 耗时
+        logger.info(
+                String.format("%s\t| 200 | %s | %s",
+                        clientIP,
+                        formatTime(usedTime),
+                        decodedURI
+                ),
+                ModernColors.GREEN);
+    }
+
+    /**
+     * 打印非 200 OK 日志
+     *
+     * @param msg        额外信息
+     * @param usedTime   耗时
+     * @param clientIP   客户端 IP
+     * @param decodedURI 转义后的 URI
+     */
+    private static void printWarnLog(String msg, long usedTime, String clientIP, String decodedURI, GUILogger logger) {
+        //格式为 IP, 额外信息, 转义后的 URI, 耗时
+        logger.warn(String.format("%s\t| %s | %s | %s",
+                clientIP,
+                msg,
+                formatTime(usedTime),
+                decodedURI));
+    }
+
+    private static String formatTime(long time) {
+        if (time < 1000 * 10) {
+            return String.format("%.3fs", (double) time / 1000);
+        } else if (time < 1000 * 100) {
+            return String.format("%.2fs", (double) time / 1000);
+        } else if (time < 1000 * 1000) {
+            return String.format("%.1fs", (double) time / 1000);
+        } else {
+            return String.format("%ss", time / 1000);
+        }
+    }
+
+    /**
+     * 获取客户端 IP
+     */
+    private static String getClientIP(ChannelHandlerContext ctx, FullHttpRequest req) {
+        //获取客户端 IP
+        Attribute<String> channelAttr = ctx.channel().attr(DecodeProxy.key);
+        if (channelAttr.get() != null) {
+            return channelAttr.get();
+        } else {
+            String clientIP = req.headers().get("X-Forwarded-For");
+            if (clientIP == null) {
+                InetSocketAddress socket = (InetSocketAddress) ctx.channel().remoteAddress();
+                clientIP = socket.getAddress().getHostAddress();
+            }
+            return clientIP;
+        }
+    }
+
+    private static void sendError(ChannelHandlerContext ctx, GUILogger logger, HttpResponseStatus status, String message, String clientIP, String decodedURI) {
+        long start = System.currentTimeMillis();
+
+        String fullMessage;
+        if (message.isEmpty()) {
+            fullMessage = String.format("Failure %s\r\n", status);
+        } else {
+            fullMessage = String.format("Failure %s: %s\r\n", status, message);
+        }
+
+        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(fullMessage, CharsetUtil.UTF_8));
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+        printWarnLog(String.valueOf(status.code()), System.currentTimeMillis() - start, clientIP, decodedURI, logger);
     }
 
     @Override
@@ -53,7 +150,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         final String uri = req.uri();
         long start = System.currentTimeMillis();
 
-        String clientIP = getClientIP(ctx,req);
+        String clientIP = getClientIP(ctx, req);
         //转义后的 URI
         String decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
 
@@ -100,7 +197,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
             sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
             return;
         }
-        if (!file.isFile()){
+        if (!file.isFile()) {
             sendError(ctx, logger, HttpResponseStatus.BAD_REQUEST, "", clientIP, decodedURI);
             return;
         }
@@ -108,28 +205,28 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         RandomAccessFile randomAccessFile;
 
         try {
-            randomAccessFile = new RandomAccessFile(file,"r");  //只读模式
+            randomAccessFile = new RandomAccessFile(file, "r");  //只读模式
         } catch (FileNotFoundException e) {
             sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
             return;
         }
         long fileLength = randomAccessFile.length();    //文件大小
-        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1,HttpResponseStatus.OK);
-        setContentLength(response,fileLength);
-        if (isKeepAlive(req)){
+        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        setContentLength(response, fileLength);
+        if (isKeepAlive(req)) {
             response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
         }
         ctx.write(response);
 
         //发送文件
         ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
-        SmoothProgressBar progressBar = createUploadPanel(getClientIP(ctx,req), file.getName());
+        SmoothProgressBar progressBar = createUploadPanel(getClientIP(ctx, req), file.getName());
 
         final long[] fileProgress = {0};
 
         Timer timer = new Timer(250, e -> {
             progressBar.setString(String.format("%s / %s", FileUtil.formatFileSizeToStr(fileProgress[0]), FileUtil.formatFileSizeToStr(fileLength)));
-            progressBar.setValue((int) (fileProgress[0] * progressBar.getMaximum() / fileLength) );
+            progressBar.setValue((int) (fileProgress[0] * progressBar.getMaximum() / fileLength));
         });
         timer.start();
 
@@ -157,6 +254,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
     /**
      * 创建一个进度条面板记录单独文件的显示
+     *
      * @return JProgressBar 进度条
      */
     private SmoothProgressBar createUploadPanel(String IP, String fileName) {
@@ -178,99 +276,5 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         requestListPanel.add(uploadPanel);
         requestListPanel.updateUI();
         return progressBar;
-    }
-
-    private static void sendJson(String jsonString, ChannelHandlerContext ctx) {
-        //因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
-        //创建完整的响应对象
-        FullHttpResponse jsonResponse = new DefaultFullHttpResponse(
-                HttpVersion.HTTP_1_1,
-                HttpResponseStatus.OK,
-                Unpooled.copiedBuffer(jsonString, CharsetUtil.UTF_8));
-
-        //设置头信息
-        jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
-
-        //响应写回给客户端,并在协会后断开这个连接
-        ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
-    }
-
-    /**
-     * 打印 200 OK 日志
-     * @param usedTime 耗时
-     * @param clientIP 客户端 IP
-     * @param decodedURI 转义后的 URI
-     */
-    private static void print200Log(long usedTime, String clientIP, String decodedURI, GUILogger logger) {
-        //格式为 IP, 额外信息, 转义后的 URI, 耗时
-        logger.info(
-                String.format("%s\t| 200 | %s | %s",
-                        clientIP,
-                        formatTime(usedTime),
-                        decodedURI
-                ),
-                ModernColors.GREEN);
-    }
-
-    /**
-     * 打印非 200 OK 日志
-     * @param msg 额外信息
-     * @param usedTime 耗时
-     * @param clientIP 客户端 IP
-     * @param decodedURI 转义后的 URI
-     */
-    private static void printWarnLog(String msg, long usedTime, String clientIP, String decodedURI, GUILogger logger) {
-        //格式为 IP, 额外信息, 转义后的 URI, 耗时
-        logger.warn(String.format("%s\t| %s | %s | %s",
-                clientIP,
-                msg,
-                formatTime(usedTime),
-                decodedURI));
-    }
-
-    private static String formatTime(long time) {
-        if (time < 1000 * 10) {
-            return String.format("%.3fs", (double) time / 1000);
-        } else if (time < 1000 * 100) {
-            return String.format("%.2fs", (double) time / 1000);
-        } else if (time < 1000 * 1000) {
-            return String.format("%.1fs", (double) time / 1000);
-        } else {
-            return String.format("%ss", time / 1000);
-        }
-    }
-
-    /**
-     * 获取客户端 IP
-     */
-    private static String getClientIP(ChannelHandlerContext ctx, FullHttpRequest req) {
-        //获取客户端 IP
-        Attribute<String> channelAttr = ctx.channel().attr(DecodeProxy.key);
-        if (channelAttr.get() != null){
-            return channelAttr.get();
-        } else {
-            String clientIP = req.headers().get("X-Forwarded-For");
-            if (clientIP == null) {
-                InetSocketAddress socket = (InetSocketAddress) ctx.channel().remoteAddress();
-                clientIP = socket.getAddress().getHostAddress();
-            }
-            return clientIP;
-        }
-    }
-
-    private static void sendError(ChannelHandlerContext ctx, GUILogger logger, HttpResponseStatus status, String message, String clientIP, String decodedURI){
-        long start = System.currentTimeMillis();
-
-        String fullMessage;
-        if (message.isEmpty()) {
-            fullMessage = String.format("Failure %s\r\n", status);
-        } else {
-            fullMessage = String.format("Failure %s: %s\r\n", status, message);
-        }
-
-        FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(fullMessage, CharsetUtil.UTF_8));
-        response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
-        printWarnLog(String.valueOf(status.code()), System.currentTimeMillis() - start, clientIP, decodedURI, logger);
     }
 }

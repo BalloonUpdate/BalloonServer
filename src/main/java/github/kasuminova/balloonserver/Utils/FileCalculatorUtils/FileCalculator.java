@@ -1,11 +1,5 @@
 package github.kasuminova.balloonserver.Utils.FileCalculatorUtils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 import cn.hutool.core.thread.ThreadUtil;
 import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
@@ -15,25 +9,26 @@ import github.kasuminova.balloonserver.Utils.FileUtil;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-import static github.kasuminova.balloonserver.BalloonServer.*;
+import static github.kasuminova.balloonserver.BalloonServer.resetStatusProgressBar;
 
 /**
  * 计算资源缓存的公用类
  */
 public class FileCalculator {
-    public FileCalculator(String hashAlgorithm) {
-        this.hashAlgorithm = hashAlgorithm;
-    }
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
     private final String hashAlgorithm;
     private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-    public long getCompletedBytes() {
-        return completedBytes.get();
-    }
-    public int getCompletedFiles() {
-        return completedFiles.get();
+    public FileCalculator(String hashAlgorithm) {
+        this.hashAlgorithm = hashAlgorithm;
     }
 
     /**
@@ -46,10 +41,19 @@ public class FileCalculator {
         return new FileCounter().getFiles(dir, statusProgressBar);
     }
 
+    public long getCompletedBytes() {
+        return completedBytes.get();
+    }
+
+    public int getCompletedFiles() {
+        return completedFiles.get();
+    }
+
     /**
      * 扫描目标文件夹内的文件与文件夹
+     *
      * @param directory 目标文件夹
-     * @param logger 日志输出器
+     * @param logger    日志输出器
      * @return ArrayList<AbstractSimpleFileObject>, 如果文件夹内容为空则返回空 ArrayList
      */
     public ArrayList<AbstractSimpleFileObject> scanDir(File directory, GUILogger logger) {
@@ -76,13 +80,15 @@ public class FileCalculator {
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : direCounterTaskList) {
             try {
                 abstractSimpleFileObjectList.add(simpleDirectoryObjectFutureTask.get());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
             try {
                 abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         //回收线程池
@@ -100,6 +106,7 @@ public class FileCalculator {
     private static class FileCounter {
         private final AtomicLong totalSize = new AtomicLong(0);
         private final AtomicLong totalFiles = new AtomicLong();
+
         private long[] getFiles(File dir, SmoothProgressBar statusProgressBar) {
             resetStatusProgressBar();
 
@@ -120,7 +127,7 @@ public class FileCalculator {
                 e.printStackTrace();
                 return new long[]{0, 0};
             }
-            return new long[]{totalSize.get(),totalFiles.get()};
+            return new long[]{totalSize.get(), totalFiles.get()};
         }
     }
 }

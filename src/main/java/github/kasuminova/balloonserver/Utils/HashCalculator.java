@@ -23,6 +23,7 @@ public class HashCalculator {
     /**
      * 获取文件 SHA1
      * BalloonUpdate 的默认方法
+     *
      * @param file 目标文件
      * @return SHA1 值
      **/
@@ -45,6 +46,7 @@ public class HashCalculator {
 
     /**
      * 获取文件 CRC32
+     *
      * @param file 目标文件
      * @return CRC32 值
      */
@@ -66,7 +68,8 @@ public class HashCalculator {
     /**
      * 获取文件 SHA1
      * BalloonUpdate 的默认方法
-     * @param file 目标文件
+     *
+     * @param file     目标文件
      * @param progress 进度变量
      * @return SHA1 值
      **/
@@ -88,7 +91,8 @@ public class HashCalculator {
 
     /**
      * 获取文件 CRC32
-     * @param file 目标文件
+     *
+     * @param file     目标文件
      * @param progress 进度变量
      * @return CRC32 值
      */
@@ -110,7 +114,8 @@ public class HashCalculator {
 
     /**
      * 获取文件 CRC32 和 SHA1
-     * @param file 目标文件
+     *
+     * @param file     目标文件
      * @param progress 进度变量
      * @return CRC32 和 SHA1 值
      */
@@ -139,6 +144,7 @@ public class HashCalculator {
 
     /**
      * 获取文件 CRC32 和 SHA1
+     *
      * @param file 目标文件
      * @return CRC32 和 SHA1 值
      */

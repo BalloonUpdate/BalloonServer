@@ -3,7 +3,10 @@ package github.kasuminova.balloonserver.HTTPServer;
 import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
-import github.kasuminova.balloonserver.Utils.*;
+import github.kasuminova.balloonserver.Utils.GUILogger;
+import github.kasuminova.balloonserver.Utils.IPAddressUtil;
+import github.kasuminova.balloonserver.Utils.ModernColors;
+import github.kasuminova.balloonserver.Utils.NextFileListener;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
@@ -21,21 +24,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * LittleServer 所绑定的服务器
  */
 public class HttpServer {
-    private Timer fileChangeListener;
-    private String apiAddress;
     private final GUILogger logger;
     private final AtomicBoolean isGenerating;
     private final AtomicBoolean isFileChanged = new AtomicBoolean(false);
     private final IntegratedServerConfig config;
     private final AtomicBoolean isStarted;
     private final IntegratedServerInterface serverInterface;
-
-    public String getAPIAddress() {
-        return apiAddress;
-    }
+    EventLoopGroup boss;
+    EventLoopGroup work;
+    ChannelFuture future;
+    NextFileListener fileListener;
+    private Timer fileChangeListener;
+    private String apiAddress;
 
     /**
      * 新建一个 HTTP 服务器实例
+     *
      * @param serverInterface 服务器实例接口
      */
     public HttpServer(IntegratedServerInterface serverInterface) {
@@ -46,10 +50,11 @@ public class HttpServer {
         this.isStarted = serverInterface.isStarted();
         this.isGenerating = serverInterface.isGenerating();
     }
-    EventLoopGroup boss;
-    EventLoopGroup work;
-    ChannelFuture future;
-    NextFileListener fileListener;
+
+    public String getAPIAddress() {
+        return apiAddress;
+    }
+
     public boolean start() {
         long start = System.currentTimeMillis();
         //载入配置
@@ -76,14 +81,11 @@ public class HttpServer {
                             StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
 
-                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
-                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址, 如果上方输出的域名不正确, 请自行将 IP 更换为域名。");
+                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果上方输出的域名不正确, 请自行更换域名。");
                 } else {
                     apiAddress = String.format("https://[%s]:%s/index.json",
                             ip,
                             port);
-
-                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
                 }
             } else {
                 if (httpServerInitializer.isUseSsl()) {
@@ -91,21 +93,17 @@ public class HttpServer {
                             StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
 
-                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
-                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。");
+                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果上方输出的域名不正确, 请自行更换域名。");
                 } else if (ip.equals("0.0.0.0")) {
                     apiAddress = String.format("http://localhost:%s/index.json",
                             port);
-
-                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
                 } else {
                     apiAddress = String.format("http://%s:%s/index.json",
                             ip,
                             port);
-
-                    logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
                 }
             }
+            logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
             serverInterface.setStatusLabelText("已启动", ModernColors.GREEN);
         } catch (Exception e) {
             isStarted.set(false);
@@ -115,8 +113,6 @@ public class HttpServer {
 
         //文件监听器
         if (config.isFileChangeListener()) {
-            long start1 = System.currentTimeMillis();
-
             fileListener = new NextFileListener(String.format(".%s", config.getMainDirPath()), isFileChanged, logger, 10);
             fileListener.start();
             fileChangeListener = new Timer(5000, e -> {
@@ -127,7 +123,7 @@ public class HttpServer {
                 }
             });
             fileChangeListener.start();
-            logger.info(String.format("实时文件监听器已启动. (%sms)", System.currentTimeMillis() - start1));
+            logger.info("实时文件监听器已启动.");
         }
         return true;
     }
@@ -146,9 +142,9 @@ public class HttpServer {
         }
 
         if (fileListener != null) {
-                fileListener.stop();
-                logger.info("实时文件监听器已停止.");
-                fileListener = null;
+            fileListener.stop();
+            logger.info("实时文件监听器已停止.");
+            fileListener = null;
         }
 
         serverInterface.setStatusLabelText("就绪", ModernColors.BLUE);

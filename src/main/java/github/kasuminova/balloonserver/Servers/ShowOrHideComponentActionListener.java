@@ -9,11 +9,13 @@ public class ShowOrHideComponentActionListener implements ActionListener {
     private final Component component;
     private final String componentName;
     private final JButton button;
+
     public ShowOrHideComponentActionListener(Component component, String componentName, JButton button) {
         this.component = component;
         this.componentName = componentName;
         this.button = button;
     }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (component.isVisible()) {

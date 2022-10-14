@@ -21,6 +21,7 @@ public class IntegratedServerConfig extends Configuration {
     private String[] commonMode = new String[0];
     @JSONField(ordinal = 9)
     private String[] onceMode = new String[0];
+
     public IntegratedServerConfig() {
         configVersion = 1;
     }
@@ -49,6 +50,11 @@ public class IntegratedServerConfig extends Configuration {
 
     public String getIp() {
         return ip;
+    }
+
+    public IntegratedServerConfig setIp(String ip) {
+        this.ip = ip;
+        return this;
     }
 
     public int getPort() {
@@ -93,11 +99,6 @@ public class IntegratedServerConfig extends Configuration {
 
     public IntegratedServerConfig setOnceMode(String[] onceMode) {
         this.onceMode = onceMode;
-        return this;
-    }
-
-    public IntegratedServerConfig setIp(String ip) {
-        this.ip = ip;
         return this;
     }
 

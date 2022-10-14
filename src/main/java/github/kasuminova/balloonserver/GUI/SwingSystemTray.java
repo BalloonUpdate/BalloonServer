@@ -21,11 +21,13 @@ import static github.kasuminova.balloonserver.Utils.SvgIcons.TERMINAL_ICON;
 /**
  * 中文系统托盘弹出菜单不乱码。
  * 网上抄的（）
+ *
  * @author Kasumi_Nova
  */
 public class SwingSystemTray {
     /**
      * 载入托盘
+     *
      * @param frame 主窗口
      */
     public static void initSystemTrayAndFrame(JFrame frame) {
@@ -114,7 +116,7 @@ public class SwingSystemTray {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
-                trayIcon.displayMessage("提示","程序已最小化至后台运行。", TrayIcon.MessageType.INFO);
+                trayIcon.displayMessage("提示", "程序已最小化至后台运行。", TrayIcon.MessageType.INFO);
             }
         });
     }

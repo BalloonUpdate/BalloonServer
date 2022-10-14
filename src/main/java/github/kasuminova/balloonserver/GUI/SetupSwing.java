@@ -36,15 +36,15 @@ public class SetupSwing {
             UIManager.put("ScrollBar.showButtons", false);
             UIManager.put("ScrollBar.thumbArc", 7);
             UIManager.put("ScrollBar.width", 12);
-            UIManager.put("ScrollBar.thumbInsets", new Insets(2,2,2,2));
-            UIManager.put("ScrollBar.track", new Color(0,0,0,0));
+            UIManager.put("ScrollBar.thumbInsets", new Insets(2, 2, 2, 2));
+            UIManager.put("ScrollBar.track", new Color(0, 0, 0, 0));
             //选项卡分隔线
             UIManager.put("TabbedPane.showTabSeparators", true);
             UIManager.put("TabbedPane.tabSeparatorsFullHeight", true);
             //菜单
             UIManager.put("MenuItem.selectionType", "underline");
             UIManager.put("MenuItem.underlineSelectionHeight", 3);
-            UIManager.put("MenuItem.margin", new Insets(5,8,3,5));
+            UIManager.put("MenuItem.margin", new Insets(5, 8, 3, 5));
             UIManager.put("MenuBar.underlineSelectionHeight", 3);
             //窗口标题居中
             UIManager.put("TitlePane.centerTitle", true);
@@ -52,7 +52,7 @@ public class SetupSwing {
             UIManager.put("ProgressBar.repaintInterval", 16);
             UIManager.put("ProgressBar.cycleTime", 7500);
             //提示框
-            UIManager.put("ToolTip.border", new LineBorder(new Color(55,60,70), 2, true));
+            UIManager.put("ToolTip.border", new LineBorder(new Color(55, 60, 70), 2, true));
 
             StaticLog.info("UIThread Completed, Used {}ms", System.currentTimeMillis() - start);
         });
@@ -103,11 +103,12 @@ public class SetupSwing {
 
     /**
      * 载入全局字体
+     *
      * @param font 字体
      */
     private static void initGlobalFont(Font font) {
         FontUIResource fontResource = new FontUIResource(font);
-        for (Enumeration<Object> keys = UIManager.getDefaults().keys(); keys.hasMoreElements();) {
+        for (Enumeration<Object> keys = UIManager.getDefaults().keys(); keys.hasMoreElements(); ) {
             Object key = keys.nextElement();
             Object value = UIManager.get(key);
             if (value instanceof FontUIResource) {

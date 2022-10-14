@@ -7,8 +7,7 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 record DirCalculatorThread(File dir, AtomicLong totalSize, AtomicLong totalFiles)
-        implements Runnable
-{
+        implements Runnable {
 
     @Override
     public void run() {

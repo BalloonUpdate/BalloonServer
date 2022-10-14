@@ -8,13 +8,11 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 
-public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
-{
+public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer {
     protected final JCheckBox check;
     protected final CheckBoxTreeLabel label;
 
-    public CheckBoxTreeCellRenderer()
-    {
+    public CheckBoxTreeCellRenderer() {
         setLayout(null);
         add(check = new JCheckBox());
         add(label = new CheckBoxTreeLabel());
@@ -30,11 +28,10 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value,
                                                   boolean selected, boolean expanded, boolean leaf, int row,
-                                                  boolean hasFocus)
-    {
+                                                  boolean hasFocus) {
         String stringValue = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
         setEnabled(tree.isEnabled());
-        check.setSelected(((CheckBoxTreeNode)value).isSelected());
+        check.setSelected(((CheckBoxTreeNode) value).isSelected());
         label.setFont(tree.getFont());
         label.setText(stringValue);
         label.setSelected(selected);
@@ -52,21 +49,19 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
     }
 
     @Override
-    public Dimension getPreferredSize()
-    {
+    public Dimension getPreferredSize() {
         Dimension dCheck = check.getPreferredSize();
         Dimension dLabel = label.getPreferredSize();
         return new Dimension(dCheck.width + dLabel.width, Math.max(dCheck.height, dLabel.height));
     }
 
     @Override
-    public void doLayout()
-    {
+    public void doLayout() {
         Dimension dCheck = check.getPreferredSize();
         Dimension dLabel = label.getPreferredSize();
         int yCheck = 0;
         int yLabel = 0;
-        if(dCheck.height < dLabel.height)
+        if (dCheck.height < dLabel.height)
             yCheck = (dLabel.height - dCheck.height) / 2;
         else
             yLabel = (dCheck.height - dLabel.height) / 2;
@@ -77,15 +72,13 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
     }
 
     @Override
-    public void setBackground(Color color)
-    {
-        if(color instanceof ColorUIResource)
+    public void setBackground(Color color) {
+        if (color instanceof ColorUIResource)
             color = null;
         super.setBackground(color);
     }
 
-    public void setFileIcon()
-    {
+    public void setFileIcon() {
         String fileName = label.getText();
 
         if (fileName.endsWith(".class")) {

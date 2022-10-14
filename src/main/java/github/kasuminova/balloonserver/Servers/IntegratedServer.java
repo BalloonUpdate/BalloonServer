@@ -11,9 +11,9 @@ import com.alibaba.fastjson2.JSONWriter;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
-import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.GUI.RuleEditor;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Utils.*;
@@ -36,17 +36,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static github.kasuminova.balloonserver.BalloonServer.*;
+import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
+import static github.kasuminova.balloonserver.BalloonServer.TITLE;
 import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
 
 /**
  * IntegratedServer 集成服务端面板实例
  */
 public class IntegratedServer {
-    protected HttpServer server;
-    protected String indexJson = null;
-    protected String resJson = null;
-    protected String legacyResJson = null;
     protected final JSONObject index = new JSONObject();
     protected final String resJsonFileExtensionName = "res-cache";
     protected final String legacyResJsonFileExtensionName = "legacy_res-cache";
@@ -91,37 +88,18 @@ public class IntegratedServer {
     protected final JList<String> commonMode = new JList<>();
     //补全模式
     protected final JList<String> onceMode = new JList<>();
+    protected HttpServer server;
+    protected String indexJson = null;
+    protected String resJson = null;
+    protected String legacyResJson = null;
     protected IntegratedServerInterface serverInterface;
     protected HttpServerInterface httpServerInterface;
 
     /**
-     * 返回当前实例的面板
-     * @return 服务器面板
-     */
-    public JPanel getPanel() {
-        return littleServerPanel;
-    }
-
-    /**
-     * 返回当前服务器实例的接口
-     * @return LittleServerInterface
-     */
-    public IntegratedServerInterface getServerInterface() {
-        return serverInterface;
-    }
-
-    /**
-     * 返回当前服务器实例的 HTTP 服务器接口
-     * @return HttpServerInterface
-     */
-    public HttpServerInterface getHttpServerInterface() {
-        return httpServerInterface;
-    }
-
-    /**
      * 创建一个服务器面板，并绑定一个新的服务器实例
+     *
      * @param serverName LittleServerConfig 配置文件路径
-     * @param autoStart 是否在创建对象后自动启动服务器
+     * @param autoStart  是否在创建对象后自动启动服务器
      */
     public IntegratedServer(String serverName, boolean autoStart) {
         this.serverName = serverName;
@@ -145,7 +123,7 @@ public class IntegratedServer {
         JMenuItem cleanLogPane = new JMenuItem("清空日志", DELETE_ICON);
         cleanLogPane.addActionListener(e -> {
             try {
-                logPane.getDocument().remove(0,logPane.getDocument().getLength());
+                logPane.getDocument().remove(0, logPane.getDocument().getLength());
                 logger.info("已清空当前服务器实例日志窗口.");
             } catch (BadLocationException ex) {
                 ex.printStackTrace();
@@ -265,74 +243,57 @@ public class IntegratedServer {
         }
     }
 
-    //更新规则编辑器类
-    protected class RuleEditorActionListener implements ActionListener {
-        protected final JList<String> ruleList;
-        protected final List<String> rules;
-        public RuleEditorActionListener(JList<String> ruleList, List<String> rules) {
-            this.ruleList = ruleList;
-            this.rules = rules;
-        }
-        protected void showRuleEditorDialog(JSONArray jsonArray) {
-            //锁定窗口，防止用户误操作
-            MAIN_FRAME.setEnabled(false);
-            RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
-            editorDialog.setModal(true);
+    /**
+     * 从指定名称 JSON 文件中读取 JSONArray
+     *
+     * @param fileName                 文件名
+     * @param resJsonFileExtensionName 自定义扩展名
+     * @param logger                   Logger
+     * @return JSONArray, 如果文件不存在或出现问题, 则返回 null
+     */
+    protected static JSONArray loadJsonArrayFromFile(String fileName, String resJsonFileExtensionName, GUILogger logger) {
+        File jsonCache = new File(String.format("./%s.%s.json", fileName, resJsonFileExtensionName));
 
-            MAIN_FRAME.setEnabled(true);
-            editorDialog.setVisible(true);
+        JSONArray jsonArray = null;
 
-            ruleList.setListData(rules.toArray(new String[0]));
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (isGenerating.get()) {
-                JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在生成资源缓存，请稍后再试。",
-                        BalloonServer.TITLE,
-                        JOptionPane.WARNING_MESSAGE);
-                return;
+        if (jsonCache.exists()) {
+            try {
+                String jsonString = new FileReader(jsonCache).readString();
+                jsonArray = JSONArray.parseArray(jsonString);
+            } catch (IORuntimeException e) {
+                logger.error("读取缓存文件的时候出现了一些问题...", e);
+                logger.warn("缓存文件读取失败, 重新生成缓存...");
             }
-
-            File file = new File(String.format("./%s.%s.json", serverName, resJsonFileExtensionName));
-            if (file.exists()) {
-                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                        "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
-                        BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
-                if (!(selection == JOptionPane.YES_OPTION)) return;
-
-                try {
-                    String json = new FileReader(file).readString();
-                    showRuleEditorDialog(JSONArray.parseArray(json));
-                } catch (IORuntimeException ex) {
-                    JOptionPane.showMessageDialog(MAIN_FRAME,
-                            "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
-                            JOptionPane.ERROR_MESSAGE);
-                }
-                return;
-            }
-
-            int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                    "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
-                    BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
-            if (!(selection == JOptionPane.YES_OPTION)) return;
-
-            ThreadUtil.execute(() -> {
-                new CacheUtils(serverInterface,httpServerInterface,startOrStop).updateDirCache(null, HashCalculator.CRC32);
-                if (file.exists()) {
-                    try {
-                        String json = new FileReader(file).readString();
-                        showRuleEditorDialog(JSONArray.parseArray(json));
-
-                    } catch (IORuntimeException ex) {
-                        JOptionPane.showMessageDialog(MAIN_FRAME,
-                                "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
-                                JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            });
         }
+
+        return jsonArray;
+    }
+
+    /**
+     * 返回当前实例的面板
+     *
+     * @return 服务器面板
+     */
+    public JPanel getPanel() {
+        return littleServerPanel;
+    }
+
+    /**
+     * 返回当前服务器实例的接口
+     *
+     * @return LittleServerInterface
+     */
+    public IntegratedServerInterface getServerInterface() {
+        return serverInterface;
+    }
+
+    /**
+     * 返回当前服务器实例的 HTTP 服务器接口
+     *
+     * @return HttpServerInterface
+     */
+    public HttpServerInterface getHttpServerInterface() {
+        return httpServerInterface;
     }
 
     /**
@@ -343,8 +304,8 @@ public class IntegratedServer {
             //检查当前端口是否被占用
             if (!NetUtil.isUsableLocalPort(config.getPort())) {
                 JOptionPane.showMessageDialog(MAIN_FRAME, """
-                        当前配置的端口已被占用.
-                        请检查是否有程序占用端口或更换端口.""",
+                                当前配置的端口已被占用.
+                                请检查是否有程序占用端口或更换端口.""",
                         TITLE,
                         JOptionPane.ERROR_MESSAGE);
                 return;
@@ -407,8 +368,18 @@ public class IntegratedServer {
             }
 
             @Override
+            public void setResJson(String newResJson) {
+                resJson = newResJson;
+            }
+
+            @Override
             public String getLegacyResJson() {
                 return legacyResJson;
+            }
+
+            @Override
+            public void setLegacyResJson(String newLegacyResJson) {
+                legacyResJson = newLegacyResJson;
             }
 
             @Override
@@ -434,16 +405,6 @@ public class IntegratedServer {
             @Override
             public String getIndexJson() {
                 return indexJson;
-            }
-
-            @Override
-            public void setResJson(String newResJson) {
-                resJson = newResJson;
-            }
-
-            @Override
-            public void setLegacyResJson(String newLegacyResJson) {
-                legacyResJson = newLegacyResJson;
             }
 
             @Override
@@ -506,32 +467,8 @@ public class IntegratedServer {
     }
 
     /**
-     * 从指定名称 JSON 文件中读取 JSONArray
-     * @param fileName 文件名
-     * @param resJsonFileExtensionName 自定义扩展名
-     * @param logger Logger
-     * @return JSONArray, 如果文件不存在或出现问题, 则返回 null
-     */
-    protected static JSONArray loadJsonArrayFromFile(String fileName, String resJsonFileExtensionName, GUILogger logger) {
-        File jsonCache = new File(String.format("./%s.%s.json", fileName, resJsonFileExtensionName));
-
-        JSONArray jsonArray = null;
-
-        if (jsonCache.exists()) {
-            try {
-                String jsonString = new FileReader(jsonCache).readString();
-                jsonArray = JSONArray.parseArray(jsonString);
-            } catch (IORuntimeException e) {
-                logger.error("读取缓存文件的时候出现了一些问题...", e);
-                logger.warn("缓存文件读取失败, 重新生成缓存...");
-            }
-        }
-
-        return jsonArray;
-    }
-
-    /**
      * 关闭服务器
+     *
      * @return 是否关闭成功
      */
     protected boolean stopServer() {
@@ -556,7 +493,7 @@ public class IntegratedServer {
     protected void saveConfigurationToFile() {
         reloadConfigurationFromGUI();
         try {
-            ConfigurationManager.saveConfigurationToFile(config,"./",serverName + configFileSuffix.replace(".json", ""));
+            ConfigurationManager.saveConfigurationToFile(config, "./", serverName + configFileSuffix.replace(".json", ""));
             logger.info("已保存配置至磁盘.");
         } catch (IORuntimeException ex) {
             logger.error("保存配置文件的时候出现了问题...", ex);
@@ -718,7 +655,7 @@ public class IntegratedServer {
     public void resetStatusProgressBar() {
         statusProgressBar.setVisible(false);
         statusProgressBar.setIndeterminate(false);
-        statusProgressBar.setValue(0);
+        statusProgressBar.reset();
     }
 
     protected Box loadIPPortBox() {
@@ -727,7 +664,7 @@ public class IntegratedServer {
         IPPortBox.add(new JLabel("监听 IP:"));
         IPPortBox.add(IPTextField);
         //端口配置
-        SpinnerNumberModel portSpinnerModel = new SpinnerNumberModel(8080,1,65535,1);
+        SpinnerNumberModel portSpinnerModel = new SpinnerNumberModel(8080, 1, 65535, 1);
         portSpinner.setModel(portSpinnerModel);
         JSpinner.NumberEditor portSpinnerEditor = new JSpinner.NumberEditor(portSpinner, "#");
         portSpinner.setEditor(portSpinnerEditor);
@@ -743,8 +680,8 @@ public class IntegratedServer {
         JLabel mainDirLabel = new JLabel("资源文件夹:");
         mainDirTextField.putClientProperty("JTextField.showClearButton", true);
         mainDirTextField.setToolTipText("""
-                        仅支持程序当前目录下的文件夹或子文件夹，请勿输入其他文件夹。
-                        默认为 /res , 也可输入其他文件夹, 如 /resources、/content、/.minecraft 等.""");
+                仅支持程序当前目录下的文件夹或子文件夹，请勿输入其他文件夹。
+                默认为 /res , 也可输入其他文件夹, 如 /resources、/content、/.minecraft 等.""");
         mainDirBox.add(mainDirLabel);
         mainDirBox.add(mainDirTextField);
 
@@ -760,7 +697,7 @@ public class IntegratedServer {
 
         selectJksSslFile.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser(".");
-            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"jks"}, null,"JKS 证书 (*.jks)"));
+            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"jks"}, null, "JKS 证书 (*.jks)"));
 
             if (fileChooser.showDialog(littleServerPanel, "载入证书") == JFileChooser.APPROVE_OPTION) {
                 File JKS = fileChooser.getSelectedFile();
@@ -819,8 +756,8 @@ public class IntegratedServer {
         commonMode.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()){
-                    commonModeMenu.show(commonMode,e.getX(),e.getY());
+                if (e.isPopupTrigger()) {
+                    commonModeMenu.show(commonMode, e.getX(), e.getY());
                 }
             }
         });
@@ -851,18 +788,18 @@ public class IntegratedServer {
         //添加更新规则
         JMenuItem addNewOnceRule = new JMenuItem("添加更新规则");
         addNewOnceRule.setIcon(PLUS_ICON);
-        addNewOnceRule.addActionListener(new AddUpdateRule(onceMode,onceModeList, MAIN_FRAME));
+        addNewOnceRule.addActionListener(new AddUpdateRule(onceMode, onceModeList, MAIN_FRAME));
         onceModeMenu.add(addNewOnceRule);
         //删除指定规则
         JMenuItem deleteOnceRule = new JMenuItem("删除选定的规则");
         deleteOnceRule.setIcon(REMOVE_ICON);
-        deleteOnceRule.addActionListener(new DeleteUpdateRule(onceMode,onceModeList, MAIN_FRAME));
+        deleteOnceRule.addActionListener(new DeleteUpdateRule(onceMode, onceModeList, MAIN_FRAME));
         //鼠标监听
         onceMode.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()){
-                    onceModeMenu.show(onceMode,e.getX(),e.getY());
+                if (e.isPopupTrigger()) {
+                    onceModeMenu.show(onceMode, e.getX(), e.getY());
                 }
             }
         });
@@ -875,17 +812,89 @@ public class IntegratedServer {
         JPanel extraFeaturesPanel = new JPanel(new BorderLayout());
         //实时文件监听
         fileChangeListener.setToolTipText("""
-                        开启后，启动服务器的同时会启动文件监听服务.
-                        文件监听服务会每隔 5 - 7 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.
-                        注意:不推荐在超大文件夹(10000 文件/文件夹 以上)上使用此功能，可能会造成 I/O 卡顿.""");
+                开启后，启动服务器的同时会启动文件监听服务.
+                文件监听服务会每隔 5 - 7 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.
+                注意:不推荐在超大文件夹(10000 文件/文件夹 以上)上使用此功能，可能会造成 I/O 卡顿.""");
 
         compatibleMode.setToolTipText("""
-                        开启后，服务端将兼容 4.x.x 版本的所有类型客户端.
-                        但是同时也会造成一定的性能下降.""");
+                开启后，服务端将兼容 4.x.x 版本的所有类型客户端.
+                但是同时也会造成一定的性能下降.""");
 
-        extraFeaturesPanel.add(fileChangeListener,BorderLayout.WEST);
+        extraFeaturesPanel.add(fileChangeListener, BorderLayout.WEST);
         extraFeaturesPanel.add(compatibleMode, BorderLayout.EAST);
 
         return extraFeaturesPanel;
+    }
+
+    //更新规则编辑器类
+    protected class RuleEditorActionListener implements ActionListener {
+        protected final JList<String> ruleList;
+        protected final List<String> rules;
+
+        public RuleEditorActionListener(JList<String> ruleList, List<String> rules) {
+            this.ruleList = ruleList;
+            this.rules = rules;
+        }
+
+        protected void showRuleEditorDialog(JSONArray jsonArray) {
+            //锁定窗口，防止用户误操作
+            MAIN_FRAME.setEnabled(false);
+            RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
+            editorDialog.setModal(true);
+
+            MAIN_FRAME.setEnabled(true);
+            editorDialog.setVisible(true);
+
+            ruleList.setListData(rules.toArray(new String[0]));
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (isGenerating.get()) {
+                JOptionPane.showMessageDialog(MAIN_FRAME,
+                        "当前正在生成资源缓存，请稍后再试。",
+                        BalloonServer.TITLE,
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            File file = new File(String.format("./%s.%s.json", serverName, resJsonFileExtensionName));
+            if (file.exists()) {
+                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
+                        "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
+                        BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
+                if (!(selection == JOptionPane.YES_OPTION)) return;
+
+                try {
+                    String json = new FileReader(file).readString();
+                    showRuleEditorDialog(JSONArray.parseArray(json));
+                } catch (IORuntimeException ex) {
+                    JOptionPane.showMessageDialog(MAIN_FRAME,
+                            "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
+                            JOptionPane.ERROR_MESSAGE);
+                }
+                return;
+            }
+
+            int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
+                    "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
+                    BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
+            if (!(selection == JOptionPane.YES_OPTION)) return;
+
+            ThreadUtil.execute(() -> {
+                new CacheUtils(serverInterface, httpServerInterface, startOrStop).updateDirCache(null, HashCalculator.CRC32);
+                if (file.exists()) {
+                    try {
+                        String json = new FileReader(file).readString();
+                        showRuleEditorDialog(JSONArray.parseArray(json));
+
+                    } catch (IORuntimeException ex) {
+                        JOptionPane.showMessageDialog(MAIN_FRAME,
+                                "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+        }
     }
 }

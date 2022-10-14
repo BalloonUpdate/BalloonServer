@@ -4,7 +4,7 @@ import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.file.FileWriter;
 
 import javax.swing.filechooser.FileFilter;
-import java.io.*;
+import java.io.File;
 
 public class FileUtil {
     /**
@@ -24,6 +24,7 @@ public class FileUtil {
     /**
      * 根据传入大小返回合适的 byte[]
      * 适用于 FileInputStream 之类的环境
+     *
      * @param size 文件大小
      * @return 根据大小适应的 byte[] 大小
      */
@@ -44,6 +45,7 @@ public class FileUtil {
     /**
      * 根据传入大小返回合适的 int 大小
      * 适用于网络文件上传
+     *
      * @param size 文件大小
      * @return 根据大小适应的 int 大小
      */
@@ -54,7 +56,7 @@ public class FileUtil {
             return 1024 * 8;
         } else if (size <= 1024 * 1024 * 128) {
             return 1024 * 64;
-        } else if (size <= 1024 * 1024 * 512){
+        } else if (size <= 1024 * 1024 * 512) {
             return 1024 * 1024;
         } else {
             return 1024 * 1024 * 8;
@@ -63,6 +65,7 @@ public class FileUtil {
 
     /**
      * 根据传入大小返回合适的大小格式化文本
+     *
      * @param size 文件大小
      * @return Byte 或 KB 或 MB 或 GB
      */
@@ -86,9 +89,10 @@ public class FileUtil {
         /**
          * 一个简易的多文件扩展名过滤器
          * 文件扩展名过滤器
-         * @param ext 扩展名数组，如 png,jpg
+         *
+         * @param ext       扩展名数组，如 png,jpg
          * @param blackList 黑名单
-         * @param des 扩展描述
+         * @param des       扩展描述
          */
         public SimpleFileFilter(String[] ext, String[] blackList, String des) {
             this.ext = ext;
@@ -111,6 +115,7 @@ public class FileUtil {
             }
             return false;
         }
+
         public String getDescription() {
             return des;
         }

@@ -14,25 +14,38 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public interface IntegratedServerInterface {
     GUILogger getLogger();
+
     IntegratedServerConfig getConfig();
+
     JPanel getRequestListPanel();
+
     AtomicBoolean isGenerating();
+
     AtomicBoolean isStarted();
+
     //获取文件结构 JSON
     String getResJson();
-    //获取旧版文件结构 JSON
-    String getLegacyResJson();
-    //获取 index.json 字符串
-    String getIndexJson();
-    String getServerName();
-    String getResJsonFileExtensionName();
-    String getLegacyResJsonFileExtensionName();
-    //获取状态栏进度条
-    SmoothProgressBar getStatusProgressBar();
+
     //设置新的文件结构 JSON
     void setResJson(String newResJson);
+
+    //获取旧版文件结构 JSON
+    String getLegacyResJson();
+
     //设置新的旧版文件结构 JSON
     void setLegacyResJson(String newLegacyResJson);
+
+    //获取 index.json 字符串
+    String getIndexJson();
+
+    String getServerName();
+
+    String getResJsonFileExtensionName();
+
+    String getLegacyResJsonFileExtensionName();
+
+    //获取状态栏进度条
+    SmoothProgressBar getStatusProgressBar();
 
     /**
      * 重新生成缓存
@@ -41,6 +54,7 @@ public interface IntegratedServerInterface {
 
     /**
      * 关闭服务器
+     *
      * @return 是否关闭成功
      */
     boolean stopServer();

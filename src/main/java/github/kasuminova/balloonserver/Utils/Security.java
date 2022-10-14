@@ -4,14 +4,15 @@ import github.kasuminova.balloonserver.BalloonServer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Security {
     /**
      * 检查字符串是否存在非法字符
-     * @param c 对话框父窗口
-     * @param str 要检查的对象
+     *
+     * @param c                        对话框父窗口
+     * @param str                      要检查的对象
      * @param customUnavailableStrings 自定义非法字符列表
      * @return 未通过返回 true, 通过返回 false
      */

@@ -10,6 +10,7 @@ public class ApplicationVersion {
 
     /**
      * 程序版本对象
+     *
      * @param version 如 1.1.1-BETA, 1.0.0-STABLE
      */
     public ApplicationVersion(String version) {
@@ -21,6 +22,7 @@ public class ApplicationVersion {
         minorVersion = Integer.parseInt(versions[2]);
         branch = versionTmp[1];
     }
+
     public int getMinorVersion() {
         return minorVersion;
     }

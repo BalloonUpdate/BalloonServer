@@ -9,16 +9,16 @@ public class CloseOperations {
         this.desc = desc;
     }
 
-    public void setDesc(String desc) {
-        this.desc = desc;
-    }
-
     public int getOperation() {
         return operation;
     }
 
     public String getDesc() {
         return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
     @Override

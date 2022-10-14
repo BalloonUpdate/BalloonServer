@@ -6,10 +6,13 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.system.SystemUtil;
 import github.kasuminova.balloonserver.Configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
-import github.kasuminova.balloonserver.GUI.*;
+import github.kasuminova.balloonserver.GUI.ConfirmExitDialog;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.GUI.Panels.AboutPanel;
 import github.kasuminova.balloonserver.GUI.Panels.SettingsPanel;
+import github.kasuminova.balloonserver.GUI.SetupSwing;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
+import github.kasuminova.balloonserver.GUI.SwingSystemTray;
 import github.kasuminova.balloonserver.Servers.IntegratedServer;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.UpdateChecker.ApplicationVersion;
@@ -27,9 +30,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
@@ -39,31 +42,23 @@ import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
  * 主 窗口/程序。
  */
 public final class BalloonServer {
-    static {
-        //设置全局主题，字体等
-        SetupSwing.init();
-    }
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.3-STABLE");
     public static final String TITLE = "BalloonServer " + VERSION;
+    //主窗口
+    public static final JFrame MAIN_FRAME = new JFrame(TITLE);
     /*
     可执行文件名称。
     如 BalloonServer-GUI-1.2.0-STABLE.jar,
     如果为 exe 格式则为 C:/Users/username/AppData/Local/Temp/e4j+随机缓存名/BalloonServer-GUI-1.2.0-STABLE.jar
      */
     public static final String ARCHIVE_NAME = BalloonServer.class.getProtectionDomain().getCodeSource().getLocation().getFile();
-    private static final long START = System.currentTimeMillis();
-    private static final JFrame PREMAIN_FRAME = new JFrame("加载中");
-    private static final JPanel STATUS_PANEL = new JPanel(new BorderLayout());
-    private static final JProgressBar PRE_LOAD_PROGRESS_BAR = new JProgressBar();
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(
             BalloonServer.class.getResource("/image/icon_128x128.jpg")));
-    //主窗口
-    public static final JFrame MAIN_FRAME = new JFrame(TITLE);
     public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);
     public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     //主窗口 Logger
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
-    public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0,1000);
+    public static final JProgressBar GLOBAL_STATUS_PROGRESSBAR = new JProgressBar(0, 1000);
     //主面板
     public static final JPanel mainPanel = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
@@ -71,9 +66,19 @@ public final class BalloonServer {
     public static final List<IntegratedServerInterface> availableCustomServerInterfaces = Collections.synchronizedList(new ArrayList<>());
     //支持放入多个任务的 Timer
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);
+    private static final long START = System.currentTimeMillis();
+    private static final JFrame PREMAIN_FRAME = new JFrame("加载中");
+    private static final JPanel STATUS_PANEL = new JPanel(new BorderLayout());
+    private static final JProgressBar PRE_LOAD_PROGRESS_BAR = new JProgressBar();
+
+    static {
+        //设置全局主题，字体等
+        SetupSwing.init();
+    }
+
     private static void init() {
         //大小设置
-        MAIN_FRAME.setSize(1400,815);
+        MAIN_FRAME.setSize(1400, 815);
         MAIN_FRAME.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.8), MAIN_FRAME.getHeight()));
 
         //标签页配置
@@ -137,7 +142,7 @@ public final class BalloonServer {
                     });
                 }
             }
-        },0,3600000);
+        }, 0, 3600000);
     }
 
     /**
@@ -153,7 +158,7 @@ public final class BalloonServer {
                     ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(MAIN_FRAME, CONFIG);
                     MAIN_FRAME.setEnabled(false);
                     confirmExitDialog.setVisible(true);
-                } else if (CONFIG.getCloseOperation() == BalloonServerConfig.HIDE_ON_CLOSE.getOperation()){
+                } else if (CONFIG.getCloseOperation() == BalloonServerConfig.HIDE_ON_CLOSE.getOperation()) {
                     MAIN_FRAME.setVisible(false);
                 } else {
                     CONFIG.setCloseOperation(BalloonServerConfig.EXIT_ON_CLOSE.getOperation());
@@ -221,6 +226,7 @@ public final class BalloonServer {
 
     /**
      * 关闭所有服务端实例
+     *
      * @param inquireUser 是否向用户确认关闭正在运行的服务端
      */
     public static void stopAllServers(boolean inquireUser) {
@@ -279,8 +285,9 @@ public final class BalloonServer {
         JMenuItem createNewLittleServer = new JMenuItem("创建集成服务端实例", PLUS_ICON);
         newMenu.add(createNewLittleServer);
         createNewLittleServer.addActionListener(e -> {
-            String serverName = JOptionPane.showInputDialog(MAIN_FRAME,"请输入服务器实例名称", BalloonServer.TITLE, JOptionPane.INFORMATION_MESSAGE);
-            if (Security.stringIsUnsafe(MAIN_FRAME, serverName, new String[]{"balloonserver","littleserver","res-cache",".lscfg",".json"})) return;
+            String serverName = JOptionPane.showInputDialog(MAIN_FRAME, "请输入服务器实例名称", BalloonServer.TITLE, JOptionPane.INFORMATION_MESSAGE);
+            if (Security.stringIsUnsafe(MAIN_FRAME, serverName, new String[]{"balloonserver", "littleserver", "res-cache", ".lscfg", ".json"}))
+                return;
 
             if (new File(String.format("./%s.lscfg.json", serverName)).exists()) {
                 JOptionPane.showMessageDialog(MAIN_FRAME,
@@ -313,7 +320,7 @@ public final class BalloonServer {
         loadLittleServer.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setMultiSelectionEnabled(true);
-            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"} ,"LittleServer 配置文件 (*.lscfg.json)"));
+            fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"}, "LittleServer 配置文件 (*.lscfg.json)"));
 
             if (!(fileChooser.showDialog(MAIN_FRAME, "载入选中实例") == JFileChooser.APPROVE_OPTION)) {
                 return;
@@ -392,10 +399,11 @@ public final class BalloonServer {
 
     /**
      * 保存并停止对应服务端实例，并从服务端列表上移除
+     *
      * @param serverInterface 服务器接口
-     * @param serverName 服务器名
-     * @param index 服务端列表位置
-     * @param inquireUser 是否向用户确认关闭服务端
+     * @param serverName      服务器名
+     * @param index           服务端列表位置
+     * @param inquireUser     是否向用户确认关闭服务端
      * @return 用户是否确认关闭了服务器
      */
     private static boolean stopIntegratedServer(IntegratedServerInterface serverInterface, String serverName, int index, boolean inquireUser) {
@@ -437,6 +445,7 @@ public final class BalloonServer {
 
     /**
      * 检查服务器列表中是否已存在相应名称的服务器
+     *
      * @param serverName 服务器名
      * @return 如果有相同返回 true, 无则返回 false
      */
@@ -461,14 +470,14 @@ public final class BalloonServer {
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
         SmoothProgressBar memBar = new SmoothProgressBar(250, 250);
-        memBar.setPreferredSize(new Dimension(memBar.getMaximum(),memBar.getHeight()));
-        memBar.setBorder(new EmptyBorder(1,0,0,5));
+        memBar.setPreferredSize(new Dimension(memBar.getMaximum(), memBar.getHeight()));
+        memBar.setBorder(new EmptyBorder(1, 0, 0, 5));
         memBar.setStringPainted(true);
         memBarBox.add(new JLabel("JVM 内存使用情况: "));
         memBarBox.add(memBar);
         //内存清理
         JButton GC = new JButton("清理");
-        GC.setPreferredSize(new Dimension(65,21));
+        GC.setPreferredSize(new Dimension(65, 21));
         GC.addActionListener(e -> System.gc());
         memBarBox.add(GC);
         STATUS_PANEL.add(memBarBox, BorderLayout.EAST);
@@ -501,14 +510,14 @@ public final class BalloonServer {
      */
     private static void preInit() {
         JPanel panel = new JPanel(new VFlowLayout());
-        panel.add(new JLabel(new ImageIcon(ICON.getImage().getScaledInstance(96,96,Image.SCALE_DEFAULT))));
+        panel.add(new JLabel(new ImageIcon(ICON.getImage().getScaledInstance(96, 96, Image.SCALE_DEFAULT))));
         panel.add(new JLabel("程序启动中，请稍等..."));
         PRE_LOAD_PROGRESS_BAR.setStringPainted(true);
         PRE_LOAD_PROGRESS_BAR.setIndeterminate(true);
         PRE_LOAD_PROGRESS_BAR.setString("...");
         panel.add(PRE_LOAD_PROGRESS_BAR);
         PREMAIN_FRAME.add(panel);
-        PREMAIN_FRAME.setSize(240,150);
+        PREMAIN_FRAME.setSize(240, 150);
         PREMAIN_FRAME.setUndecorated(true);
         PREMAIN_FRAME.setLocationRelativeTo(null);
         PREMAIN_FRAME.setVisible(true);
@@ -520,13 +529,13 @@ public final class BalloonServer {
         GLOBAL_LOGGER.info("程序分支为 " + VERSION.getBranch());
         if (VERSION.getBranch().equals("ALPHA")) {
             int selection = JOptionPane.showConfirmDialog(PREMAIN_FRAME, """
-                    此版本为 ALPHA 版本，通常引入了一些可能存在破坏性的强大的新功能。
-                    在使用之前，您应知悉此版本可能存在无征兆的程序崩溃，报错。
-                    请不要将此版本投入生产环境
-                    请不要将此版本投入生产环境
-                    请不要将此版本投入生产环境
-                    在阅读上方提示后，请点击 “是” 启动程序并代表你愿意承担因不稳定版本造成的程序崩溃后果，
-                    选择 “否” 退出程序。""",
+                            此版本为 ALPHA 版本，通常引入了一些可能存在破坏性的强大的新功能。
+                            在使用之前，您应知悉此版本可能存在无征兆的程序崩溃，报错。
+                            请不要将此版本投入生产环境
+                            请不要将此版本投入生产环境
+                            请不要将此版本投入生产环境
+                            在阅读上方提示后，请点击 “是” 启动程序并代表你愿意承担因不稳定版本造成的程序崩溃后果，
+                            选择 “否” 退出程序。""",
                     "WARNING", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (!(selection == JOptionPane.YES_OPTION)) {
                 System.exit(0);

@@ -20,15 +20,12 @@ import java.nio.file.Files;
  * @author Kasumi_Nova
  */
 public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
-    File jks;
-    char[] jksPasswd;
     private final boolean useSsl;
     private final GUILogger logger;
-    public boolean isUseSsl() {
-        return useSsl;
-    }
-
     private final IntegratedServerInterface serverInterface;
+    File jks;
+    char[] jksPasswd;
+
     public HttpServerInitializer(IntegratedServerInterface serverInterface) {
         this.serverInterface = serverInterface;
 
@@ -57,6 +54,10 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         }
     }
 
+    public boolean isUseSsl() {
+        return useSsl;
+    }
+
     @Override
     protected void initChannel(SocketChannel channel) throws Exception {
         ChannelPipeline pipeline = channel.pipeline();
@@ -73,10 +74,10 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         }
 
         //反向代理适配器
-        pipeline.addLast("decoder",new DecodeProxy(logger));
+        pipeline.addLast("decoder", new DecodeProxy(logger));
         pipeline.addLast(new HttpServerCodec());
-        pipeline.addLast("httpAggregator",new HttpObjectAggregator(512 * 1024));
-        pipeline.addLast("http-chunked",new ChunkedWriteHandler());
+        pipeline.addLast("httpAggregator", new HttpObjectAggregator(512 * 1024));
+        pipeline.addLast("http-chunked", new ChunkedWriteHandler());
         //gzip 压缩
 //        pipeline.addLast("compressor",new HttpContentCompressor());
         //请求处理器

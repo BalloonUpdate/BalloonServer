@@ -6,7 +6,6 @@ import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -39,8 +38,7 @@ public class Checker {
             //版本更新检查
             if (applicationVersion.toInt() >= newVersion.toInt()) continue;
 
-            if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp"))
-            {
+            if (CONFIG.isAutoUpdate() && ARCHIVE_NAME.contains("e4j") && ARCHIVE_NAME.contains("Temp")) {
                 startAutoUpdate(latestRelease);
                 return;
             }
@@ -67,6 +65,7 @@ public class Checker {
 
     /**
      * 启动指定名称的程序
+     *
      * @param fileName 程序名
      */
     public static void startProgram(String fileName, boolean exitThisProgram) {
@@ -91,7 +90,8 @@ public class Checker {
 
     /**
      * 下载最新的程序版本，返回下载完成后的文件名
-     * @param latestRelease Release API 的 JSON 信息
+     *
+     * @param latestRelease      Release API 的 JSON 信息
      * @param showCompleteDialog 完成下载后是否弹出完成对话框
      * @return 文件名, 如果无匹配服务端或下载失败返回 null
      */

@@ -13,9 +13,9 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-record DirCounterTask(File directory, ExecutorService FILE_THREAD_POOL, String hashAlgorithm, AtomicLong completedBytes, AtomicInteger completedFiles)
-        implements Callable<SimpleDirectoryObject>
-{
+record DirCounterTask(File directory, ExecutorService FILE_THREAD_POOL, String hashAlgorithm, AtomicLong completedBytes,
+                      AtomicInteger completedFiles)
+        implements Callable<SimpleDirectoryObject> {
 
     @Override
     public SimpleDirectoryObject call() {

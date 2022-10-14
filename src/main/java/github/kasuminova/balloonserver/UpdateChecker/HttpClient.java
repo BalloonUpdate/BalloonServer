@@ -7,7 +7,9 @@ import github.kasuminova.balloonserver.Utils.FileUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -17,6 +19,7 @@ import java.util.Objects;
 public class HttpClient {
     /**
      * 从指定 URL 中获取 String 字符串
+     *
      * @param urlStr 链接
      * @return 返回的字符串
      */
@@ -32,16 +35,16 @@ public class HttpClient {
                 throw new IOException("Could Not Delete File " + file.getPath());
             }
         }
-        if (!file.createNewFile()){
+        if (!file.createNewFile()) {
             throw new IOException("Could Not Create File " + file.getPath());
         }
 
         JFrame downloadingFrame = new JFrame(BalloonServer.TITLE);
         downloadingFrame.setIconImage(BalloonServer.ICON.getImage());
-        downloadingFrame.setSize(new Dimension(350,145));
+        downloadingFrame.setSize(new Dimension(350, 145));
         downloadingFrame.setResizable(false);
 
-        JPanel mainPanel = new JPanel(new VFlowLayout(0,10,5,true,false));
+        JPanel mainPanel = new JPanel(new VFlowLayout(0, 10, 5, true, false));
         mainPanel.add(new JLabel("进度: "));
 
         JProgressBar progressBar = new JProgressBar();
@@ -64,7 +67,7 @@ public class HttpClient {
         ByteBuffer byteBuffer = ByteBuffer.allocate(4096);
 
         //[0] 为已完成进度，[1] 为速度缓存进度
-        final long[] total = {0,1};
+        final long[] total = {0, 1};
         //定时更新查询器
         Timer timer = new Timer(250, e -> {
             progressBar.setString(String.format("已完成: %s - 速度: %s/s",
@@ -84,13 +87,13 @@ public class HttpClient {
             try {
                 bis.close();
                 foc.close();
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
             downloadingFrame.dispose();
         });
 
         int count;
-        while((count = bis.read(byteBuffer.array(),0,4096)) != -1)
-        {
+        while ((count = bis.read(byteBuffer.array(), 0, 4096)) != -1) {
             foc.write(byteBuffer, total[0]);
             total[0] += count;
             byteBuffer.flip();

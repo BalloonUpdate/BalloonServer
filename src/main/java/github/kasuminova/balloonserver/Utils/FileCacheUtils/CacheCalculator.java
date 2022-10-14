@@ -10,28 +10,38 @@ import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 一个多线程计算文件缓存差异的工具类
+ *
  * @author Kasumi_Nova
  */
 public class CacheCalculator {
-    public CacheCalculator(GUILogger logger, String hashAlgorithm) {
-        this.logger = logger;
-        this.hashAlgorithm = hashAlgorithm;
-    }
+    public final AtomicInteger completedFiles = new AtomicInteger(0);
     private final ExecutorService FILE_THREAD_POOL = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
     private final GUILogger logger;
     private final String hashAlgorithm;
-    public final AtomicInteger completedFiles = new AtomicInteger(0);
-
     /**
      * 可复用变量（降低内存使用率）
      */
     private final StringBuilder childPath = new StringBuilder();
     private final JSONObject obj = new JSONObject();
+    public CacheCalculator(GUILogger logger, String hashAlgorithm) {
+        this.logger = logger;
+        this.hashAlgorithm = hashAlgorithm;
+    }
+
+    private synchronized static void removeObjectFromJsonArray(JSONArray jsonArray, JSONObject object) {
+        jsonArray.remove(object);
+    }
+
+    private synchronized static void addObjectObjectToJsonArray(JSONArray jsonArray, AbstractSimpleFileObject object) {
+        jsonArray.add(object);
+    }
 
     public JSONArray scanDir(JSONArray jsonArray, File dir) {
         //两个 ArrayList 存储启动的线程，用于读取变量
@@ -73,7 +83,7 @@ public class CacheCalculator {
                 directoryObject = simpleDirectoryObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件夹: " + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
-                addObjectObjectToJsonArray(jsonArray,directoryObject);
+                addObjectObjectToJsonArray(jsonArray, directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -84,7 +94,7 @@ public class CacheCalculator {
                 fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到资源目录下有新文件: " + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
-                addObjectObjectToJsonArray(jsonArray,fileObject);
+                addObjectObjectToJsonArray(jsonArray, fileObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -110,7 +120,7 @@ public class CacheCalculator {
                 if (obj.getLong("length") == null) {
                     //如果资源文件夹现在是文件，则重新生成文件缓存，否则扫描文件夹内内容变化
                     if (childFile.isFile()) {
-                        removeObjectFromJsonArray(jsonArray,obj);
+                        removeObjectFromJsonArray(jsonArray, obj);
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
@@ -123,7 +133,7 @@ public class CacheCalculator {
                 } else if (childFile.isFile()) {
                     //如果文件修改时间变动，则重新生成缓存
                     if (childFile.lastModified() / 1000 != obj.getLong("modified")) {
-                        removeObjectFromJsonArray(jsonArray,obj);
+                        removeObjectFromJsonArray(jsonArray, obj);
 
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(childFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
@@ -133,14 +143,14 @@ public class CacheCalculator {
                     }
                     //如果资源文件现在是文件夹，则遍历文件夹内部文件并返回 SimpleDirectoryObject
                 } else if (childFile.isDirectory()) {
-                    removeObjectFromJsonArray(jsonArray,obj);
+                    removeObjectFromJsonArray(jsonArray, obj);
 
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile, FILE_THREAD_POOL, hashAlgorithm));
                     dirThreadList.add(dirCounterThread);
                     ThreadUtil.execute(dirCounterThread);
                 }
             } else {
-                removeObjectFromJsonArray(jsonArray,obj);
+                removeObjectFromJsonArray(jsonArray, obj);
                 i--;
                 logger.info(childPath + " 不存在, 删除缓存数据.");
             }
@@ -153,7 +163,7 @@ public class CacheCalculator {
                 logger.info("检测到文件夹变动: " + dir.getPath() + File.separator + directoryObject.getName() + ", 添加中...");
 
                 completedFiles.getAndAdd(directoryObject.getChildren().size());
-                addObjectObjectToJsonArray(jsonArray,directoryObject);
+                addObjectObjectToJsonArray(jsonArray, directoryObject);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -163,7 +173,7 @@ public class CacheCalculator {
                 fileObject = simpleFileObjectFutureTask.get();
                 logger.info("检测到文件变动: " + dir.getPath() + File.separator + fileObject.getName() + ", 添加中...");
 
-                addObjectObjectToJsonArray(jsonArray,fileObject);
+                addObjectObjectToJsonArray(jsonArray, fileObject);
                 completedFiles.getAndIncrement();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -171,14 +181,6 @@ public class CacheCalculator {
         }
 
         return jsonArray;
-    }
-
-    private synchronized static void removeObjectFromJsonArray(JSONArray jsonArray, JSONObject object) {
-        jsonArray.remove(object);
-    }
-
-    private synchronized static void addObjectObjectToJsonArray(JSONArray jsonArray, AbstractSimpleFileObject object) {
-        jsonArray.add(object);
     }
 
 }

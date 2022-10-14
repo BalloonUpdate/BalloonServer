@@ -8,6 +8,7 @@ import java.security.KeyStore;
 
 /**
  * 用于加载 SSL 证书的类（网上抄的）
+ *
  * @author Kasumi_Nova
  */
 public class SslContextFactoryOne {
@@ -20,7 +21,7 @@ public class SslContextFactoryOne {
 
     // 使用KeyTool生成密钥库和密钥时配置的密码
 
-    public static SSLContext getServerContext(InputStream jks,char[] pass) {
+    public static SSLContext getServerContext(InputStream jks, char[] pass) {
         if (SERVER_CONTEXT != null) {
             return SERVER_CONTEXT;
         }
@@ -36,7 +37,7 @@ public class SslContextFactoryOne {
             //初始化密钥管理器
             kmf.init(ks, pass);
             //获取安全套接字协议（TLS协议）的对象
-            SERVER_CONTEXT= SSLContext.getInstance(PROTOCOL);
+            SERVER_CONTEXT = SSLContext.getInstance(PROTOCOL);
             //初始化此上下文
             //参数一：认证的密钥  参数二：对等信任认证  参数三：伪随机数生成器。由于单向认证，服务端不用验证客户端，所以第二个参数为 null
             SERVER_CONTEXT.init(kmf.getKeyManagers(), null, null);
