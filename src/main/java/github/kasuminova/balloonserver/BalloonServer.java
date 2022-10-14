@@ -4,22 +4,22 @@ import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.system.SystemUtil;
-import github.kasuminova.balloonserver.Configurations.BalloonServerConfig;
-import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
-import github.kasuminova.balloonserver.GUI.ConfirmExitDialog;
-import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
-import github.kasuminova.balloonserver.GUI.Panels.AboutPanel;
-import github.kasuminova.balloonserver.GUI.Panels.SettingsPanel;
-import github.kasuminova.balloonserver.GUI.SetupSwing;
-import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
-import github.kasuminova.balloonserver.GUI.SwingSystemTray;
-import github.kasuminova.balloonserver.Servers.IntegratedServer;
-import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
-import github.kasuminova.balloonserver.UpdateChecker.ApplicationVersion;
-import github.kasuminova.balloonserver.UpdateChecker.Checker;
-import github.kasuminova.balloonserver.Utils.FileUtil;
-import github.kasuminova.balloonserver.Utils.GUILogger;
-import github.kasuminova.balloonserver.Utils.Security;
+import github.kasuminova.balloonserver.configurations.BalloonServerConfig;
+import github.kasuminova.balloonserver.configurations.ConfigurationManager;
+import github.kasuminova.balloonserver.gui.ConfirmExitDialog;
+import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
+import github.kasuminova.balloonserver.gui.panels.AboutPanel;
+import github.kasuminova.balloonserver.gui.panels.SettingsPanel;
+import github.kasuminova.balloonserver.gui.SetupSwing;
+import github.kasuminova.balloonserver.gui.SmoothProgressBar;
+import github.kasuminova.balloonserver.gui.SwingSystemTray;
+import github.kasuminova.balloonserver.servers.IntegratedServer;
+import github.kasuminova.balloonserver.servers.IntegratedServerInterface;
+import github.kasuminova.balloonserver.updatechecker.ApplicationVersion;
+import github.kasuminova.balloonserver.updatechecker.Checker;
+import github.kasuminova.balloonserver.utils.FileUtil;
+import github.kasuminova.balloonserver.utils.GUILogger;
+import github.kasuminova.balloonserver.utils.Security;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -36,7 +36,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
-import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
+import static github.kasuminova.balloonserver.utils.SvgIcons.*;
 
 /**
  * 主 窗口/程序。
