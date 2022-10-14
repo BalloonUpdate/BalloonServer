@@ -81,7 +81,7 @@ public class HttpServer {
                             StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
 
-                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果上方输出的域名不正确, 请自行更换域名。");
+                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果下方输出的域名不正确, 请自行更换域名。");
                 } else {
                     apiAddress = String.format("https://[%s]:%s/index.json",
                             ip,
@@ -93,7 +93,7 @@ public class HttpServer {
                             StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
 
-                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果上方输出的域名不正确, 请自行更换域名。");
+                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果下方输出的域名不正确, 请自行更换域名。");
                 } else if (ip.equals("0.0.0.0")) {
                     apiAddress = String.format("http://localhost:%s/index.json",
                             port);
