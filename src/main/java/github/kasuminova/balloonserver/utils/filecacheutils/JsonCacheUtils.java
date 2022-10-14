@@ -187,7 +187,7 @@ public class JsonCacheUtils {
             checkJsonCache(dir, cacheCalculator, jsonCache, dirSize[1]);
         } else {
             logger.info("正在生成资源目录缓存...");
-            generateCache(dir, hashAlgorithm, totalSize, dirSize[0]);
+            generateCache(dir, hashAlgorithm, totalSize, dirSize[0], dirSize[1]);
         }
 
         return true;
@@ -213,7 +213,7 @@ public class JsonCacheUtils {
         statusProgressBar.setVisible(true);
     }
 
-    private void generateCache(File dir, String hashAlgorithm, String totalSize, long totalFileSize) {
+    private void generateCache(File dir, String hashAlgorithm, String totalSize, long totalFileSize, long totalFiles) {
         //新建资源计算器实例
         fileCacheCalculator = new FileCacheCalculator(hashAlgorithm);
         //创建新线程实例并执行
@@ -234,7 +234,7 @@ public class JsonCacheUtils {
                     completedSize,
                     totalSize,
                     completedFiles,
-                    totalFileSize));
+                    totalFiles));
         });
         //启动轮询
         timer.start();

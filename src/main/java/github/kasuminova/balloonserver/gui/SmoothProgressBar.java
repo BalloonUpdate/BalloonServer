@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class SmoothProgressBar extends JProgressBar {
     private final ExecutorService singleThreadExecutor = new ThreadPoolExecutor(1, 1,
             0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(2));
+            new LinkedBlockingQueue<>(10));
     private final int flowTime;
     private final int frequency;
 
@@ -34,34 +34,11 @@ public class SmoothProgressBar extends JProgressBar {
      * <p>
      * 以平滑方式设置进度
      * </p>
-     * <p>
-     * 注意：此方法会阻塞当前线程以设置进度，如果需要非阻塞，请自行创建一个线程或使用 setValueAsync(int value) 方法
-     * </p>
      *
      * @param value 新进度
-     * @see #setValueAsync(int value)
      */
     @Override
-    public synchronized void setValue(int value) {
-        int currentValue = getValue();
-        if (value < currentValue) {
-            decrement(currentValue - value);
-        } else {
-            increment(value - currentValue);
-        }
-    }
-
-    /**
-     * <p>
-     * 以平滑方式设置进度
-     * </p>
-     * <p>
-     * 此方法不会阻塞线程。
-     * </p>
-     *
-     * @param value 新进度
-     */
-    public void setValueAsync(int value) {
+    public void setValue(int value) {
         singleThreadExecutor.execute(() -> {
             int currentValue = getValue();
             if (value < currentValue) {
@@ -70,6 +47,11 @@ public class SmoothProgressBar extends JProgressBar {
                 increment(value - currentValue);
             }
         });
+    }
+
+    @Override
+    public void setVisible(boolean aFlag) {
+        singleThreadExecutor.execute(() -> super.setVisible(aFlag));
     }
 
     /**
@@ -89,9 +71,21 @@ public class SmoothProgressBar extends JProgressBar {
         //如果变动的数值小于刷新速度，则使用变动数值作为刷新速度，否则使用默认刷新速度
         int finalFrequency = Math.min(frequency, value);
         for (int i = 1; i <= finalFrequency; i++) {
-            if (((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() > 0) break;
+            int queueSize = ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size();
+            if (queueSize > 5) break;
+
             super.setValue(currentValue + ((value / finalFrequency) * i));
-            ThreadUtil.sleep(flowTime / (finalFrequency + i));
+
+            if (queueSize == 0) {
+                ThreadUtil.sleep(flowTime / (finalFrequency + i));
+            } else {
+                ThreadUtil.sleep(flowTime / (finalFrequency + i) / queueSize);
+            }
+        }
+
+        int lastValue = (currentValue + value) - getValue();
+        if (lastValue >= 5 && ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() <= 1) {
+            increment(lastValue);
         }
 
         super.setValue(currentValue + value);
@@ -107,63 +101,23 @@ public class SmoothProgressBar extends JProgressBar {
         //如果变动的数值小于刷新速度，则使用变动数值作为刷新速度，否则使用默认刷新速度
         int finalFrequency = Math.min(frequency, value);
         for (int i = 0; i < finalFrequency; i++) {
-            if (((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() > 0) break;
+            int queueSize = ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size();
+            if (queueSize > 5) break;
+
             super.setValue(currentValue - ((value / finalFrequency) * i));
-            ThreadUtil.sleep(flowTime / (finalFrequency + i));
+
+            if (queueSize == 0) {
+                ThreadUtil.sleep(flowTime / (finalFrequency + i));
+            } else {
+                ThreadUtil.sleep(flowTime / (finalFrequency + i) / queueSize);
+            }
+        }
+
+        int lastValue = (currentValue - value) - getValue();
+        if (lastValue >= 5 && ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() <= 1) {
+            decrement(lastValue);
         }
 
         super.setValue(currentValue - value);
-    }
-
-    /**
-     * <p>
-     * 将进度条进度增长指定数值, 使用平滑方式
-     * </p>
-     *
-     * <p>
-     * 非同步模式
-     * </p>
-     *
-     * @param value 增长的数值
-     */
-    public void incrementAsync(int value) {
-        singleThreadExecutor.execute(() -> {
-            int currentValue = getValue();
-            //如果变动的数值小于刷新速度，则使用变动数值作为刷新速度，否则使用默认刷新速度
-            int finalFrequency = Math.min(frequency, value);
-            for (int i = 1; i <= finalFrequency; i++) {
-                if (((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() > 0) break;
-                super.setValue(currentValue + ((value / finalFrequency) * i));
-                ThreadUtil.sleep(flowTime / (finalFrequency + i));
-            }
-
-            super.setValue(currentValue + value);
-        });
-    }
-
-    /**
-     * <p>
-     * 将进度条进度减少指定数值, 使用平滑方式
-     * </p>
-     *
-     * <p>
-     * 非同步模式
-     * </p>
-     *
-     * @param value 减少的数值
-     */
-    public void decrementAsync(int value) {
-        singleThreadExecutor.execute(() -> {
-            int currentValue = getValue();
-            //如果变动的数值小于刷新速度，则使用变动数值作为刷新速度，否则使用默认刷新速度
-            int finalFrequency = Math.min(frequency, value);
-            for (int i = 0; i < finalFrequency; i++) {
-                if (((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() > 0) break;
-                super.setValue(currentValue - ((value / finalFrequency) * i));
-                ThreadUtil.sleep(flowTime / (finalFrequency + i));
-            }
-
-            super.setValue(currentValue - value);
-        });
     }
 }
