@@ -34,7 +34,7 @@ record DirCounterThread(
                     FILE_THREAD_POOL.submit(fileCounterThread);
                 } else if (file.isDirectory()) {
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(file, FILE_THREAD_POOL, hashAlgorithm));
-                    ThreadUtil.execAsync(dirCounterThread);
+                    ThreadUtil.execute(dirCounterThread);
                     dirThreadList.add(dirCounterThread);
                 }
             }

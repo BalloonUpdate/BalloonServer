@@ -3,6 +3,7 @@ package github.kasuminova.balloonserver.Utils;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson2.JSONArray;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
@@ -33,7 +34,7 @@ public class CacheUtils {
         statusProgressBar = serverInterface.getStatusProgressBar();
     }
     private final JButton startOrStop;
-    private final JProgressBar statusProgressBar;
+    private final SmoothProgressBar statusProgressBar;
     private final GUILogger logger;
     private final AtomicBoolean isGenerating;
     private final IntegratedServerConfig config;
@@ -189,7 +190,7 @@ public class CacheUtils {
 
             serverInterface.resetStatusProgressBar();
             statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件", dirSize[1]));
-            timer = new Timer(25, e -> {
+            timer = new Timer(250, e -> {
                 int completedFiles = cacheCalculator.completedFiles.get();
                 statusProgressBar.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
                 statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles, dirSize[1]));
@@ -208,7 +209,7 @@ public class CacheUtils {
 
             serverInterface.resetStatusProgressBar();
             //轮询线程, 读取进度
-            timer = new Timer(25, e -> {
+            timer = new Timer(250, e -> {
                 long completedBytes = fileListUtils.getCompletedBytes();
                 long completedFiles = fileListUtils.getCompletedFiles();
                 String completedSize = FileUtil.formatFileSizeToStr(completedBytes);

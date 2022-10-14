@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver.Servers;
 
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 
 import javax.swing.*;
@@ -27,7 +28,7 @@ public interface IntegratedServerInterface {
     String getResJsonFileExtensionName();
     String getLegacyResJsonFileExtensionName();
     //获取状态栏进度条
-    JProgressBar getStatusProgressBar();
+    SmoothProgressBar getStatusProgressBar();
     //设置新的文件结构 JSON
     void setResJson(String newResJson);
     //设置新的旧版文件结构 JSON

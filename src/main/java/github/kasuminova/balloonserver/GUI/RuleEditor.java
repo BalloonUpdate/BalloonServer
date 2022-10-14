@@ -14,6 +14,7 @@ import github.kasuminova.balloonserver.UpdateChecker.ApplicationVersion;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultTreeModel;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class RuleEditor extends JDialog {
         setResizable(false);
         setLocationRelativeTo(null);
 
-        JPanel contentPane = (JPanel) getContentPane();
+        Container contentPane = getContentPane();
         contentPane.setLayout(new VFlowLayout());
 
         contentPane.add(new JLabel("更新规则编辑器是为不熟悉正则表达式的小白用户准备的, 能够兼容大部分情况下的应用场景。"));

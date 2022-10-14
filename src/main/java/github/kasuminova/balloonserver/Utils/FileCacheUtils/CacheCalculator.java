@@ -53,11 +53,11 @@ public class CacheCalculator {
                     if (resDirFile.isFile()) {
                         FutureTask<SimpleFileObject> fileCounterThread = new FutureTask<>(new FileCounterThread(resDirFile, hashAlgorithm));
                         fileThreadList.add(fileCounterThread);
-                        ThreadUtil.execAsync(fileCounterThread);
+                        ThreadUtil.execute(fileCounterThread);
                     } else {
                         FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(resDirFile, FILE_THREAD_POOL, hashAlgorithm));
                         dirThreadList.add(dirCounterThread);
-                        ThreadUtil.execAsync(dirCounterThread);
+                        ThreadUtil.execute(dirCounterThread);
                     }
                 }
             }
@@ -137,7 +137,7 @@ public class CacheCalculator {
 
                     FutureTask<SimpleDirectoryObject> dirCounterThread = new FutureTask<>(new DirCounterThread(childFile, FILE_THREAD_POOL, hashAlgorithm));
                     dirThreadList.add(dirCounterThread);
-                    ThreadUtil.execAsync(dirCounterThread);
+                    ThreadUtil.execute(dirCounterThread);
                 }
             } else {
                 removeObjectFromJsonArray(jsonArray,obj);

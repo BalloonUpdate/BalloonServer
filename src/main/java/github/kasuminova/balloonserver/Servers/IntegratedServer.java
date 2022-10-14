@@ -11,6 +11,7 @@ import com.alibaba.fastjson2.JSONWriter;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.Configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.GUI.RuleEditor;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
@@ -51,7 +52,7 @@ public class IntegratedServer {
     protected final String legacyResJsonFileExtensionName = "legacy_res-cache";
     protected final String configFileSuffix = ".lscfg.json";
     protected final JLabel statusLabel = new JLabel("状态: 就绪", JLabel.LEFT);
-    protected final JProgressBar statusProgressBar = new JProgressBar(0, 1000);
+    protected final SmoothProgressBar statusProgressBar = new SmoothProgressBar(1000, 250);
     protected final JButton copyAddressButton = new JButton("复制 API 地址");
     protected final JButton openAddressButton = new JButton("在浏览器中打开 API 地址");
     protected final String serverName;
@@ -317,7 +318,7 @@ public class IntegratedServer {
                     BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
             if (!(selection == JOptionPane.YES_OPTION)) return;
 
-            ThreadUtil.execAsync(() -> {
+            ThreadUtil.execute(() -> {
                 new CacheUtils(serverInterface,httpServerInterface,startOrStop).updateDirCache(null, HashCalculator.CRC32);
                 if (file.exists()) {
                     try {
@@ -338,7 +339,7 @@ public class IntegratedServer {
      * 启动服务器
      */
     protected void startServer() {
-        ThreadUtil.execAsync(() -> {
+        ThreadUtil.execute(() -> {
             //检查当前端口是否被占用
             if (!NetUtil.isUsableLocalPort(config.getPort())) {
                 JOptionPane.showMessageDialog(MAIN_FRAME, """
@@ -429,7 +430,7 @@ public class IntegratedServer {
             }
 
             @Override
-            public JProgressBar getStatusProgressBar() {
+            public SmoothProgressBar getStatusProgressBar() {
                 return statusProgressBar;
             }
 
@@ -482,7 +483,7 @@ public class IntegratedServer {
      * 重新生成缓存
      */
     protected void regenResCache() {
-        ThreadUtil.execAsync(() -> {
+        ThreadUtil.execute(() -> {
             serverInterface.setStatusLabelText("生成缓存结构中", ModernColors.YELLOW);
 
             CacheUtils cacheUtil = new CacheUtils(serverInterface, httpServerInterface, startOrStop);
@@ -560,7 +561,7 @@ public class IntegratedServer {
         try {
             ConfigurationManager.saveConfigurationToFile(config,"./",serverName + configFileSuffix.replace(".json", ""));
             logger.info("已保存配置至磁盘.");
-        } catch (IOException ex) {
+        } catch (IORuntimeException ex) {
             logger.error("保存配置文件的时候出现了问题...", ex);
         }
     }

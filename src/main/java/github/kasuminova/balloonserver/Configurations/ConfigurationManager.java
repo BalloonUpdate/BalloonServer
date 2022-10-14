@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.Configurations;
 
+import cn.hutool.core.io.IORuntimeException;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
@@ -37,7 +38,7 @@ public class ConfigurationManager {
                  .setAutoUpdate(config.isAutoUpdate());
     }
 
-    public static void saveConfigurationToFile(Configuration configuration, String path, String name) throws IOException {
+    public static void saveConfigurationToFile(Configuration configuration, String path, String name) throws IORuntimeException {
         FileUtil.createJsonFile(JSONObject.toJSONString(configuration, JSONWriter.Feature.PrettyFormat), path, name);
     }
 }

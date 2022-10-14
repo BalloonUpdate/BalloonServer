@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver;
 
+import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.system.SystemUtil;
@@ -79,6 +80,7 @@ public final class BalloonServer {
         PRE_LOAD_PROGRESS_BAR.setString("载入主面板...");
         TABBED_PANE.putClientProperty("JTabbedPane.tabAreaAlignment", "fill");
         mainPanel.add(TABBED_PANE, BorderLayout.CENTER);
+        MAIN_FRAME.add(mainPanel);
 
         //载入主配置文件
         loadConfig();
@@ -92,6 +94,81 @@ public final class BalloonServer {
         TABBED_PANE.addTab("主程序控制面板", SETTINGS_ICON, SettingsPanel.getPanel());
         TABBED_PANE.addTab("关于本程序", ABOUT_ICON, AboutPanel.createPanel());
 
+        loadServerTabbedPaneProperty();
+
+        Thread serverThread = new Thread(BalloonServer::loadDefaultIntegratedServer);
+        serverThread.start();
+
+        loadStatusBar();
+        loadMenuBar();
+
+        ThreadUtil.execute(BalloonServer::loadSystemTrayFeature);
+
+        //等待主服务器面板完成创建
+        ThreadUtil.waitForDie(serverThread);
+
+        //主窗口
+        MAIN_FRAME.setIconImage(ICON.getImage());
+        MAIN_FRAME.setLocationRelativeTo(null);
+        GLOBAL_LOGGER.info(String.format("程序已加载完成, 耗时 %sms", System.currentTimeMillis() - START));
+
+        MAIN_FRAME.setVisible(true);
+        PREMAIN_FRAME.dispose();
+
+        loadAutoUpdateFeature();
+    }
+
+    /**
+     * 载入自动更新功能
+     */
+    private static void loadAutoUpdateFeature() {
+        //当前是否在检查更新，防止长时间静置未操作弹出多个对话框
+        AtomicBoolean isCheckingUpdate = new AtomicBoolean(false);
+        //更新检查线程，每一小时检查一次最新版本
+        GLOBAL_QUERY_TIMER.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (CONFIG.isAutoCheckUpdates() && !isCheckingUpdate.get()) {
+                    GLOBAL_LOGGER.info("开始检查更新...");
+                    isCheckingUpdate.set(true);
+                    ThreadUtil.execute(() -> {
+                        Checker.checkUpdates();
+                        isCheckingUpdate.set(false);
+                    });
+                }
+            }
+        },0,3600000);
+    }
+
+    /**
+     * 载入系统托盘
+     */
+    private static void loadSystemTrayFeature() {
+        long start = System.currentTimeMillis();
+        SwingSystemTray.initSystemTrayAndFrame(MAIN_FRAME);
+        MAIN_FRAME.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (CONFIG.getCloseOperation() == BalloonServerConfig.QUERY.getOperation()) {
+                    ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(MAIN_FRAME, CONFIG);
+                    MAIN_FRAME.setEnabled(false);
+                    confirmExitDialog.setVisible(true);
+                } else if (CONFIG.getCloseOperation() == BalloonServerConfig.HIDE_ON_CLOSE.getOperation()){
+                    MAIN_FRAME.setVisible(false);
+                } else {
+                    CONFIG.setCloseOperation(BalloonServerConfig.EXIT_ON_CLOSE.getOperation());
+                    saveConfig();
+                    System.exit(0);
+                }
+            }
+        });
+        GLOBAL_LOGGER.info(String.format("任务栏已加载完毕, 耗时 %sms", System.currentTimeMillis() - start));
+    }
+
+    /**
+     * 载入服务器标签页配置
+     */
+    private static void loadServerTabbedPaneProperty() {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabClosable", true);
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.hideTabAreaWithOneTab", true);
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabCloseToolTipText", "关闭这个标签页。且只能关闭自定义服务器实例。");
@@ -112,86 +189,34 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabsPopupPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
+    }
 
-        Thread serverThread = new Thread(() -> {
-            IntegratedServer abstractIntegratedServer;
-            //自动启动服务器检测
-            if (CONFIG.isAutoStartServer()) {
-                abstractIntegratedServer = new IntegratedServer("littleserver", true);
-                //自动启动服务器（仅本次）
-            } else if (CONFIG.isAutoStartServerOnce()) {
-                abstractIntegratedServer = new IntegratedServer("littleserver", true);
+    /**
+     * 载入默认集成服务端
+     */
+    private static void loadDefaultIntegratedServer() {
+        IntegratedServer abstractIntegratedServer;
+        //自动启动服务器检测
+        if (CONFIG.isAutoStartServer()) {
+            abstractIntegratedServer = new IntegratedServer("littleserver", true);
+            //自动启动服务器（仅本次）
+        } else if (CONFIG.isAutoStartServerOnce()) {
+            abstractIntegratedServer = new IntegratedServer("littleserver", true);
 
-                CONFIG.setAutoStartServerOnce(false);
-                SettingsPanel.applyConfiguration();
+            CONFIG.setAutoStartServerOnce(false);
+            SettingsPanel.applyConfiguration();
 
-                try {
-                    ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
-                    BalloonServer.GLOBAL_LOGGER.info("已更新主程序配置文件.");
-                } catch (IOException e) {
-                    GLOBAL_LOGGER.error("保存主程序配置文件失败！", e);
-                }
-            } else {
-                abstractIntegratedServer = new IntegratedServer("littleserver", false);
+            try {
+                ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
+                BalloonServer.GLOBAL_LOGGER.info("已更新主程序配置文件.");
+            } catch (IORuntimeException e) {
+                GLOBAL_LOGGER.error("保存主程序配置文件失败！", e);
             }
-            SERVER_TABBED_PANE.addTab("集成服务端", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
-            availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
-        });
-        serverThread.start();
-
-        loadStatusBar();
-        loadMenuBar();
-
-        ThreadUtil.execAsync(() -> {
-            long start = System.currentTimeMillis();
-            SwingSystemTray.initSystemTrayAndFrame(MAIN_FRAME);
-            MAIN_FRAME.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent e) {
-                    if (CONFIG.getCloseOperation() == BalloonServerConfig.QUERY.getOperation()) {
-                        ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog(MAIN_FRAME, CONFIG);
-                        MAIN_FRAME.setEnabled(false);
-                        confirmExitDialog.setVisible(true);
-                    } else if (CONFIG.getCloseOperation() == BalloonServerConfig.HIDE_ON_CLOSE.getOperation()){
-                        MAIN_FRAME.setVisible(false);
-                    } else {
-                        CONFIG.setCloseOperation(BalloonServerConfig.EXIT_ON_CLOSE.getOperation());
-                        saveConfig();
-                        System.exit(0);
-                    }
-                }
-            });
-            GLOBAL_LOGGER.info(String.format("任务栏已加载完毕, 耗时 %sms", System.currentTimeMillis() - start));
-        });
-
-        //等待主服务器面板完成创建
-        ThreadUtil.waitForDie(serverThread);
-
-        //主窗口
-        MAIN_FRAME.add(mainPanel);
-        MAIN_FRAME.setIconImage(ICON.getImage());
-        MAIN_FRAME.setLocationRelativeTo(null);
-        GLOBAL_LOGGER.info(String.format("程序已加载完成, 耗时 %sms", System.currentTimeMillis() - START));
-
-        MAIN_FRAME.setVisible(true);
-        PREMAIN_FRAME.dispose();
-
-        //当前是否在检查更新，防止长时间静置未操作弹出多个对话框
-        AtomicBoolean isCheckingUpdate = new AtomicBoolean(false);
-        //更新检查线程，每一小时检查一次最新版本
-        GLOBAL_QUERY_TIMER.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (CONFIG.isAutoCheckUpdates() && !isCheckingUpdate.get()) {
-                    GLOBAL_LOGGER.info("开始检查更新...");
-                    isCheckingUpdate.set(true);
-                    ThreadUtil.execAsync(() -> {
-                        Checker.checkUpdates();
-                        isCheckingUpdate.set(false);
-                    });
-                }
-            }
-        },0,3600000);
+        } else {
+            abstractIntegratedServer = new IntegratedServer("littleserver", false);
+        }
+        SERVER_TABBED_PANE.addTab("集成服务端", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
+        availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
     }
 
     /**
@@ -237,7 +262,7 @@ public final class BalloonServer {
         try {
             ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
             GLOBAL_LOGGER.info("成功保存主程序配置文件.");
-        } catch (IOException e) {
+        } catch (IORuntimeException e) {
             GLOBAL_LOGGER.error("主程序配置文件保存失败！", e);
         }
     }
@@ -265,7 +290,7 @@ public final class BalloonServer {
             }
             if (checkSameServer(serverName)) return;
 
-            ThreadUtil.execAsync(() -> {
+            ThreadUtil.execute(() -> {
                 long start = System.currentTimeMillis();
                 GLOBAL_LOGGER.info(String.format("正在创建新的集成服务端实例: %s", serverName));
 
@@ -305,12 +330,8 @@ public final class BalloonServer {
             ArrayList<Thread> threadList = new ArrayList<>();
             //检查是否存在非法名称或已存在的名称
             for (String serverName : serverNames) {
-                if (Security.stringIsUnsafe(MAIN_FRAME, serverName, null)) {
-                    return;
-                }
-                if (checkSameServer(serverName)) {
-                    return;
-                }
+                if (Security.stringIsUnsafe(MAIN_FRAME, serverName, null)) return;
+                if (checkSameServer(serverName)) return;
             }
             //循环多线程载入服务器面板
             for (int i = 0; i < serverNames.length; i++) {
@@ -330,9 +351,7 @@ public final class BalloonServer {
             }
 
             //等待所有线程操作完成
-            for (Thread thread : threadList) {
-                ThreadUtil.waitForDie(thread);
-            }
+            for (Thread thread : threadList) ThreadUtil.waitForDie(thread);
 
             //按顺序添加面板和接口
             for (int i = 0; i < customServers.length; i++) {
@@ -353,7 +372,7 @@ public final class BalloonServer {
             String serverName = serverInterface.getServerName();
 
             if (stopIntegratedServer(serverInterface, serverName, selected, true)) {
-                ThreadUtil.execAsync(() -> {
+                ThreadUtil.execute(() -> {
                     IntegratedServer littleServer;
                     if (serverName.equals("littleserver")) {
                         littleServer = new IntegratedServer("littleserver", false);
@@ -441,7 +460,7 @@ public final class BalloonServer {
         STATUS_PANEL.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
-        JProgressBar memBar = new JProgressBar(0,250);
+        SmoothProgressBar memBar = new SmoothProgressBar(250, 250);
         memBar.setPreferredSize(new Dimension(memBar.getMaximum(),memBar.getHeight()));
         memBar.setBorder(new EmptyBorder(1,0,0,5));
         memBar.setStringPainted(true);

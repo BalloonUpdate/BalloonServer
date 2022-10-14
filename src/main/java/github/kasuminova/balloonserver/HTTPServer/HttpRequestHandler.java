@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver.HTTPServer;
 
 import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
 import github.kasuminova.balloonserver.Utils.FileUtil;
@@ -122,13 +123,13 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //发送文件
         ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
-        JProgressBar progressBar = createUploadPanel(getClientIP(ctx,req), file.getName());
+        SmoothProgressBar progressBar = createUploadPanel(getClientIP(ctx,req), file.getName());
 
         final long[] fileProgress = {0};
 
-        Timer timer = new Timer(100, e -> {
+        Timer timer = new Timer(250, e -> {
             progressBar.setString(String.format("%s / %s", FileUtil.formatFileSizeToStr(fileProgress[0]), FileUtil.formatFileSizeToStr(fileLength)));
-            progressBar.setValue((int) (fileProgress[0] * 200 / fileLength) );
+            progressBar.setValue((int) (fileProgress[0] * progressBar.getMaximum() / fileLength) );
         });
         timer.start();
 
@@ -158,7 +159,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
      * 创建一个进度条面板记录单独文件的显示
      * @return JProgressBar 进度条
      */
-    private JProgressBar createUploadPanel(String IP, String fileName) {
+    private SmoothProgressBar createUploadPanel(String IP, String fileName) {
         //单个线程的面板
         JPanel uploadPanel = new JPanel(new VFlowLayout());
         //单个线程的 Box
@@ -169,7 +170,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         //状态
         box.add(new JLabel("进度: "), BorderLayout.WEST);
         //进度条
-        JProgressBar progressBar = new JProgressBar(0,200);
+        SmoothProgressBar progressBar = new SmoothProgressBar(500, 250);
         progressBar.setStringPainted(true);
         //向 Box 添加进度条
         box.add(progressBar, BorderLayout.EAST);
@@ -228,11 +229,11 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
     }
 
     private static String formatTime(long time) {
-        if (time < 1000) {
+        if (time < 1000 * 10) {
             return String.format("%.3fs", (double) time / 1000);
-        } else if (time < 1000 * 10) {
-            return String.format("%.2fs", (double) time / 1000);
         } else if (time < 1000 * 100) {
+            return String.format("%.2fs", (double) time / 1000);
+        } else if (time < 1000 * 1000) {
             return String.format("%.1fs", (double) time / 1000);
         } else {
             return String.format("%ss", time / 1000);

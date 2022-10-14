@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import cn.hutool.core.thread.ThreadUtil;
+import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
 import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
@@ -41,7 +42,7 @@ public class FileCalculator {
      * size[0] 为总大小
      * size[1] 为总文件数量
      */
-    public static long[] getDirSize(File dir, JProgressBar statusProgressBar) {
+    public static long[] getDirSize(File dir, SmoothProgressBar statusProgressBar) {
         return new FileCounter().getFiles(dir, statusProgressBar);
     }
 
@@ -68,7 +69,7 @@ public class FileCalculator {
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirCounterTask(file, FILE_THREAD_POOL, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
-                ThreadUtil.execAsync(dirCounterTask);
+                ThreadUtil.execute(dirCounterTask);
             }
         }
 
@@ -85,7 +86,7 @@ public class FileCalculator {
         }
 
         //回收线程池
-        ThreadUtil.execAsync(() -> {
+        ThreadUtil.execute(() -> {
             FILE_THREAD_POOL.shutdown();
             logger.info("已回收所有闲置线程.");
         });
@@ -99,7 +100,7 @@ public class FileCalculator {
     private static class FileCounter {
         private final AtomicLong totalSize = new AtomicLong(0);
         private final AtomicLong totalFiles = new AtomicLong();
-        private long[] getFiles(File dir, JProgressBar statusProgressBar) {
+        private long[] getFiles(File dir, SmoothProgressBar statusProgressBar) {
             resetStatusProgressBar();
 
             statusProgressBar.setString("扫描文件夹内容... (0 Byte, 0 文件)");

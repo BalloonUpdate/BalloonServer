@@ -37,7 +37,7 @@ record DirCounterTask(File directory, ExecutorService FILE_THREAD_POOL, String h
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(
                         new DirCounterTask(file, FILE_THREAD_POOL, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
-                ThreadUtil.execAsync(dirCounterTask);
+                ThreadUtil.execute(dirCounterTask);
             }
         }
 

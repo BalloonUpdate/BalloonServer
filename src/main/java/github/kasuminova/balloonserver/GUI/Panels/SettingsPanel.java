@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.GUI.Panels;
 
+import cn.hutool.core.io.IORuntimeException;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
@@ -16,7 +17,6 @@ import github.kasuminova.balloonserver.GUI.LayoutManager.VFlowLayout;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -145,7 +145,7 @@ public class SettingsPanel {
         try {
             ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
             GLOBAL_LOGGER.info("成功保存主程序配置文件.");
-        } catch (IOException e) {
+        } catch (IORuntimeException e) {
             GLOBAL_LOGGER.error("主程序配置文件保存失败！", e);
         }
     }
