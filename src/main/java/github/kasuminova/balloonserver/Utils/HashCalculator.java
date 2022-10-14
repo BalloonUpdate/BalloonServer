@@ -1,8 +1,9 @@
 package github.kasuminova.balloonserver.Utils;
 
+import cn.hutool.core.util.HexUtil;
+
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
@@ -37,8 +38,9 @@ public class HashCalculator {
         }
         fc.close();
 
+
         //转换为 16 进制
-        return new BigInteger(1, md.digest()).toString(16);
+        return HexUtil.encodeHexStr(md.digest());
     }
 
     /**
@@ -58,7 +60,7 @@ public class HashCalculator {
         fc.close();
 
         //转换为 16 进制
-        return Integer.toHexString((int) crc32.getValue());
+        return HexUtil.toHex(crc32.getValue());
     }
 
     /**
@@ -81,7 +83,7 @@ public class HashCalculator {
         fc.close();
 
         //转换为 16 进制
-        return new BigInteger(1, md.digest()).toString(16);
+        return HexUtil.encodeHexStr(md.digest());
     }
 
     /**
@@ -103,7 +105,7 @@ public class HashCalculator {
         fc.close();
 
         //转换为 16 进制
-        return Integer.toHexString((int) crc32.getValue());
+        return HexUtil.toHex(crc32.getValue());
     }
 
     /**
@@ -129,8 +131,8 @@ public class HashCalculator {
         fc.close();
 
         //转为 16 进制
-        String CRC32String = Integer.toHexString((int) crc32.getValue());
-        String SHA1String = new BigInteger(1, md.digest()).toString(16);
+        String CRC32String = HexUtil.toHex(crc32.getValue());
+        String SHA1String = HexUtil.encodeHexStr(md.digest());
 
         return new HashStrings(CRC32String, SHA1String);
     }
@@ -156,8 +158,8 @@ public class HashCalculator {
         fc.close();
 
         //转为 16 进制
-        String CRC32String = Integer.toHexString((int) crc32.getValue());
-        String SHA1String = new BigInteger(1, md.digest()).toString(16);
+        String CRC32String = HexUtil.toHex(crc32.getValue());
+        String SHA1String = HexUtil.encodeHexStr(md.digest());
 
         return new HashStrings(CRC32String, SHA1String);
     }
