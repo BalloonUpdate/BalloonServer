@@ -87,8 +87,7 @@ public class HttpClient {
             try {
                 bis.close();
                 foc.close();
-            } catch (IOException ignored) {
-            }
+            } catch (IOException ignored) {}
             downloadingFrame.dispose();
         });
 

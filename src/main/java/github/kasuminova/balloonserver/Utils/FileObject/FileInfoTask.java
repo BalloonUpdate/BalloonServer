@@ -1,6 +1,5 @@
-package github.kasuminova.balloonserver.Utils.FileCalculatorUtils;
+package github.kasuminova.balloonserver.Utils.FileObject;
 
-import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
 import github.kasuminova.balloonserver.Utils.HashCalculator;
 
 import java.io.File;
@@ -13,17 +12,17 @@ import java.util.concurrent.atomic.AtomicLong;
 import static github.kasuminova.balloonserver.Utils.HashCalculator.getCRC32;
 import static github.kasuminova.balloonserver.Utils.HashCalculator.getSHA1;
 
-record FileCounterTask(File file, String hashAlgorithm, AtomicLong completedBytes, AtomicInteger completedFiles)
+public record FileInfoTask(File file, String hashAlgorithm, AtomicLong completedBytes, AtomicInteger completedFiles)
         implements Callable<SimpleFileObject> {
     @Override
     public SimpleFileObject call() throws IOException, NoSuchAlgorithmException {
         String hash;
         if (hashAlgorithm.equals(HashCalculator.SHA1)) {
-            hash = getSHA1(file, completedBytes);
+            hash = completedBytes == null ? getSHA1(file) : getSHA1(file, completedBytes);
         } else {
-            hash = getCRC32(file, completedBytes);
+            hash = completedBytes == null ? getCRC32(file) : getCRC32(file, completedBytes);
         }
-        completedFiles.getAndIncrement();
+        if (completedFiles != null) completedFiles.getAndIncrement();
         return new SimpleFileObject(
                 file.getName(),
                 file.length(),

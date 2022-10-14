@@ -1,4 +1,4 @@
-package github.kasuminova.balloonserver.Utils.FileCalculatorUtils;
+package github.kasuminova.balloonserver.Utils.FileCacheUtils;
 
 import cn.hutool.core.thread.ThreadUtil;
 
@@ -6,7 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-record DirCalculatorThread(File dir, AtomicLong totalSize, AtomicLong totalFiles)
+record DirSizeCalculatorThread(File dir, AtomicLong totalSize, AtomicLong totalFiles)
         implements Runnable {
 
     @Override
@@ -21,7 +21,7 @@ record DirCalculatorThread(File dir, AtomicLong totalSize, AtomicLong totalFiles
                     //计算文件
                     totalFiles.getAndIncrement();
                 } else {
-                    Thread thread = new Thread(new DirCalculatorThread(value, totalSize, totalFiles));
+                    Thread thread = new Thread(new DirSizeCalculatorThread(value, totalSize, totalFiles));
                     threadList.add(thread);
                     thread.start();
                 }

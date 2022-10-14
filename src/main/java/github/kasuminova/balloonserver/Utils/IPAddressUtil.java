@@ -17,8 +17,7 @@ public class IPAddressUtil {
             InetAddress iNetAddress = InetAddress.getByName(address);
             if (iNetAddress instanceof Inet6Address) return "v6";
             if (iNetAddress instanceof Inet4Address) return "v4";
-        } catch (UnknownHostException ignored) {
-        }
+        } catch (UnknownHostException ignored) {}
         return null;
     }
 }

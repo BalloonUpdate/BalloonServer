@@ -17,6 +17,7 @@ import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.HTTPServer.HttpServer;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Utils.*;
+import github.kasuminova.balloonserver.Utils.FileCacheUtils.JsonCacheUtils;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -314,14 +315,14 @@ public class IntegratedServer {
             isStarting.set(true);
             serverInterface.setStatusLabelText("生成缓存结构中", ModernColors.YELLOW);
 
-            CacheUtils cacheUtils = new CacheUtils(serverInterface, httpServerInterface, startOrStop);
+            JsonCacheUtils jsonCacheUtils = new JsonCacheUtils(serverInterface, httpServerInterface, startOrStop);
 
             if (config.isCompatibleMode()) {
-                cacheUtils.updateDirCache(
+                jsonCacheUtils.updateDirCache(
                         loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
                         HashCalculator.SHA1);
             }
-            cacheUtils.updateDirCacheAndStartServer(
+            jsonCacheUtils.updateDirCacheAndStartServer(
                     loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
                     HashCalculator.CRC32);
 
@@ -444,14 +445,14 @@ public class IntegratedServer {
         ThreadUtil.execute(() -> {
             serverInterface.setStatusLabelText("生成缓存结构中", ModernColors.YELLOW);
 
-            CacheUtils cacheUtil = new CacheUtils(serverInterface, httpServerInterface, startOrStop);
+            JsonCacheUtils jsonCacheUtil = new JsonCacheUtils(serverInterface, httpServerInterface, startOrStop);
 
             if (config.isCompatibleMode()) {
-                cacheUtil.updateDirCache(
+                jsonCacheUtil.updateDirCache(
                         loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
                         HashCalculator.SHA1);
             }
-            cacheUtil.updateDirCache(
+            jsonCacheUtil.updateDirCache(
                     loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
                     HashCalculator.CRC32);
 
@@ -882,7 +883,7 @@ public class IntegratedServer {
             if (!(selection == JOptionPane.YES_OPTION)) return;
 
             ThreadUtil.execute(() -> {
-                new CacheUtils(serverInterface, httpServerInterface, startOrStop).updateDirCache(null, HashCalculator.CRC32);
+                new JsonCacheUtils(serverInterface, httpServerInterface, startOrStop).updateDirCache(null, HashCalculator.CRC32);
                 if (file.exists()) {
                     try {
                         String json = new FileReader(file).readString();

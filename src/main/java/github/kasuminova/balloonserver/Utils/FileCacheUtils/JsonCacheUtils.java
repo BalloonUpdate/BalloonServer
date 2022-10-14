@@ -1,4 +1,4 @@
-package github.kasuminova.balloonserver.Utils;
+package github.kasuminova.balloonserver.Utils.FileCacheUtils;
 
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.thread.ThreadUtil;
@@ -7,9 +7,11 @@ import github.kasuminova.balloonserver.Configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
 import github.kasuminova.balloonserver.HTTPServer.HttpServerInterface;
 import github.kasuminova.balloonserver.Servers.IntegratedServerInterface;
-import github.kasuminova.balloonserver.Utils.FileCacheUtils.CacheCalculator;
-import github.kasuminova.balloonserver.Utils.FileCalculatorUtils.FileCalculator;
 import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
+import github.kasuminova.balloonserver.Utils.FileUtil;
+import github.kasuminova.balloonserver.Utils.GUILogger;
+import github.kasuminova.balloonserver.Utils.HashCalculator;
+import github.kasuminova.balloonserver.Utils.ModernColors;
 
 import javax.swing.*;
 import java.io.File;
@@ -20,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * 从 LittleServer 的 cacheUtils 的内部类独立出来的一个工具，用于计算文件缓存并输出 JSON
  */
-public class CacheUtils {
+public class JsonCacheUtils {
     private final HttpServerInterface httpServerInterface;
     private final IntegratedServerInterface serverInterface;
     private final JButton startOrStop;
@@ -35,8 +37,8 @@ public class CacheUtils {
     //公用定时器
     private Timer timer;
     private Thread counterThread;
-    private FileCalculator fileListUtils;
-    public CacheUtils(IntegratedServerInterface serverInterface, HttpServerInterface httpServerInterface, JButton startOrStop) {
+    private FileCacheCalculator fileCacheCalculator;
+    public JsonCacheUtils(IntegratedServerInterface serverInterface, HttpServerInterface httpServerInterface, JButton startOrStop) {
         this.serverInterface = serverInterface;
         this.httpServerInterface = httpServerInterface;
         this.startOrStop = startOrStop;
@@ -173,60 +175,69 @@ public class CacheUtils {
 
         isGenerating.set(true);
         //计算文件夹内的文件和总大小（文件夹不计入），用于进度条显示
-        long[] dirSize = FileCalculator.getDirSize(dir, statusProgressBar);
+        long[] dirSize = FileCacheCalculator.getDirSize(dir, statusProgressBar);
 
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
 
-        CacheCalculator cacheCalculator = new CacheCalculator(logger, hashAlgorithm);
+        JsonCacheChecker cacheCalculator = new JsonCacheChecker(logger, hashAlgorithm);
         logger.info(String.format("文件夹大小: %s, 文件数量: %s", totalSize, dirSize[1]));
+
         if (jsonCache != null) {
             logger.info("检测到已缓存的 JSON, 正在检查变化...");
-
-            //创建新线程实例并执行
-            File finalDir = dir;
-            counterThread = new Thread(() -> {
-                jsonArray.clear();
-                jsonArray.addAll(cacheCalculator.scanDir(jsonCache, finalDir));
-            });
-            counterThread.start();
-
-            serverInterface.resetStatusProgressBar();
-            statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件", dirSize[1]));
-            timer = new Timer(250, e -> {
-                int completedFiles = cacheCalculator.completedFiles.get();
-                statusProgressBar.setValue((int) ((double) completedFiles * 1000 / dirSize[1]));
-                statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles, dirSize[1]));
-            });
+            checkJsonCache(dir, cacheCalculator, jsonCache, dirSize[1]);
         } else {
             logger.info("正在生成资源目录缓存...");
-            File finalDir = dir;
-            //新建资源计算器实例
-            fileListUtils = new FileCalculator(hashAlgorithm);
-            //创建新线程实例并执行
-            counterThread = new Thread(() -> {
-                fileObjList.clear();
-                fileObjList.addAll(fileListUtils.scanDir(finalDir, logger));
-            });
-            counterThread.start();
-
-            serverInterface.resetStatusProgressBar();
-            //轮询线程, 读取进度
-            timer = new Timer(250, e -> {
-                long completedBytes = fileListUtils.getCompletedBytes();
-                long completedFiles = fileListUtils.getCompletedFiles();
-                String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
-                statusProgressBar.setValue((int) ((double) completedBytes * 1000 / dirSize[0]));
-                statusProgressBar.setString(String.format("生成缓存中: %s / %s - %s 文件 / %s 文件",
-                        completedSize,
-                        totalSize,
-                        completedFiles,
-                        dirSize[1]));
-            });
+            generateCache(dir, hashAlgorithm, totalSize, dirSize[0]);
         }
+
+        return true;
+    }
+
+    private void checkJsonCache(File dir, JsonCacheChecker jsonCacheChecker, JSONArray jsonCache, long totalFiles) {
+        //创建新线程实例并执行
+        counterThread = new Thread(() -> {
+            jsonArray.clear();
+            jsonArray.addAll(jsonCacheChecker.checkDirJsonCache(jsonCache, dir));
+        });
+        counterThread.start();
+
+        serverInterface.resetStatusProgressBar();
+        statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件", totalFiles));
+        timer = new Timer(250, e -> {
+            int completedFiles = jsonCacheChecker.completedFiles.get();
+            statusProgressBar.setValue((int) ((double) completedFiles * 1000 / totalFiles));
+            statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles, totalFiles));
+        });
         //启动轮询
         timer.start();
         statusProgressBar.setVisible(true);
+    }
 
-        return true;
+    private void generateCache(File dir, String hashAlgorithm, String totalSize, long totalFileSize) {
+        //新建资源计算器实例
+        fileCacheCalculator = new FileCacheCalculator(hashAlgorithm);
+        //创建新线程实例并执行
+        counterThread = new Thread(() -> {
+            fileObjList.clear();
+            fileObjList.addAll(fileCacheCalculator.scanDir(dir, logger));
+        });
+        counterThread.start();
+
+        serverInterface.resetStatusProgressBar();
+        //轮询线程, 读取进度
+        timer = new Timer(250, e -> {
+            long completedBytes = fileCacheCalculator.getCompletedBytes();
+            long completedFiles = fileCacheCalculator.getCompletedFiles();
+            String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
+            statusProgressBar.setValue((int) ((double) completedBytes * 1000 / totalFileSize));
+            statusProgressBar.setString(String.format("生成缓存中: %s / %s - %s 文件 / %s 文件",
+                    completedSize,
+                    totalSize,
+                    completedFiles,
+                    totalFileSize));
+        });
+        //启动轮询
+        timer.start();
+        statusProgressBar.setVisible(true);
     }
 }

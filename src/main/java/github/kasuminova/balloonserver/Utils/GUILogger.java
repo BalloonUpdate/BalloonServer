@@ -301,8 +301,7 @@ public class GUILogger {
         try {
             logWriter.write(logMessage);
             logWriter.flush();
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
     }
 
     /**

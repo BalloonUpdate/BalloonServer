@@ -1,10 +1,8 @@
-package github.kasuminova.balloonserver.Utils.FileCalculatorUtils;
+package github.kasuminova.balloonserver.Utils.FileCacheUtils;
 
 import cn.hutool.core.thread.ThreadUtil;
 import github.kasuminova.balloonserver.GUI.SmoothProgressBar;
-import github.kasuminova.balloonserver.Utils.FileObject.AbstractSimpleFileObject;
-import github.kasuminova.balloonserver.Utils.FileObject.SimpleDirectoryObject;
-import github.kasuminova.balloonserver.Utils.FileObject.SimpleFileObject;
+import github.kasuminova.balloonserver.Utils.FileObject.*;
 import github.kasuminova.balloonserver.Utils.FileUtil;
 import github.kasuminova.balloonserver.Utils.GUILogger;
 
@@ -20,12 +18,12 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * 计算资源缓存的公用类
  */
-public class FileCalculator {
+public class FileCacheCalculator {
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
     private final String hashAlgorithm;
     private final ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-    public FileCalculator(String hashAlgorithm) {
+    public FileCacheCalculator(String hashAlgorithm) {
         this.hashAlgorithm = hashAlgorithm;
     }
 
@@ -65,11 +63,11 @@ public class FileCalculator {
 
         for (File file : fileList) {
             if (file.isFile()) {
-                FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(new FileCounterTask(file, hashAlgorithm, completedBytes, completedFiles));
+                FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileCounterTask);
                 fileThreadPool.execute(fileCounterTask);
             } else {
-                FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirCounterTask(file, fileThreadPool, hashAlgorithm, completedBytes, completedFiles));
+                FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, fileThreadPool, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
                 ThreadUtil.execute(dirCounterTask);
             }
@@ -78,15 +76,13 @@ public class FileCalculator {
         for (FutureTask<SimpleDirectoryObject> simpleDirectoryObjectFutureTask : direCounterTaskList) {
             try {
                 abstractSimpleFileObjectList.add(simpleDirectoryObjectFutureTask.get());
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         for (FutureTask<SimpleFileObject> simpleFileObjectFutureTask : fileCounterTaskList) {
             try {
                 abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         //回收线程池
@@ -117,7 +113,7 @@ public class FileCalculator {
             statusProgressBar.setIndeterminate(true);
 
             try {
-                new DirCalculatorThread(dir, totalSize, totalFiles).run();
+                new DirSizeCalculatorThread(dir, totalSize, totalFiles).run();
                 timer.stop();
             } catch (Exception e) {
                 e.printStackTrace();

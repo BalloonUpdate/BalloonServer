@@ -1,6 +1,5 @@
 /src/test/
 /res/
-BalloonServer*
 *.json
 /build
 /Test
