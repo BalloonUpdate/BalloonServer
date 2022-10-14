@@ -219,7 +219,7 @@ public class IntegratedServer {
         //上传列表
         requestListScrollPane.getVerticalScrollBar().setUnitIncrement(50);
         requestListScrollPane.setBorder(new TitledBorder("上传列表"));
-        requestListScrollPane.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.225), littleServerPanel.getHeight()));
+        requestListScrollPane.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.235), littleServerPanel.getHeight()));
         //组装控制面板
         controlPanel.add(configPanel);
         controlPanel.add(southControlPanel, BorderLayout.SOUTH);
