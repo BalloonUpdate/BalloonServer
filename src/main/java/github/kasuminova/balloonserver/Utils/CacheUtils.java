@@ -54,6 +54,7 @@ public class CacheUtils {
     public void updateDirCache(JSONArray jsonCache, String hashAlgorithm) {
         long start = System.currentTimeMillis();
 
+        logger.info(String.format("正在计算 %s 资源缓存结构中...", hashAlgorithm));
         if (jsonCache != null) {
             if (!genDirCache(jsonCache, hashAlgorithm)) {
                 return;

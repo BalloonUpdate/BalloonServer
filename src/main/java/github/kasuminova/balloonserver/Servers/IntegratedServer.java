@@ -356,13 +356,10 @@ public class IntegratedServer {
             CacheUtils cacheUtils = new CacheUtils(serverInterface, httpServerInterface, startOrStop);
 
             if (config.isCompatibleMode()) {
-                logger.info("生成 SHA1 资源缓存结构中...");
-
                 cacheUtils.updateDirCache(
                         loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
                         HashCalculator.SHA1);
             }
-            logger.info("生成 CRC32 资源缓存结构中...");
             cacheUtils.updateDirCacheAndStartServer(
                     loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
                     HashCalculator.CRC32);
