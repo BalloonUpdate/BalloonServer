@@ -7,8 +7,6 @@ import github.kasuminova.balloonserver.utils.MiscUtils;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
 import static github.kasuminova.balloonserver.updatechecker.HttpClient.downloadFileWithURL;
@@ -107,7 +105,7 @@ public class Checker {
                     try {
                         //下载文件
                         downloadFileWithURL(
-                                new URL(asset.getString("browser_download_url")),
+                                asset.getString("browser_download_url"),
                                 new File(String.format("./%s", fileName)));
                         if (showCompleteDialog) {
                             JOptionPane.showMessageDialog(MAIN_FRAME,
@@ -116,7 +114,7 @@ public class Checker {
                                     JOptionPane.INFORMATION_MESSAGE);
                         }
                         return fileName;
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         GLOBAL_LOGGER.error("下载更新失败.", e);
                     }
                 }
@@ -131,7 +129,7 @@ public class Checker {
                 try {
                     //下载文件
                     downloadFileWithURL(
-                            new URL(asset.getString("browser_download_url")),
+                            asset.getString("browser_download_url"),
                             new File(String.format("./%s", fileName)));
                     if (showCompleteDialog) {
                         JOptionPane.showMessageDialog(MAIN_FRAME,
@@ -140,7 +138,7 @@ public class Checker {
                                 JOptionPane.INFORMATION_MESSAGE);
                     }
                     return fileName;
-                } catch (IOException e) {
+                } catch (Exception e) {
                     GLOBAL_LOGGER.error("下载更新失败，可能是因为用户取消了操作或无法连接至服务器.", e);
                 }
             }

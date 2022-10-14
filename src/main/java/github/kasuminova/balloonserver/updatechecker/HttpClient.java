@@ -1,20 +1,27 @@
 package github.kasuminova.balloonserver.updatechecker;
 
+import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.http.HttpException;
 import cn.hutool.http.HttpUtil;
 import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.utils.FileUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class HttpClient {
     /**
@@ -29,80 +36,135 @@ public class HttpClient {
         return Objects.requireNonNullElse(result, "ERROR");
     }
 
-    public static void downloadFileWithURL(URL url, File file) throws IOException {
-        if (file.exists()) {
-            if (!file.delete()) {
-                throw new IOException("Could Not Delete File " + file.getPath());
+    /**
+     * <p>
+     * 从指定链接下载文件并保存到指定文件中，并弹出一个对话框显示进度。
+     * </p>
+     *
+     * <p>
+     * 高度封装。
+     * </p>
+     *
+     * @param url 链接
+     * @param file 保存文件
+     * @throws HttpException 如果无法连接到服务器或状态码错误
+     * @throws ExecutionException 如果线程异常或被中断
+     * @throws InterruptedException 如果线程被用户中断
+     */
+    public static void downloadFileWithURL(String url, File file) throws HttpException, ExecutionException, InterruptedException {
+        FutureTask<Boolean> downloadTask = new FutureTask<>(() -> {
+            if (file.exists()) {
+                if (!file.delete()) {
+                    throw new IOException("Could Not Delete File " + file.getPath());
+                }
             }
-        }
-        if (!file.createNewFile()) {
-            throw new IOException("Could Not Create File " + file.getPath());
-        }
+            if (!file.createNewFile()) {
+                throw new IOException("Could Not Create File " + file.getPath());
+            }
 
-        JFrame downloadingFrame = new JFrame(BalloonServer.TITLE);
-        downloadingFrame.setIconImage(BalloonServer.ICON.getImage());
-        downloadingFrame.setSize(new Dimension(350, 145));
-        downloadingFrame.setResizable(false);
+            JFrame downloadingFrame = new JFrame(BalloonServer.TITLE);
+            downloadingFrame.setIconImage(BalloonServer.ICON.getImage());
+            downloadingFrame.setSize(new Dimension(450, 145));
+            downloadingFrame.setResizable(false);
 
-        JPanel mainPanel = new JPanel(new VFlowLayout(0, 10, 5, true, false));
-        mainPanel.add(new JLabel("进度: "));
+            JPanel mainPanel = new JPanel(new VFlowLayout(0, 10, 5, true, false));
+            mainPanel.add(new JLabel("进度: "));
 
-        JProgressBar progressBar = new JProgressBar();
-        progressBar.setValue(progressBar.getMaximum());
-        progressBar.setIndeterminate(true);
-        progressBar.setStringPainted(true);
-        progressBar.setString("连接中...");
+            SmoothProgressBar progressBar = new SmoothProgressBar(500, 500);
+            progressBar.setIndeterminate(true);
+            progressBar.setStringPainted(true);
+            progressBar.setString("连接中...");
 
-        mainPanel.add(progressBar);
-        mainPanel.add(new JLabel("在此期间你可以继续使用程序。"));
-        JButton cancel = new JButton("取消下载");
-        mainPanel.add(cancel);
+            mainPanel.add(progressBar);
+            mainPanel.add(new JLabel("在此期间你可以继续使用程序。"));
+            JButton cancel = new JButton("取消下载");
+            mainPanel.add(cancel);
 
-        downloadingFrame.add(mainPanel);
-        downloadingFrame.setLocationRelativeTo(null);
-        downloadingFrame.setVisible(true);
+            //[0] 为已完成进度, [1] 为速度缓存进度
+            AtomicLong completedBytes = new AtomicLong(0);
+            AtomicLong cachedCompletedBytes = new AtomicLong(0);
+            AtomicLong fileSize = new AtomicLong(0);
+            //定时更新查询器
+            Timer timer = new Timer(500, e -> {
+                progressBar.setString(String.format("进度: %s / %s - 速度: %s/s",
+                        FileUtil.formatFileSizeToStr(completedBytes.get()),
+                        FileUtil.formatFileSizeToStr(fileSize.get()),
+                        FileUtil.formatFileSizeToStr((completedBytes.get() - cachedCompletedBytes.get()) * 2)
+                ));
+                progressBar.setValue((int) (completedBytes.get() * progressBar.getMaximum() / fileSize.get()));
 
-        BufferedInputStream bis = new BufferedInputStream(url.openStream());
-        FileChannel foc = FileChannel.open(file.toPath(), StandardOpenOption.WRITE);
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4096);
+                cachedCompletedBytes.set(completedBytes.get());
+            });
 
-        //[0] 为已完成进度，[1] 为速度缓存进度
-        final long[] total = {0, 1};
-        //定时更新查询器
-        Timer timer = new Timer(250, e -> {
-            progressBar.setString(String.format("已完成: %s - 速度: %s/s",
-                    FileUtil.formatFileSizeToStr(total[0]),
-                    FileUtil.formatFileSizeToStr((total[0] - total[1]) * 4)
-            ));
-            total[1] = total[0];
-        });
-        timer.start();
-        Thread currentThread = Thread.currentThread();
-        cancel.addActionListener(e -> {
-            //中断线程后再完成其他停止操作
-            currentThread.interrupt();
+            downloadingFrame.add(mainPanel);
+            downloadingFrame.setLocationRelativeTo(null);
+            downloadingFrame.setVisible(true);
 
-            timer.stop();
-            progressBar.setString("停止中...");
+            InputStream fis = null;
+            FileChannel foc = null;
+            HttpURLConnection urlConnection = (HttpURLConnection) new URL(url).openConnection();
+            int responseCode = urlConnection.getResponseCode();
+            if (!(responseCode >= 200 && responseCode < 300)) {
+                //关闭窗口
+                downloadingFrame.dispose();
+
+                throw new HttpException("无法连接至下载服务器或连接异常！(Code: {})", responseCode);
+            }
+
             try {
-                bis.close();
-                foc.close();
-            } catch (IOException ignored) {}
-            downloadingFrame.dispose();
+                fis = urlConnection.getInputStream();
+                foc = FileChannel.open(file.toPath(), StandardOpenOption.WRITE);
+
+                ByteBuffer byteBuffer = ByteBuffer.allocate(4096);
+                fileSize.set(urlConnection.getContentLength());
+                progressBar.setIndeterminate(false);
+                timer.start();
+                Thread currentThread = Thread.currentThread();
+                InputStream finalFis = fis;
+                FileChannel finalFoc = foc;
+                cancel.addActionListener(e -> {
+                    timer.stop();
+                    currentThread.interrupt();
+                    try {
+                        finalFis.close();
+                        finalFoc.close();
+                    } catch (IOException ignored) {}
+                });
+
+                downloadingFrame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        timer.stop();
+                        currentThread.interrupt();
+                        try {
+                            finalFis.close();
+                            finalFoc.close();
+                        } catch (IOException ignored) {}
+                    }
+                });
+
+                int count;
+                while ((count = fis.read(byteBuffer.array(), 0, 4096)) != -1) {
+                    foc.write(byteBuffer, completedBytes.get());
+                    completedBytes.getAndAdd(count);
+                    byteBuffer.clear();
+                }
+            } finally {
+                if (fis != null) {
+                    fis.close();
+                }
+                if (foc != null) {
+                    foc.close();
+                }
+                //关闭定时器和窗口
+                timer.stop();
+                downloadingFrame.dispose();
+            }
+
+            return true;
         });
 
-        int count;
-        while ((count = bis.read(byteBuffer.array(), 0, 4096)) != -1) {
-            foc.write(byteBuffer, total[0]);
-            total[0] += count;
-            byteBuffer.flip();
-            byteBuffer.clear();
-        }
-        bis.close();
-        foc.close();
-
-        //关闭定时器和窗口
-        timer.stop();
-        downloadingFrame.dispose();
+        ThreadUtil.execAsync(downloadTask);
+        downloadTask.get();
     }
 }
