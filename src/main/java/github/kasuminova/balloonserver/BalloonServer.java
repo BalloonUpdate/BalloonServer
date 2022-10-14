@@ -42,6 +42,11 @@ import static github.kasuminova.balloonserver.Utils.SvgIcons.*;
  * 主 窗口/程序。
  */
 public final class BalloonServer {
+    static {
+        //设置全局主题，字体等
+        SetupSwing.init();
+    }
+
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.3-STABLE");
     public static final String TITLE = "BalloonServer " + VERSION;
     //主窗口
@@ -70,11 +75,6 @@ public final class BalloonServer {
     private static final JFrame PREMAIN_FRAME = new JFrame("加载中");
     private static final JPanel STATUS_PANEL = new JPanel(new BorderLayout());
     private static final JProgressBar PRE_LOAD_PROGRESS_BAR = new JProgressBar();
-
-    static {
-        //设置全局主题，字体等
-        SetupSwing.init();
-    }
 
     private static void init() {
         //大小设置
