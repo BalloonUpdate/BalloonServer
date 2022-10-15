@@ -1,7 +1,9 @@
 package github.kasuminova.balloonserver.utils;
 
 import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.file.FileReader;
 import cn.hutool.core.io.file.FileWriter;
+import com.alibaba.fastjson2.JSONArray;
 
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
@@ -67,6 +69,34 @@ public class FileUtil {
         } else {
             return String.format("%.2f", (double) size / (1024 * 1024 * 1024)) + " GB";
         }
+    }
+
+    /**
+     * 从指定名称 JSON 文件中读取 JSONArray
+     *
+     * @param fileName                 文件名
+     * @param resJsonFileExtensionName 自定义扩展名
+     * @param logger                   Logger
+     * @return JSONArray, 如果文件不存在或出现问题, 则返回 null
+     */
+    public static JSONArray loadJsonArrayFromFile(String fileName, String resJsonFileExtensionName, GUILogger logger) {
+        File jsonCache = new File(String.format("./%s.%s.json", fileName, resJsonFileExtensionName));
+
+        JSONArray jsonArray = null;
+
+        if (jsonCache.exists()) {
+            try {
+                String jsonString = new FileReader(jsonCache).readString();
+                jsonArray = JSONArray.parseArray(jsonString);
+            } catch (IORuntimeException e) {
+                if (logger != null) {
+                    logger.error("读取缓存文件的时候出现了一些问题...", e);
+                    logger.warn("缓存文件读取失败, 重新生成缓存...");
+                }
+            }
+        }
+
+        return jsonArray;
     }
 
     public static class SimpleFileFilter extends FileFilter {

@@ -112,6 +112,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         sendFile(ctx, req, file, start);
     }
 
+    /**
+     * 发送文件
+     * @param ctx ChannelHandlerContext
+     * @param req HTTP 请求
+     * @param file 文件
+     * @param start 请求开始时间
+     * @throws IOException 如果文件读取错误
+     */
     private void sendFile(ChannelHandlerContext ctx, FullHttpRequest req, File file, long start) throws IOException {
         RandomAccessFile randomAccessFile;
 
@@ -177,6 +185,11 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         });
     }
 
+    /**
+     * 发送纯 JSON
+     * @param jsonString json
+     * @param ctx ChannelHandlerContext
+     */
     private static void sendJson(String jsonString, ChannelHandlerContext ctx) {
         //因为经过 HttpServerCodec 处理器的处理后消息被封装为 FullHttpRequest 对象
         //创建完整的响应对象

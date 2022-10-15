@@ -16,7 +16,9 @@ import github.kasuminova.balloonserver.utils.ModernColors;
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -179,12 +181,11 @@ public class JsonCacheUtils {
 
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
 
-        JsonCacheChecker cacheCalculator = new JsonCacheChecker(logger, hashAlgorithm);
         logger.info(String.format("文件夹大小: %s, 文件数量: %s", totalSize, dirSize[1]));
 
         if (jsonCache != null) {
             logger.info("检测到已缓存的 JSON, 正在检查变化...");
-            checkJsonCache(dir, cacheCalculator, jsonCache, dirSize[1]);
+            checkJsonCache(dir, jsonCache, dirSize[1], hashAlgorithm);
         } else {
             logger.info("正在生成资源目录缓存...");
             generateCache(dir, hashAlgorithm, totalSize, dirSize[0], dirSize[1]);
@@ -193,20 +194,22 @@ public class JsonCacheUtils {
         return true;
     }
 
-    private void checkJsonCache(File dir, JsonCacheChecker jsonCacheChecker, JSONArray jsonCache, long totalFiles) {
+    private void checkJsonCache(File dir, JSONArray jsonCache, long totalFiles, String hashAlgorithm) {
         //创建新线程实例并执行
-        counterThread = new Thread(() -> {
-            jsonArray.clear();
-            jsonArray.addAll(jsonCacheChecker.checkDirJsonCache(jsonCache, dir));
-        });
+        AtomicInteger completedFiles = new AtomicInteger(0);
+        jsonArray.clear();
+
+        counterThread = new Thread(() -> jsonArray.addAll(new JsonCacheCheckerTask(
+                dir, AbstractSimpleFileObject.jsonArrToFileObjArr(jsonCache), hashAlgorithm, logger, completedFiles,
+                Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2))
+                .call().getChildren()));
         counterThread.start();
 
         serverInterface.resetStatusProgressBar();
         statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件", totalFiles));
         timer = new Timer(250, e -> {
-            int completedFiles = jsonCacheChecker.completedFiles.get();
-            statusProgressBar.setValue((int) ((double) completedFiles * 1000 / totalFiles));
-            statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles, totalFiles));
+            statusProgressBar.setValue((int) ((double) completedFiles.get() * 1000 / totalFiles));
+            statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles.get(), totalFiles));
         });
         //启动轮询
         timer.start();

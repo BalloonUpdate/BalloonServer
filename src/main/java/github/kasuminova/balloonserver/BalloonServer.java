@@ -47,7 +47,7 @@ public final class BalloonServer {
         SetupSwing.init();
     }
 
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.3-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.4-STABLE");
     public static final String TITLE = "BalloonServer " + VERSION;
     //主窗口
     public static final JFrame MAIN_FRAME = new JFrame(TITLE);

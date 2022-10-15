@@ -245,32 +245,6 @@ public class IntegratedServer {
     }
 
     /**
-     * 从指定名称 JSON 文件中读取 JSONArray
-     *
-     * @param fileName                 文件名
-     * @param resJsonFileExtensionName 自定义扩展名
-     * @param logger                   Logger
-     * @return JSONArray, 如果文件不存在或出现问题, 则返回 null
-     */
-    protected static JSONArray loadJsonArrayFromFile(String fileName, String resJsonFileExtensionName, GUILogger logger) {
-        File jsonCache = new File(String.format("./%s.%s.json", fileName, resJsonFileExtensionName));
-
-        JSONArray jsonArray = null;
-
-        if (jsonCache.exists()) {
-            try {
-                String jsonString = new FileReader(jsonCache).readString();
-                jsonArray = JSONArray.parseArray(jsonString);
-            } catch (IORuntimeException e) {
-                logger.error("读取缓存文件的时候出现了一些问题...", e);
-                logger.warn("缓存文件读取失败, 重新生成缓存...");
-            }
-        }
-
-        return jsonArray;
-    }
-
-    /**
      * 返回当前实例的面板
      *
      * @return 服务器面板
@@ -319,11 +293,11 @@ public class IntegratedServer {
 
             if (config.isCompatibleMode()) {
                 jsonCacheUtils.updateDirCache(
-                        loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
+                        FileUtil.loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
                         HashCalculator.SHA1);
             }
             jsonCacheUtils.updateDirCacheAndStartServer(
-                    loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
+                    FileUtil.loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
                     HashCalculator.CRC32);
 
             copyAddressButton.setVisible(true);
@@ -449,11 +423,11 @@ public class IntegratedServer {
 
             if (config.isCompatibleMode()) {
                 jsonCacheUtil.updateDirCache(
-                        loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
+                        FileUtil.loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
                         HashCalculator.SHA1);
             }
             jsonCacheUtil.updateDirCache(
-                    loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
+                    FileUtil.loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
                     HashCalculator.CRC32);
 
             System.gc();
@@ -653,7 +627,7 @@ public class IntegratedServer {
     /**
      * 重置主窗口状态栏进度条
      */
-    public void resetStatusProgressBar() {
+    protected void resetStatusProgressBar() {
         statusProgressBar.setVisible(false);
         statusProgressBar.setIndeterminate(false);
         statusProgressBar.reset();
@@ -832,21 +806,23 @@ public class IntegratedServer {
         protected final JList<String> ruleList;
         protected final List<String> rules;
 
-        public RuleEditorActionListener(JList<String> ruleList, List<String> rules) {
+        protected RuleEditorActionListener(JList<String> ruleList, List<String> rules) {
             this.ruleList = ruleList;
             this.rules = rules;
         }
 
         protected void showRuleEditorDialog(JSONArray jsonArray) {
-            //锁定窗口，防止用户误操作
-            MAIN_FRAME.setEnabled(false);
-            RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
-            editorDialog.setModal(true);
+            ThreadUtil.execute(() -> {
+                //锁定窗口，防止用户误操作
+                MAIN_FRAME.setEnabled(false);
+                RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
+                editorDialog.setModal(true);
 
-            MAIN_FRAME.setEnabled(true);
-            editorDialog.setVisible(true);
+                MAIN_FRAME.setEnabled(true);
+                editorDialog.setVisible(true);
 
-            ruleList.setListData(rules.toArray(new String[0]));
+                ruleList.setListData(rules.toArray(new String[0]));
+            });
         }
 
         @Override

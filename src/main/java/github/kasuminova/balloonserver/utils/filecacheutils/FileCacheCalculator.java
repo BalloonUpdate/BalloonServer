@@ -63,11 +63,11 @@ public class FileCacheCalculator {
 
         for (File file : fileList) {
             if (file.isFile()) {
-                FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
-                fileCounterTaskList.add(fileCounterTask);
-                fileThreadPool.execute(fileCounterTask);
+                FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
+                fileCounterTaskList.add(fileInfoTask);
+                fileThreadPool.execute(fileInfoTask);
             } else {
-                FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, fileThreadPool, hashAlgorithm, completedBytes, completedFiles));
+                FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
                 ThreadUtil.execute(dirCounterTask);
             }

@@ -2,22 +2,22 @@ package github.kasuminova.balloonserver.utils.fileobject;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 
-import java.util.List;
+import java.util.ArrayList;
 
 public final class SimpleDirectoryObject extends AbstractSimpleFileObject {
     @JSONField(ordinal = 1)
-    List<AbstractSimpleFileObject> children;
+    ArrayList<AbstractSimpleFileObject> children;
 
-    public SimpleDirectoryObject(String name, List<AbstractSimpleFileObject> children) {
+    public SimpleDirectoryObject(String name, ArrayList<AbstractSimpleFileObject> children) {
         this.name = name;
         this.children = children;
     }
 
-    public List<AbstractSimpleFileObject> getChildren() {
+    public ArrayList<AbstractSimpleFileObject> getChildren() {
         return children;
     }
 
-    public void setChildren(List<AbstractSimpleFileObject> children) {
+    public void setChildren(ArrayList<AbstractSimpleFileObject> children) {
         this.children = children;
     }
 }
