@@ -11,14 +11,24 @@ public class FileUtil {
      * 生成.json格式文件
      */
     public static void createJsonFile(String jsonString, String filePath, String fileName) throws IORuntimeException {
+        createFile(jsonString, filePath, fileName + ".json");
+    }
+
+    /**
+     * 生成文件
+     * @param str 内容
+     * @param filePath 路径
+     * @param fileName 文件名
+     */
+    public static void createFile(String str, String filePath, String fileName) throws IORuntimeException {
         //拼接文件完整路径
-        String fullPath = filePath + File.separator + fileName + ".json";
-        File file = new File(fullPath);
+        File target = new File(filePath + fileName);
         //保证创建一个新文件
-        cn.hutool.core.io.FileUtil.touch(file);
+        cn.hutool.core.io.FileUtil.touch(target);
+
         //写入文件
-        FileWriter writer = new FileWriter(file);
-        writer.write(jsonString);
+        FileWriter writer = new FileWriter(target);
+        writer.write(str);
     }
 
     /**

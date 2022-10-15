@@ -3,6 +3,7 @@ package github.kasuminova.balloonserver.updatechecker;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.BalloonServer;
+import github.kasuminova.balloonserver.utils.BatchUtils;
 import github.kasuminova.balloonserver.utils.MiscUtils;
 
 import javax.swing.*;
@@ -68,7 +69,19 @@ public class Checker {
      */
     public static void startProgram(String fileName, boolean exitThisProgram) {
         try {
-            Runtime.getRuntime().exec(new String[]{String.format(".\\%s", fileName)});
+            String[] commands = new String[]{
+                    "echo Starting Program...",
+                    "echo Waiting Old Program Exit...",
+
+                    "timeout /t 3",
+
+                    "echo Delete Old Program...",
+                    "del /f /s /q .\\BalloonServer.exe",
+
+                    String.format("ren %s BalloonServer.exe",fileName),
+                    "echo Starting...",
+            };
+            BatchUtils.runBatch(commands);
             if (exitThisProgram) {
                 //如果主服务端正在运行，则打开自动启动服务器（仅一次）选项并保存，下次启动服务端时自动启动服务器
                 if (availableCustomServerInterfaces.get(0).isStarted().get()) {
@@ -115,7 +128,7 @@ public class Checker {
                         }
                         return fileName;
                     } catch (Exception e) {
-                        GLOBAL_LOGGER.error("下载更新失败.", e);
+                        GLOBAL_LOGGER.error("下载更新失败，可能是因为用户取消了操作或无法连接至服务器.", e);
                     }
                 }
             }

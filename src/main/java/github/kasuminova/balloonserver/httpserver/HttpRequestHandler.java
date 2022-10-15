@@ -23,7 +23,9 @@ import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicLong;
 
+import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
@@ -34,6 +36,8 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
     private final GUILogger logger;
     private final JPanel requestListPanel;
     private final String indexJsonString;
+    private String clientIP = null;
+    private String decodedURI = null;
 
     public HttpRequestHandler(IntegratedServerInterface serverInterface) {
         resJson = serverInterface.getResJson();
@@ -42,6 +46,135 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         logger = serverInterface.getLogger();
         requestListPanel = serverInterface.getRequestListPanel();
         indexJsonString = serverInterface.getIndexJson();
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) throws IOException {
+        final String uri = req.uri();
+        long start = System.currentTimeMillis();
+
+        clientIP = getClientIP(ctx, req);
+        //转义后的 URI
+        decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
+
+        if (CONFIG.isDebugMode()) {
+            printDebugLog(req.headers().toString(), clientIP, decodedURI, logger);
+        }
+
+        //index 请求监听
+        if (decodedURI.equals("/index.json")) {
+            sendJson(indexJsonString, ctx);
+            //打印日志
+            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+            return;
+        }
+
+        //资源结构 JSON 请求监听
+        if (decodedURI.equals(config.getMainDirPath() + "_crc32.json")) {
+            sendJson(resJson, ctx);
+            //打印日志
+            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+            return;
+        }
+
+        if (decodedURI.equals(config.getMainDirPath() + ".json")) {
+            //如果服务端未启用旧版兼容模式，且使用了旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户启用旧版兼容模式
+            if (!config.isCompatibleMode() || legacyResJson == null) {
+                sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端未启用兼容模式.（仅兼容 4.1.15+）\n".repeat(6), clientIP, decodedURI);
+                logger.error("警告: 检测到你可能正在使用旧版客户端获取服务端缓存文件.");
+                logger.error("如果你想要兼容旧版客户端, 请按照下方描述进行操作:");
+                logger.error("打开 “启用旧版兼容”, 然后保存并重载配置, 最后点击 “重新生成资源文件夹缓存”.");
+                return;
+            }
+            sendJson(legacyResJson, ctx);
+            //打印日志
+            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+            return;
+        }
+
+        //安全性检查
+        if (!decodedURI.startsWith(config.getMainDirPath())) {
+            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "", clientIP, decodedURI);
+            return;
+        }
+
+        //文件请求监听
+        File file = new File("." + decodedURI);
+        if (file.isHidden() || !file.exists()) {
+            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
+            return;
+        }
+        if (!file.isFile()) {
+            sendError(ctx, logger, HttpResponseStatus.BAD_REQUEST, "", clientIP, decodedURI);
+            return;
+        }
+
+        sendFile(ctx, req, file, start);
+    }
+
+    private void sendFile(ChannelHandlerContext ctx, FullHttpRequest req, File file, long start) throws IOException {
+        RandomAccessFile randomAccessFile;
+
+        try {
+            randomAccessFile = new RandomAccessFile(file, "r");
+        } catch (FileNotFoundException e) {
+            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
+            return;
+        }
+
+        //文件大小
+        long fileLength = randomAccessFile.length();
+
+        ContentRanges ranges = new ContentRanges(req.headers().get(HttpHeaderNames.RANGE), "bytes", fileLength);
+
+        long contentLength = ranges.getEnd() - ranges.getStart();
+
+        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.PARTIAL_CONTENT);
+
+        //设置类型为二进制流
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
+        response.headers().set(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES);
+        response.headers().set(HttpHeaderNames.CONTENT_RANGE, String.format("bytes %s-%s/%s", ranges.getStart(), ranges.getEnd(), fileLength));
+
+        setContentLength(response, contentLength);
+        if (isKeepAlive(req)) {
+            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+        }
+        ctx.write(response);
+
+        //发送文件
+        ChannelFuture sendFileFuture = ctx.write(
+                new ChunkedFile(randomAccessFile,
+                        ranges.getStart(), contentLength, 8192),
+                ctx.newProgressivePromise()).addListener(ChannelFutureListener.CLOSE);
+        SmoothProgressBar progressBar = createUploadPanel(clientIP, file.getName());
+
+        AtomicLong fileProgress = new AtomicLong(0);
+        AtomicLong totalProgress = new AtomicLong(contentLength);
+
+        Timer timer = new Timer(250, e -> {
+            progressBar.setString(String.format("%s / %s", FileUtil.formatFileSizeToStr(fileProgress.get()), FileUtil.formatFileSizeToStr(totalProgress.get())));
+            progressBar.setValue((int) (fileProgress.get() * progressBar.getMaximum() / totalProgress.get()));
+        });
+        timer.start();
+
+        sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
+            @Override
+            public void operationProgressed(ChannelProgressiveFuture channelProgressiveFuture, long progress, long total) {
+                fileProgress.set(progress);
+            }
+
+            @Override
+            public void operationComplete(ChannelProgressiveFuture channelProgressiveFuture) throws IOException {
+                randomAccessFile.close();
+
+                //移除进度条的容器面板
+                timer.stop();
+                requestListPanel.remove(progressBar.getParent().getParent());
+                requestListPanel.updateUI();
+                print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+            }
+        });
     }
 
     private static void sendJson(String jsonString, ChannelHandlerContext ctx) {
@@ -94,6 +227,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
                 decodedURI));
     }
 
+    private static void printDebugLog(String msg, String clientIP, String decodedURI ,GUILogger logger) {
+        logger.debug(String.format("%s\t| %s\n%s",
+                clientIP,
+                decodedURI,
+                msg
+                ));
+    }
+
     private static String formatTime(long time) {
         if (time < 1000 * 10) {
             return String.format("%.3fs", (double) time / 1000);
@@ -143,113 +284,6 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
         ctx.flush();
-    }
-
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) throws IOException {
-        final String uri = req.uri();
-        long start = System.currentTimeMillis();
-
-        String clientIP = getClientIP(ctx, req);
-        //转义后的 URI
-        String decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
-
-        //index 请求监听
-        if (decodedURI.equals("/index.json")) {
-            sendJson(indexJsonString, ctx);
-            //打印日志
-            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
-            return;
-        }
-
-        //资源结构 JSON 请求监听
-        if (decodedURI.equals(config.getMainDirPath() + "_crc32.json")) {
-            sendJson(resJson, ctx);
-            //打印日志
-            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
-            return;
-        }
-
-        if (decodedURI.equals(config.getMainDirPath() + ".json")) {
-            //如果服务端未启用旧版兼容模式，且使用了旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户启用旧版兼容模式
-            if (!config.isCompatibleMode() || legacyResJson == null) {
-                sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端未启用兼容模式.（仅兼容 4.1.15+）\n".repeat(6), clientIP, decodedURI);
-                logger.error("警告: 检测到你可能正在使用旧版客户端获取服务端缓存文件.");
-                logger.error("如果你想要兼容旧版客户端, 请按照下方描述进行操作:");
-                logger.error("打开 “启用旧版兼容”, 然后保存并重载配置, 最后点击 “重新生成资源文件夹缓存”.");
-                return;
-            }
-            sendJson(legacyResJson, ctx);
-            //打印日志
-            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
-            return;
-        }
-
-        //安全性检查
-        if (!decodedURI.startsWith(config.getMainDirPath())) {
-            sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "", clientIP, decodedURI);
-            return;
-        }
-
-        //文件请求监听
-        File file = new File("." + decodedURI);
-        if (file.isHidden() || !file.exists()) {
-            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
-            return;
-        }
-        if (!file.isFile()) {
-            sendError(ctx, logger, HttpResponseStatus.BAD_REQUEST, "", clientIP, decodedURI);
-            return;
-        }
-
-        RandomAccessFile randomAccessFile;
-
-        try {
-            randomAccessFile = new RandomAccessFile(file, "r");  //只读模式
-        } catch (FileNotFoundException e) {
-            sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
-            return;
-        }
-        long fileLength = randomAccessFile.length();    //文件大小
-        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-        setContentLength(response, fileLength);
-        if (isKeepAlive(req)) {
-            response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-        }
-        ctx.write(response);
-
-        //发送文件
-        ChannelFuture sendFileFuture = ctx.write(new ChunkedFile(randomAccessFile, 0, fileLength, 8192), ctx.newProgressivePromise());
-        SmoothProgressBar progressBar = createUploadPanel(getClientIP(ctx, req), file.getName());
-
-        final long[] fileProgress = {0};
-
-        Timer timer = new Timer(250, e -> {
-            progressBar.setString(String.format("%s / %s", FileUtil.formatFileSizeToStr(fileProgress[0]), FileUtil.formatFileSizeToStr(fileLength)));
-            progressBar.setValue((int) (fileProgress[0] * progressBar.getMaximum() / fileLength));
-        });
-        timer.start();
-
-        sendFileFuture.addListener(new ChannelProgressiveFutureListener() {
-            @Override
-            public void operationProgressed(ChannelProgressiveFuture channelProgressiveFuture, long progress, long total) {
-                fileProgress[0] = progress;
-            }
-
-            @Override
-            public void operationComplete(ChannelProgressiveFuture channelProgressiveFuture) {
-                timer.stop();
-                //移除进度条的容器面板
-                requestListPanel.remove(progressBar.getParent().getParent());
-                requestListPanel.updateUI();
-                print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
-            }
-        });
-
-        ChannelFuture lastContentFuture = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-        if (!isKeepAlive(req)) {
-            lastContentFuture.addListener(ChannelFutureListener.CLOSE);
-        }
     }
 
     /**
