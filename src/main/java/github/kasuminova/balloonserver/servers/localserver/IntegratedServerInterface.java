@@ -1,4 +1,4 @@
-package github.kasuminova.balloonserver.servers;
+package github.kasuminova.balloonserver.servers.localserver;
 
 import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * LittleServer 面板向外开放的接口，大部分内容都在此处交互。
- * TODO 计划添加子状态栏功能
  */
 public interface IntegratedServerInterface {
     GUILogger getLogger();

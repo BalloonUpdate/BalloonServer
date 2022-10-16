@@ -13,8 +13,9 @@ import github.kasuminova.balloonserver.gui.panels.SettingsPanel;
 import github.kasuminova.balloonserver.gui.SetupSwing;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.gui.SwingSystemTray;
-import github.kasuminova.balloonserver.servers.IntegratedServer;
-import github.kasuminova.balloonserver.servers.IntegratedServerInterface;
+import github.kasuminova.balloonserver.servers.localserver.IntegratedServer;
+import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
+import github.kasuminova.balloonserver.servers.remoteserver.RemoteIntegratedServerClient;
 import github.kasuminova.balloonserver.updatechecker.ApplicationVersion;
 import github.kasuminova.balloonserver.updatechecker.Checker;
 import github.kasuminova.balloonserver.utils.FileUtil;
@@ -47,7 +48,7 @@ public final class BalloonServer {
         SetupSwing.init();
     }
 
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.3.4-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("1.4.0-BETA");
     public static final String TITLE = "BalloonServer " + VERSION;
     //主窗口
     public static final JFrame MAIN_FRAME = new JFrame(TITLE);
@@ -61,6 +62,7 @@ public final class BalloonServer {
             BalloonServer.class.getResource("/image/icon_128x128.jpg")));
     public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);
     public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
+    public static final JTabbedPane REMOTE_SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     //主窗口 Logger
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
     public static final SmoothProgressBar GLOBAL_STATUS_PROGRESSBAR = new SmoothProgressBar(1000, 250);
@@ -92,16 +94,23 @@ public final class BalloonServer {
 
         //创建一个子面板，存放 SERVER_TABBED_PANE.
         //关于为什么要这么做，因为直接向 TABBED_PANE 放入 SERVER_TABBED_PANE 会导致服务端列表标签页可被删除，目前暂时不清楚问题所在...
-        JPanel subMainPanel = new JPanel(new BorderLayout());
-        subMainPanel.add(SERVER_TABBED_PANE, BorderLayout.CENTER);
+        JPanel localServerPanel = new JPanel(new BorderLayout());
+        localServerPanel.add(SERVER_TABBED_PANE, BorderLayout.CENTER);
+        JPanel remoteServerPanel = new JPanel(new BorderLayout());
+        remoteServerPanel.add(REMOTE_SERVER_TABBED_PANE, BorderLayout.CENTER);
 
-        TABBED_PANE.addTab("服务端实例列表", SERVER_LIST_ICON, subMainPanel);
+        TABBED_PANE.addTab("本地服务端实例列表", SERVER_LIST_ICON, localServerPanel);
+        TABBED_PANE.addTab("远程服务端实例列表", SERVER_LIST_ICON, remoteServerPanel);
         TABBED_PANE.addTab("主程序控制面板", SETTINGS_ICON, SettingsPanel.getPanel());
         TABBED_PANE.addTab("关于本程序", ABOUT_ICON, AboutPanel.createPanel());
 
         loadServerTabbedPaneProperty();
+        loadRemoteServerTabbedPaneProperty();
 
-        Thread serverThread = new Thread(BalloonServer::loadDefaultIntegratedServer);
+        Thread serverThread = new Thread(() -> {
+            loadDefaultIntegratedServer();
+            loadDefaultRemoteIntegratedServerClient();
+        });
         serverThread.start();
 
         loadStatusBar();
@@ -196,6 +205,15 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
     }
 
+    private static void loadRemoteServerTabbedPaneProperty() {
+//        REMOTE_SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabClosable", true);
+        REMOTE_SERVER_TABBED_PANE.putClientProperty("JTabbedPane.hideTabAreaWithOneTab", true);
+
+        REMOTE_SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabsPopupPolicy", "asNeeded");
+        REMOTE_SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
+        REMOTE_SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
+    }
+
     /**
      * 载入默认集成服务端
      */
@@ -222,6 +240,14 @@ public final class BalloonServer {
         }
         SERVER_TABBED_PANE.addTab("集成服务端", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
         availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
+    }
+
+    /**
+     * 载入默认远程服务端
+     */
+    private static void loadDefaultRemoteIntegratedServerClient() {
+        RemoteIntegratedServerClient client = new RemoteIntegratedServerClient("hyperserver");
+        REMOTE_SERVER_TABBED_PANE.addTab("远程服务端", DEFAULT_SERVER_ICON, client.getPanel());
     }
 
     /**

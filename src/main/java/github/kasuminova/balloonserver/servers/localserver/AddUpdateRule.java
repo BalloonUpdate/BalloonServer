@@ -1,4 +1,4 @@
-package github.kasuminova.balloonserver.servers;
+package github.kasuminova.balloonserver.servers.localserver;
 
 import github.kasuminova.balloonserver.gui.RuleEditor;
 

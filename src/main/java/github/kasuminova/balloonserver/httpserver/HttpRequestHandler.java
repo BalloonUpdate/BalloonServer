@@ -3,7 +3,7 @@ package github.kasuminova.balloonserver.httpserver;
 import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
-import github.kasuminova.balloonserver.servers.IntegratedServerInterface;
+import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
 import github.kasuminova.balloonserver.utils.FileUtil;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.balloonserver.utils.ModernColors;

@@ -39,6 +39,13 @@ public class ConfigurationManager {
                 .setAutoUpdate(config.isAutoUpdate());
     }
 
+    public static void loadRemoteClientConfigFromFile(String path, RemoteClientConfig oldConfig) throws IOException {
+        RemoteClientConfig config = JSON.parseObject(Files.newInputStream(Paths.get(path)), RemoteClientConfig.class);
+        oldConfig.setToken(config.getToken())
+                .setIp(config.getIp())
+                .setPort(config.getPort());
+    }
+
     public static void saveConfigurationToFile(Configuration configuration, String path, String name) throws IORuntimeException {
         FileUtil.createJsonFile(JSONObject.toJSONString(configuration, JSONWriter.Feature.PrettyFormat), path, name);
     }

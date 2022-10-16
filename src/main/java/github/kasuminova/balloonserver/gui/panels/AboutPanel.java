@@ -62,7 +62,7 @@ public class AboutPanel {
         descPanel.add(new JLabel("Netty 为 BalloonServer 提供了高性能的并发网络框架；", JLabel.CENTER));
         descPanel.add(new JLabel("Alibaba FastJson2 为 BalloonServer 提供了高性能的 JSON 解析功能；", JLabel.CENTER));
         descPanel.add(new JLabel("FlatLaf, FlatLaf-Extra 为 BalloonServer 提供了一套完美的用户界面体验；", JLabel.CENTER));
-        descPanel.add(new JLabel("Apache Commons IO 使 BalloonServer 实现了实时文件监听器的功能；", JLabel.CENTER));
+        descPanel.add(new JLabel("Hutools 为 BalloonServer 提供了一系列的实用工具；实现了实时文件监听器的功能；", JLabel.CENTER));
         descPanel.add(new JLabel("以及任何积极使用该软件和为此软件出谋划策的用户和开发者们~", JLabel.CENTER));
 
         //协议

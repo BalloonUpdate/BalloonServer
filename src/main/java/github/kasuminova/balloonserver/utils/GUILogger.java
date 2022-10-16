@@ -1,8 +1,8 @@
 package github.kasuminova.balloonserver.utils;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
-import github.kasuminova.balloonserver.BalloonServer;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
 import static github.kasuminova.balloonserver.utils.ModernColors.*;
 
 /**
@@ -38,6 +39,7 @@ public class GUILogger {
     private final JTextPane logPane;
     private final Log logger;
     private final Writer logWriter;
+
     /**
      * logger 线程池
      * 用于保证 Log 顺序
@@ -136,24 +138,38 @@ public class GUILogger {
         return String.format("[%s][%s][%s]: %s\n", FULL_DATE_FORMAT.format(System.currentTimeMillis()), logLevel, threadName, msg);
     }
 
-    /**
-     * 输出 INFO 日志
-     *
-     * @param msg 消息
-     */
-    public void info(String msg) {
+    public void log(String msg, SimpleAttributeSet attributeSet, String level, Object... params) {
         if (prepared.get() > 100) return;
 
         String threadName = Thread.currentThread().getName();
 
         prepared.getAndIncrement();
         loggerThreadPool.execute(() -> {
-            logger.info(msg);
+            String formatMsg = StrUtil.format(msg, params);
 
-            writeAndFlushMessage(buildFullLogMessage(threadName, msg, INFO));
-            insertStringToDocument(buildNormalLogMessage(msg, INFO), INFO_ATTRIBUTE);
+            switch (level) {
+                case INFO -> logger.info(formatMsg);
+                case WARN -> logger.warn(formatMsg);
+                case ERROR -> logger.error(formatMsg);
+                case DEBUG -> {
+                    if (CONFIG.isDebugMode()) logger.debug(formatMsg);
+                }
+            }
+
+            writeAndFlushMessage(buildFullLogMessage(threadName, formatMsg, level));
+            insertStringToDocument(buildNormalLogMessage(formatMsg, level), attributeSet);
             prepared.getAndDecrement();
         });
+    }
+
+    /**
+     * 输出 INFO 日志
+     *
+     * @param msg                   消息
+     * @param attributeSet          自定义颜色属性
+     */
+    public void info(String msg, SimpleAttributeSet attributeSet) {
+        log(msg, attributeSet, INFO);
     }
 
     /**
@@ -163,20 +179,43 @@ public class GUILogger {
      * @param customForegroundColor 自定义颜色
      */
     public void info(String msg, Color customForegroundColor) {
-        if (prepared.get() > 100) return;
+        SimpleAttributeSet attributeSet = new SimpleAttributeSet();
+        StyleConstants.setForeground(attributeSet, customForegroundColor);
 
-        String threadName = Thread.currentThread().getName();
+        log(msg, attributeSet, INFO);
+    }
 
-        prepared.getAndIncrement();
-        loggerThreadPool.execute(() -> {
-            logger.info(msg);
+    /**
+     * 输出 INFO 日志
+     *
+     * @param msg 消息
+     */
+    public void info(String msg) {
+        log(msg, INFO_ATTRIBUTE, INFO);
+    }
 
-            SimpleAttributeSet attributeSet = new SimpleAttributeSet();
-            StyleConstants.setForeground(attributeSet, customForegroundColor);
-            writeAndFlushMessage(buildFullLogMessage(threadName, msg, INFO));
-            insertStringToDocument(buildNormalLogMessage(msg, INFO), attributeSet);
-            prepared.getAndDecrement();
-        });
+    /**
+     * 输出 INFO 日志
+     *
+     * @param format    消息
+     * @param params    占位符
+     */
+    public void info(String format, Object... params) {
+        log(format, INFO_ATTRIBUTE, INFO, params);
+    }
+
+    /**
+     * 输出 INFO 日志
+     *
+     * @param format                消息
+     * @param customForegroundColor 自定义颜色
+     * @param params                占位符
+     */
+    public void info(String format, Color customForegroundColor, Object... params) {
+        SimpleAttributeSet attributeSet = new SimpleAttributeSet();
+        StyleConstants.setForeground(attributeSet, customForegroundColor);
+
+        log(format, attributeSet, INFO, params);
     }
 
     /**
@@ -185,19 +224,7 @@ public class GUILogger {
      * @param msg 消息
      */
     public void debug(String msg) {
-        if (prepared.get() > 100) return;
-        if (!BalloonServer.CONFIG.isDebugMode()) return;
-
-        String threadName = Thread.currentThread().getName();
-
-        prepared.getAndIncrement();
-        loggerThreadPool.execute(() -> {
-            logger.info(msg);
-
-            writeAndFlushMessage(buildFullLogMessage(threadName, msg, DEBUG));
-            insertStringToDocument(buildNormalLogMessage(msg, DEBUG), DEBUG_ATTRIBUTE);
-            prepared.getAndDecrement();
-        });
+        log(msg, DEBUG_ATTRIBUTE, DEBUG);
     }
 
     /**
@@ -206,18 +233,11 @@ public class GUILogger {
      * @param msg 消息
      */
     public void warn(String msg) {
-        if (prepared.get() > 100) return;
+        log(msg, WARN_ATTRIBUTE, WARN);
+    }
 
-        String threadName = Thread.currentThread().getName();
-
-        prepared.getAndIncrement();
-        loggerThreadPool.execute(() -> {
-            logger.warn(msg);
-
-            writeAndFlushMessage(buildFullLogMessage(threadName, msg, WARN));
-            insertStringToDocument(buildNormalLogMessage(msg, WARN), WARN_ATTRIBUTE);
-            prepared.getAndDecrement();
-        });
+    public void warn(String msg, Object... params) {
+        log(msg, WARN_ATTRIBUTE, WARN, params);
     }
 
     /**
@@ -226,40 +246,20 @@ public class GUILogger {
      * @param msg 消息
      */
     public void error(String msg) {
-        if (prepared.get() > 100) return;
-
-        String threadName = Thread.currentThread().getName();
-
-        loggerThreadPool.execute(() -> {
-            logger.warn(msg);
-
-            writeAndFlushMessage(buildFullLogMessage(threadName, msg, ERROR));
-            insertStringToDocument(buildNormalLogMessage(msg, ERROR), ERROR_ATTRIBUTE);
-            prepared.getAndDecrement();
-        });
+        log(msg, ERROR_ATTRIBUTE, ERROR);
     }
 
+    public void error(String format, Object... params) {
+        log(format, ERROR_ATTRIBUTE, ERROR, params);
+    }
     /**
      * 输出 ERROR 日志
      *
      * @param msg 消息
      * @param e   错误信息
      */
-    public void error(String msg, Exception e) {
-        if (prepared.get() > 100) return;
-
-        String threadName = Thread.currentThread().getName();
-
-        prepared.getAndIncrement();
-        loggerThreadPool.execute(() -> {
-            logger.warn(String.format("%s \n %s", msg, MiscUtils.stackTraceToString(e)));
-
-            writeAndFlushMessage(buildFullLogMessage(threadName,
-                    String.format("%s\n%s", msg, MiscUtils.stackTraceToString(e)), ERROR));
-            insertStringToDocument(buildNormalLogMessage(
-                    String.format("%s\n%s", msg, MiscUtils.stackTraceToString(e)), ERROR), ERROR_ATTRIBUTE);
-            prepared.getAndDecrement();
-        });
+    public void error(String msg, Throwable e) {
+        log(msg, ERROR_ATTRIBUTE, ERROR, MiscUtils.stackTraceToString(e));
     }
 
     /**
@@ -267,19 +267,8 @@ public class GUILogger {
      *
      * @param e 错误信息
      */
-    public void error(Exception e) {
-        if (prepared.get() > 100) return;
-
-        String threadName = Thread.currentThread().getName();
-
-        prepared.getAndIncrement();
-        loggerThreadPool.execute(() -> {
-            logger.warn(MiscUtils.stackTraceToString(e));
-
-            writeAndFlushMessage(buildFullLogMessage(threadName, MiscUtils.stackTraceToString(e), ERROR));
-            insertStringToDocument(buildNormalLogMessage(MiscUtils.stackTraceToString(e), ERROR), ERROR_ATTRIBUTE);
-            prepared.getAndDecrement();
-        });
+    public void error(Throwable e) {
+        log("", ERROR_ATTRIBUTE, ERROR, MiscUtils.stackTraceToString(e));
     }
 
     /**

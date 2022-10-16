@@ -7,8 +7,8 @@ import github.kasuminova.balloonserver.gui.checkboxtree.CheckBoxTreeCellRenderer
 import github.kasuminova.balloonserver.gui.checkboxtree.CheckBoxTreeNode;
 import github.kasuminova.balloonserver.gui.checkboxtree.CheckBoxTreeNodeSelectionListener;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
-import github.kasuminova.balloonserver.servers.AddUpdateRule;
-import github.kasuminova.balloonserver.servers.DeleteUpdateRule;
+import github.kasuminova.balloonserver.servers.localserver.AddUpdateRule;
+import github.kasuminova.balloonserver.servers.localserver.DeleteUpdateRule;
 import github.kasuminova.balloonserver.updatechecker.ApplicationVersion;
 
 import javax.swing.*;

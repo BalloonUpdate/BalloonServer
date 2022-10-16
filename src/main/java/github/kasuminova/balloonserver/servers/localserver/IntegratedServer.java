@@ -1,4 +1,4 @@
-package github.kasuminova.balloonserver.servers;
+package github.kasuminova.balloonserver.servers.localserver;
 
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.file.FileReader;

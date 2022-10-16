@@ -1,4 +1,4 @@
-package github.kasuminova.balloonserver.servers;
+package github.kasuminova.balloonserver.servers.localserver;
 
 import javax.swing.*;
 import java.awt.*;

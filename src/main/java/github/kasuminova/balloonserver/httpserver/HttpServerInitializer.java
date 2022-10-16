@@ -1,7 +1,7 @@
 package github.kasuminova.balloonserver.httpserver;
 
 import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
-import github.kasuminova.balloonserver.servers.IntegratedServerInterface;
+import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;

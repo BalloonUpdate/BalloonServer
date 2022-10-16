@@ -6,7 +6,7 @@ import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.httpserver.HttpServerInterface;
-import github.kasuminova.balloonserver.servers.IntegratedServerInterface;
+import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
 import github.kasuminova.balloonserver.utils.fileobject.AbstractSimpleFileObject;
 import github.kasuminova.balloonserver.utils.FileUtil;
 import github.kasuminova.balloonserver.utils.GUILogger;
