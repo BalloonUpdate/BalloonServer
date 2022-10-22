@@ -65,7 +65,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         if (decodedURI.equals("/index.json")) {
             sendJson(indexJsonString, ctx);
             //打印日志
-            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+            printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
             return;
         }
 
@@ -73,7 +73,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         if (decodedURI.equals(config.getMainDirPath() + "_crc32.json")) {
             sendJson(resJson, ctx);
             //打印日志
-            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+            printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
             return;
         }
 
@@ -88,7 +88,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
             }
             sendJson(legacyResJson, ctx);
             //打印日志
-            print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+            printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
             return;
         }
 
@@ -180,7 +180,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
                 timer.stop();
                 requestListPanel.remove(progressBar.getParent().getParent());
                 requestListPanel.updateUI();
-                print200Log(System.currentTimeMillis() - start, clientIP, decodedURI, logger);
+                printSuccessLog(System.currentTimeMillis() - start, String.valueOf(response.status().code()), clientIP, decodedURI, logger);
             }
         });
     }
@@ -212,11 +212,12 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
      * @param clientIP   客户端 IP
      * @param decodedURI 转义后的 URI
      */
-    private static void print200Log(long usedTime, String clientIP, String decodedURI, GUILogger logger) {
+    private static void printSuccessLog(long usedTime, String status ,String clientIP, String decodedURI, GUILogger logger) {
         //格式为 IP, 额外信息, 转义后的 URI, 耗时
         logger.info(
-                String.format("%s\t| 200 | %s | %s",
+                String.format("%s\t| %s | %s | %s",
                         clientIP,
+                        status,
                         formatTime(usedTime),
                         decodedURI
                 ),

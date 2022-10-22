@@ -182,7 +182,8 @@ public class RemoteIntegratedServerClient {
                 try {
                     client.connect();
                 } catch (Exception ex) {
-                    logger.error("无法连接至服务器: ", ex);
+                    logger.error("无法连接至服务器: {}", ex);
+                    isConnecting = false;
                 }
                 connect.setText("连接");
             });

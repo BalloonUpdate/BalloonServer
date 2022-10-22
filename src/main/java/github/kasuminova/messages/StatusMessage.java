@@ -5,14 +5,14 @@ public class StatusMessage extends AbstractMessage {
     private int total;
     private int max;
     private int runningThreadCount;
-    private String clientIP;
+    private String clientID;
 
-    public StatusMessage(int used, int total, int max, int runningThreadCount, String clientIP) {
+    public StatusMessage(int used, int total, int max, int runningThreadCount, String clientID) {
         this.used = used;
         this.total = total;
         this.max = max;
         this.runningThreadCount = runningThreadCount;
-        this.clientIP = clientIP;
+        this.clientID = clientID;
         messageType = StringMessage.class.getName();
     }
 
@@ -49,10 +49,10 @@ public class StatusMessage extends AbstractMessage {
     }
 
     public String getClientIP() {
-        return clientIP;
+        return clientID;
     }
 
     public void setClientIP(String clientIP) {
-        this.clientIP = clientIP;
+        this.clientID = clientIP;
     }
 }

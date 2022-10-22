@@ -21,8 +21,6 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<AbstractMes
         config = serverInterface.getConfig();
     }
 
-    String str;
-
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         logger.info("认证中...");
@@ -46,28 +44,40 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<AbstractMes
     @Override
     public void channelRead0(ChannelHandlerContext ctx, AbstractMessage msg) {
         if (msg instanceof StringMessage strMsg) {
-            str = strMsg.getMessage();
-            logger.info(str);
+            logger.info(strMsg.getMessage());
         } else if (msg instanceof ErrorMessage errMsg) {
-            str = errMsg.getMessage();
-            if (errMsg.getStackTrace().isEmpty()) {
-                logger.error(str);
-            } else {
-                logger.error("{}\n{}", str, errMsg.getStackTrace());
-            }
+            printErrLog(errMsg, logger);
+
         } else if (msg instanceof StatusMessage statusMessage) {
-            serverInterface.updateStatus(
-                    StrUtil.format("{} M / {} M - Max: {} M",
-                            statusMessage.getUsed(), statusMessage.getTotal(), statusMessage.getMax()),
-                    (int) ((double) (statusMessage.getUsed() * 500) / statusMessage.getTotal()),
-                    statusMessage.getRunningThreadCount(),
-                    statusMessage.getClientIP());
+            updateStatus(statusMessage, serverInterface);
+
         } else if (msg instanceof LiteDirectoryObject directoryObject) {
-            FileObjectBrowser objectBrowser = new FileObjectBrowser(directoryObject);
-            objectBrowser.setVisible(true);
+            showFileObjectBrowser(directoryObject);
+
         } else {
-            str = msg.getMessageType();
-            logger.info("从服务端接收到未知消息类型: {}", str);
+            logger.info("从服务端接收到未知消息类型: {}", msg.getMessageType());
         }
+    }
+
+    private static void printErrLog(ErrorMessage errMsg, GUILogger logger) {
+        if (errMsg.getStackTrace().isEmpty()) {
+            logger.error(errMsg.getMessage());
+        } else {
+            logger.error("{}\n{}", errMsg.getMessage(), errMsg.getStackTrace());
+        }
+    }
+
+    private static void updateStatus(StatusMessage statusMessage, RemoteClientInterface serverInterface) {
+        serverInterface.updateStatus(
+                StrUtil.format("{} M / {} M - Max: {} M",
+                        statusMessage.getUsed(), statusMessage.getTotal(), statusMessage.getMax()),
+                (int) ((double) (statusMessage.getUsed() * 500) / statusMessage.getTotal()),
+                statusMessage.getRunningThreadCount(),
+                statusMessage.getClientIP());
+    }
+
+    private static void showFileObjectBrowser(LiteDirectoryObject directoryObject) {
+        FileObjectBrowser objectBrowser = new FileObjectBrowser(directoryObject);
+        objectBrowser.setVisible(true);
     }
 }
