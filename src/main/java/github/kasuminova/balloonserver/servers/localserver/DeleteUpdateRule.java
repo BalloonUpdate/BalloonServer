@@ -1,6 +1,6 @@
 package github.kasuminova.balloonserver.servers.localserver;
 
-import github.kasuminova.balloonserver.gui.RuleEditor;
+import github.kasuminova.balloonserver.gui.ruleeditor.RuleEditor;
 
 import javax.swing.*;
 import java.awt.*;

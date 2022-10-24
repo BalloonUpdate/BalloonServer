@@ -25,6 +25,8 @@ public class SetupSwing {
 
         //UI 配置线程
         Thread uiThread = new Thread(() -> {
+            LineBorder lineBorder = new LineBorder(new Color(55, 60, 70), 1, true);
+
             long start = System.currentTimeMillis();
             //设置圆角弧度
             UIManager.put("Button.arc", 7);
@@ -52,7 +54,7 @@ public class SetupSwing {
             UIManager.put("ProgressBar.repaintInterval", 16);
             UIManager.put("ProgressBar.cycleTime", 7500);
             //提示框
-            UIManager.put("ToolTip.border", new LineBorder(new Color(55, 60, 70), 2, true));
+            UIManager.put("ToolTip.border", lineBorder);
 
             StaticLog.info("UIThread Completed, Used {}ms", System.currentTimeMillis() - start);
         });
@@ -64,15 +66,18 @@ public class SetupSwing {
             //设置字体
             try {
                 InputStream HMOSSansAndJBMono = SetupSwing.class.getResourceAsStream("/font/HarmonyOS_Sans_SC+JetBrains_Mono.ttf");
-                InputStream saira = AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf");
+                InputStream HMOSSansAndSaira = AboutPanel.class.getResourceAsStream("/font/HarmonyOS_Sans_SC+Saira.ttf");
                 Font font;
+                //日志窗口字体
                 if (HMOSSansAndJBMono != null) {
                     font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndJBMono).deriveFont(13f);
-                    initGlobalFont(font);
+                    UIManager.put("TextPane.font", font);
                 }
-                if (saira != null) {
-                    font = Font.createFont(Font.TRUETYPE_FONT, saira).deriveFont(15f);
-                    UIManager.put("TitlePane.font", font);
+                //全局字体 + 标题字体
+                if (HMOSSansAndSaira != null) {
+                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndSaira);
+                    initGlobalFont(font.deriveFont(13f));
+                    UIManager.put("TitlePane.font", font.deriveFont(15f));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

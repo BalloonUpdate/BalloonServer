@@ -2,7 +2,6 @@ package github.kasuminova.balloonserver.utils.fileobject;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import github.kasuminova.messages.AbstractMessage;
 
 import java.io.Serial;
 import java.io.Serializable;

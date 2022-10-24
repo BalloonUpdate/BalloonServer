@@ -5,15 +5,18 @@ import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.configurations.ConfigurationManager;
+import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.configurations.RemoteClientConfig;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
+import github.kasuminova.balloonserver.remoteclient.RemoteClient;
+import github.kasuminova.balloonserver.servers.AbstractServer;
+import github.kasuminova.balloonserver.servers.ServerInterface;
+import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.balloonserver.utils.IPAddressUtil;
 import github.kasuminova.balloonserver.utils.ModernColors;
 import github.kasuminova.messages.RequestMessage;
 import github.kasuminova.messages.StringMessage;
-import github.kasuminova.balloonserver.remoteclient.RemoteClient;
-import github.kasuminova.balloonserver.utils.GUILogger;
 import io.netty.channel.ChannelHandlerContext;
 
 import javax.swing.*;
@@ -24,23 +27,23 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 
 /**
  * RemoteIntegratedClient 远程服务器客户端实例
  */
-public class RemoteIntegratedServerClient {
+public class RemoteIntegratedServerClient extends AbstractServer {
     protected final RemoteClientConfig config = new RemoteClientConfig();
     protected final JPanel remoteClientPanel = new JPanel(new BorderLayout());
     protected final JPanel remotePanel = new JPanel(new BorderLayout());
-    protected final JPanel controlPanel = new JPanel(new VFlowLayout());
     protected final JPanel connectPanel = new JPanel(new VFlowLayout());
-    protected final JTextField IPTextField = new JTextField("0.0.0.0");
-    protected final JSpinner portSpinner = new JSpinner();
+    protected final JTextField remoteIPTextField = new JTextField("0.0.0.0");
+    protected final JSpinner remotePortSpinner = new JSpinner();
     protected final JTextField tokenTextField = new JTextField("");
     protected final JPanel statusPanel = new JPanel(new BorderLayout());
-    protected final SmoothProgressBar memBar = new SmoothProgressBar(500,250);
+    protected final SmoothProgressBar memBar = new SmoothProgressBar(500, 250);
     protected final JLabel runningThreadCount = new JLabel("远程服务器运行的线程数: 未连接至服务器");
     protected final JLabel pingLabel = new JLabel("延迟: 未连接至服务器");
     protected final GUILogger logger;
@@ -51,6 +54,7 @@ public class RemoteIntegratedServerClient {
     protected ChannelHandlerContext remoteChannel;
     protected RemoteClientInterface serverInterface;
     protected RemoteClient client;
+
     public RemoteIntegratedServerClient(String serverName) {
         this.serverName = serverName;
 
@@ -71,19 +75,17 @@ public class RemoteIntegratedServerClient {
 
         loadClientInterface();
 
-        loadControlPanel();
         controlPanel.setVisible(false);
 
-        loadConnectPanel();
-        loadStatusBar();
-
-        remotePanel.add(controlPanel, BorderLayout.EAST);
-        remotePanel.add(connectPanel, BorderLayout.WEST);
+        remotePanel.add(loadControlPanel(), BorderLayout.EAST);
+        remotePanel.add(loadConnectPanel(), BorderLayout.WEST);
         remoteClientPanel.add(remotePanel, BorderLayout.EAST);
-        remoteClientPanel.add(statusPanel, BorderLayout.SOUTH);
+
+        remoteClientPanel.add(loadStatusBar(), BorderLayout.SOUTH);
     }
 
-    private void loadControlPanel() {
+    protected JPanel loadControlPanel() {
+        controlPanel.setLayout(new VFlowLayout());
         controlPanel.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.3), 0));
         controlPanel.setBorder(new TitledBorder("远程控制面板"));
 
@@ -114,18 +116,20 @@ public class RemoteIntegratedServerClient {
                 new RequestMessage("GetFileList",
                         List.of(new String[]{"./"}))));
         controlPanel.add(openFileList);
+
+        return controlPanel;
     }
 
-    protected void loadStatusBar() {
+    protected JPanel loadStatusBar() {
         statusPanel.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(5, 4, 5, 4)));
 
         Box leftBox = Box.createHorizontalBox();
-        pingLabel.setBorder(new EmptyBorder(0,0,0,20));
+        pingLabel.setBorder(new EmptyBorder(0, 0, 0, 20));
         leftBox.add(pingLabel);
         leftBox.add(runningThreadCount);
 
         Box memBarBox = Box.createHorizontalBox();
-        memBar.setBorder(new EmptyBorder(0,0,0,5));
+        memBar.setBorder(new EmptyBorder(0, 0, 0, 5));
         memBar.setPreferredSize(new Dimension(250, memBar.getHeight()));
         memBar.setStringPainted(true);
         memBar.setString("未连接至服务器");
@@ -141,25 +145,27 @@ public class RemoteIntegratedServerClient {
 
         statusPanel.add(leftBox, BorderLayout.WEST);
         statusPanel.add(memBarBox, BorderLayout.EAST);
+
+        return statusPanel;
     }
 
-    private void loadConnectPanel() {
+    private JPanel loadConnectPanel() {
         connectPanel.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.3), 0));
         connectPanel.setBorder(new TitledBorder("连接服务器"));
 
         //IP 配置
         Box IPPortBox = Box.createHorizontalBox();
         IPPortBox.add(new JLabel("远程服务器 IP:"));
-        IPPortBox.add(IPTextField);
+        IPPortBox.add(remoteIPTextField);
 
         //端口配置
         IPPortBox.add(new JLabel(" 远程端口:"), BorderLayout.WEST);
         SpinnerNumberModel portSpinnerModel = new SpinnerNumberModel(10000, 1, 65535, 1);
-        portSpinner.setModel(portSpinnerModel);
-        JSpinner.NumberEditor portSpinnerEditor = new JSpinner.NumberEditor(portSpinner, "#");
-        portSpinner.setEditor(portSpinnerEditor);
+        remotePortSpinner.setModel(portSpinnerModel);
+        JSpinner.NumberEditor portSpinnerEditor = new JSpinner.NumberEditor(remotePortSpinner, "#");
+        remotePortSpinner.setEditor(portSpinnerEditor);
 
-        IPPortBox.add(portSpinner);
+        IPPortBox.add(remotePortSpinner);
 
         //token 配置
         Box tokenBox = Box.createHorizontalBox();
@@ -193,18 +199,106 @@ public class RemoteIntegratedServerClient {
         connectPanel.add(IPPortBox);
         connectPanel.add(tokenBox);
         connectPanel.add(connect);
+
+        return connectPanel;
     }
 
     private void loadClientInterface() {
         serverInterface = new RemoteClientInterface() {
             long lastStatusUpdated;
+
+            @Override
+            public IntegratedServerConfig getIntegratedServerConfig() {
+                return null;
+            }
+
+            @Override
+            public String getServerName() {
+                return serverName;
+            }
+
+            @Override
+            public void regenCache() {
+
+            }
+
+            @Override
+            public boolean stopServer() {
+                return false;
+            }
+
+            @Override
+            public void saveConfig() {
+
+            }
+
+            @Override
+            public String getIndexJson() {
+                return null;
+            }
+
+            @Override
+            public String getResJsonFileExtensionName() {
+                return null;
+            }
+
+            @Override
+            public String getLegacyResJsonFileExtensionName() {
+                return null;
+            }
+
+            @Override
+            public String getLegacyResJson() {
+                return null;
+            }
+
+            @Override
+            public void setLegacyResJson(String newLegacyResJson) {
+
+            }
+
+            @Override
+            public SmoothProgressBar getStatusProgressBar() {
+                return null;
+            }
+
+            @Override
+            public void setStatusLabelText(String text, Color fg) {
+
+            }
+
+            @Override
+            public void resetStatusProgressBar() {
+
+            }
+
+            @Override
+            public AtomicBoolean isGenerating() {
+                return null;
+            }
+
+            @Override
+            public AtomicBoolean isStarted() {
+                return null;
+            }
+
+            @Override
+            public String getResJson() {
+                return null;
+            }
+
+            @Override
+            public void setResJson(String newResJson) {
+
+            }
+
             @Override
             public ChannelHandlerContext getMainChannel() {
                 return remoteChannel;
             }
 
             @Override
-            public RemoteClientConfig getConfig() {
+            public RemoteClientConfig getRemoteClientConfig() {
                 return config;
             }
 
@@ -276,14 +370,14 @@ public class RemoteIntegratedServerClient {
             logger.error("远程服务器客户端配置文件加载失败！", e);
         }
 
-        IPTextField.setText(config.getIp());
-        portSpinner.setValue(config.getPort());
+        remoteIPTextField.setText(config.getIp());
+        remotePortSpinner.setValue(config.getPort());
         tokenTextField.setText(config.getToken());
     }
 
     protected void reloadConfigurationFromGUI() {
         //IP 检查
-        String IP = IPTextField.getText();
+        String IP = remoteIPTextField.getText();
         String IPType = IPAddressUtil.checkAddress(IP);
         if (IPType == null) {
             IP = "0.0.0.0";
@@ -291,7 +385,7 @@ public class RemoteIntegratedServerClient {
             logger.warn("配置中的 IP 格式错误，使用默认 IP 地址 0.0.0.0");
         }
 
-        config.setPort((Integer) portSpinner.getValue())
+        config.setPort((Integer) remotePortSpinner.getValue())
                 .setIp(IP)
                 .setToken(tokenTextField.getText());
 
@@ -315,5 +409,15 @@ public class RemoteIntegratedServerClient {
      */
     public JPanel getPanel() {
         return remoteClientPanel;
+    }
+
+    @Override
+    protected Box loadJksSslBox() {
+        return null;
+    }
+
+    @Override
+    protected ServerInterface getServerInterface() {
+        return null;
     }
 }

@@ -16,7 +16,7 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
     public RemoteClientChannel(GUILogger logger, RemoteClientInterface serverInterface) {
         this.logger = logger;
         this.serverInterface = serverInterface;
-        config = serverInterface.getConfig();
+        config = serverInterface.getRemoteClientConfig();
     }
 
     @Override

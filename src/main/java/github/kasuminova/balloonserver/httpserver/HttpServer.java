@@ -46,7 +46,7 @@ public class HttpServer {
         this.serverInterface = serverInterface;
 
         this.logger = serverInterface.getLogger();
-        this.config = serverInterface.getConfig();
+        this.config = serverInterface.getIntegratedServerConfig();
         this.isStarted = serverInterface.isStarted();
         this.isGenerating = serverInterface.isGenerating();
     }

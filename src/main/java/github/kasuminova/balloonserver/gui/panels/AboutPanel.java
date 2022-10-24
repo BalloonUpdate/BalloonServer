@@ -7,7 +7,6 @@ import github.kasuminova.balloonserver.utils.MiscUtils;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.InputStream;
 
 public class AboutPanel {
     static final int GLOBAL_BUTTON_WIDTH = 170;
@@ -24,14 +23,7 @@ public class AboutPanel {
         JLabel title = new JLabel("BalloonServer " + BalloonServer.VERSION);
         title.setBorder(new EmptyBorder(0,10,0,0));
         //设置字体
-        try {
-            InputStream ttfFile = AboutPanel.class.getResourceAsStream("/font/Saira-Medium.ttf");
-            if (ttfFile != null) {
-                title.setFont(Font.createFont(Font.TRUETYPE_FONT, ttfFile).deriveFont(35f));
-            }
-        } catch (Exception e) {
-            title.setFont(title.getFont().deriveFont(35f));
-        }
+        title.setFont(title.getFont().deriveFont(35f));
         titleBox.add(title);
         //描述
         JPanel descPanel = new JPanel(new VFlowLayout(0, VFlowLayout.MIDDLE, 5, 5, 5, 5, false, false));

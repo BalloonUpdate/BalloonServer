@@ -80,8 +80,7 @@ public final class BalloonServer {
 
     private static void init() {
         //大小设置
-        MAIN_FRAME.setSize(1400, 815);
-        MAIN_FRAME.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.8), MAIN_FRAME.getHeight()));
+        MAIN_FRAME.setMinimumSize(new Dimension(1125,725));
 
         //标签页配置
         PRE_LOAD_PROGRESS_BAR.setString("载入主面板...");

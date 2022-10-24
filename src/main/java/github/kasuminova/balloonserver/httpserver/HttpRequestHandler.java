@@ -43,7 +43,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
     public HttpRequestHandler(IntegratedServerInterface serverInterface) {
         resJson = serverInterface.getResJson();
         legacyResJson = serverInterface.getLegacyResJson();
-        config = serverInterface.getConfig();
+        config = serverInterface.getIntegratedServerConfig();
         logger = serverInterface.getLogger();
         requestListPanel = serverInterface.getRequestListPanel();
         indexJsonString = serverInterface.getIndexJson();

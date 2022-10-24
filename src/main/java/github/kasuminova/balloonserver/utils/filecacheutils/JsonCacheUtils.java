@@ -47,7 +47,7 @@ public class JsonCacheUtils {
 
         logger = serverInterface.getLogger();
         isGenerating = serverInterface.isGenerating();
-        config = serverInterface.getConfig();
+        config = serverInterface.getIntegratedServerConfig();
         statusProgressBar = serverInterface.getStatusProgressBar();
     }
 

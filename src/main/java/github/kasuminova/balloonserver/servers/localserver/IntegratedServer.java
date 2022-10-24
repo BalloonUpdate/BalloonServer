@@ -1,21 +1,19 @@
 package github.kasuminova.balloonserver.servers.localserver;
 
 import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.io.file.FileReader;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.swing.clipboard.ClipboardUtil;
 import cn.hutool.core.thread.ThreadUtil;
-import com.alibaba.fastjson2.JSONArray;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
-import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
-import github.kasuminova.balloonserver.gui.RuleEditor;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
+import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.httpserver.HttpServer;
-import github.kasuminova.balloonserver.httpserver.HttpServerInterface;
+import github.kasuminova.balloonserver.servers.AbstractServer;
 import github.kasuminova.balloonserver.utils.*;
 import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
 
@@ -26,75 +24,47 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 import static github.kasuminova.balloonserver.BalloonServer.TITLE;
-import static github.kasuminova.balloonserver.utils.SvgIcons.*;
+import static github.kasuminova.balloonserver.utils.SvgIcons.DELETE_ICON;
 
 /**
  * IntegratedServer 集成服务端面板实例
  */
-public class IntegratedServer {
+public class IntegratedServer extends AbstractServer {
     protected final JSONObject index = new JSONObject();
     protected final String resJsonFileExtensionName = "res-cache";
     protected final String legacyResJsonFileExtensionName = "legacy_res-cache";
     protected final String configFileSuffix = ".lscfg.json";
     protected final JLabel statusLabel = new JLabel("状态: 就绪", JLabel.LEFT);
-    protected final SmoothProgressBar statusProgressBar = new SmoothProgressBar(1000, 250);
     protected final JButton copyAddressButton = new JButton("复制 API 地址");
     protected final JButton openAddressButton = new JButton("在浏览器中打开 API 地址");
     protected final String serverName;
     protected final GUILogger logger;
     protected final IntegratedServerConfig config = new IntegratedServerConfig();
-    protected final List<String> commonModeList = new ArrayList<>();
-    protected final List<String> onceModeList = new ArrayList<>();
-    //服务器启动状态
-    protected final AtomicBoolean isStarted = new AtomicBoolean(false);
-    protected final AtomicBoolean isStarting = new AtomicBoolean(false);
-    //服务端是否在生成缓存，防止同一时间多个线程生成缓存导致程序混乱
-    protected final AtomicBoolean isGenerating = new AtomicBoolean(false);
+    protected final JFrame requestListFrame = new JFrame();
     protected final JPanel requestListPanel = new JPanel(new VFlowLayout());
     protected final JScrollPane requestListScrollPane = new JScrollPane(
             requestListPanel,
             JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     protected final JPanel littleServerPanel = new JPanel(new BorderLayout());
-    protected final JPanel controlPanel = new JPanel(new BorderLayout());
     protected final JButton startOrStop = new JButton("保存配置并启动服务器");
-    //IP 输入框
-    protected final JTextField IPTextField = new JTextField("0.0.0.0");
-    //端口输入框
-    protected final JSpinner portSpinner = new JSpinner();
-    //Jks 证书密码
-    protected final JPasswordField JksSslPassField = new JPasswordField();
-    //资源文件夹输入框
-    protected final JTextField mainDirTextField = new JTextField("/res");
-    //实时文件监听
-    protected final JCheckBox fileChangeListener = new JCheckBox("启用实时文件监听", true);
-    //旧版兼容模式
-    protected final JCheckBox compatibleMode = new JCheckBox("启用旧版兼容");
-    //证书文件名（不可编辑）
-    protected final JTextField JksSslTextField = new JTextField("请选择证书文件");
-    //普通模式
-    protected final JList<String> commonMode = new JList<>();
-    //补全模式
-    protected final JList<String> onceMode = new JList<>();
+
     protected HttpServer server;
     protected String indexJson = null;
     protected String resJson = null;
     protected String legacyResJson = null;
     protected IntegratedServerInterface serverInterface;
-    protected HttpServerInterface httpServerInterface;
 
     /**
      * 创建一个服务器面板，并绑定一个新的服务器实例
@@ -140,103 +110,24 @@ public class IntegratedServer {
             }
         });
 
-        //控制面板
-        controlPanel.setBorder(new TitledBorder("控制面板"));
-        controlPanel.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.26), 0));
-
-        //配置窗口
-        JPanel configPanel = new JPanel(new VFlowLayout());
-        configPanel.setBorder(new TitledBorder("程序配置"));
-
-        //IP 端口
-        configPanel.add(loadIPPortBox());
-        //资源文件夹
-        configPanel.add(loadMainDirBox());
-        //SSL 证书框，仅用于显示。实际操作为右方按钮。
-        configPanel.add(loadJksSslBox());
-        //Jks 证书密码框
-        configPanel.add(loadJksSslPassBox());
-        //额外功能
-        configPanel.add(loadExtraFeaturesPanel());
-        //普通模式
-        configPanel.add(loadCommonModePanel());
-        //补全模式
-        configPanel.add(loadOnceModePanel());
-
         //载入配置文件并初始化 HTTP 服务端
         loadConfigurationFromFile();
         loadHttpServer();
 
-        JPanel southControlPanel = new JPanel(new VFlowLayout());
-        JLabel tipLabel = new JLabel("上方配置修改后, 请点击保存配置按钮来载入配置.");
-        tipLabel.setForeground(ModernColors.RED);
-        southControlPanel.add(tipLabel);
-
-        //存储当前配置
-        JButton saveConfigButton = new JButton("保存并重载配置");
-        saveConfigButton.setToolTipText("以控制面板当前的配置应用到服务器, 并保存配置到磁盘.");
-        southControlPanel.add(saveConfigButton);
-        saveConfigButton.addActionListener(e -> saveConfigurationToFile());
-
-        //重新生成资源文件夹缓存
-        JButton regenDirectoryStructureCache = new JButton("重新生成资源文件夹缓存");
-        southControlPanel.add(regenDirectoryStructureCache);
-        regenDirectoryStructureCache.addActionListener(e -> {
-            if (isGenerating.get()) {
-                JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在生成资源缓存, 请稍后再试。", BalloonServer.TITLE,
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            regenResCache();
-        });
-
-        //启动/关闭 服务器
-        startOrStop.addActionListener(e -> {
-            if (isGenerating.get()) {
-                JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在生成资源缓存, 请稍后再试。", BalloonServer.TITLE,
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            if (isStarting.get()) {
-                JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在启动服务器, 请稍后再试。", BalloonServer.TITLE,
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            //如果启动则关闭服务器
-            if (!isStarted.get()) {
-                saveConfigurationToFile();
-                startServer();
-            } else {
-                stopServer();
-            }
-        });
-        southControlPanel.add(startOrStop);
-
-        //上传列表
-        requestListScrollPane.getVerticalScrollBar().setUnitIncrement(50);
-        requestListScrollPane.setBorder(new TitledBorder("上传列表"));
-        requestListScrollPane.setPreferredSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.235), littleServerPanel.getHeight()));
-        //组装控制面板
-        controlPanel.add(configPanel);
-        controlPanel.add(southControlPanel, BorderLayout.SOUTH);
-
         //服务器窗口组装
-        //控制面板
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.add(controlPanel, BorderLayout.WEST);
-        //上传列表
-        rightPanel.add(requestListScrollPane, BorderLayout.EAST);
+        //控制面板
+        rightPanel.add(loadControlPanel(), BorderLayout.WEST);
+
+        //上传列表窗口
+        loadRequestList();
 
         //组装主面板
         littleServerPanel.add(logPanel, BorderLayout.CENTER);
         littleServerPanel.add(rightPanel, BorderLayout.EAST);
-        //载入实例状态栏
+        //载入状态栏
         littleServerPanel.add(loadStatusBar(), BorderLayout.SOUTH);
-        logger.debug(String.format("载入服务器耗时 %sms.", System.currentTimeMillis() - start));
+        logger.info(String.format("载入服务器耗时 %sms.", System.currentTimeMillis() - start));
 
         if (autoStart) {
             logger.info("检测到自动启动服务器选项已开启, 正在启动服务器...");
@@ -260,15 +151,6 @@ public class IntegratedServer {
      */
     public IntegratedServerInterface getServerInterface() {
         return serverInterface;
-    }
-
-    /**
-     * 返回当前服务器实例的 HTTP 服务器接口
-     *
-     * @return HttpServerInterface
-     */
-    public HttpServerInterface getHttpServerInterface() {
-        return httpServerInterface;
     }
 
     /**
@@ -318,7 +200,7 @@ public class IntegratedServer {
             }
 
             @Override
-            public IntegratedServerConfig getConfig() {
+            public IntegratedServerConfig getIntegratedServerConfig() {
                 return config;
             }
 
@@ -593,10 +475,16 @@ public class IntegratedServer {
                 controlPanel, "控制面板", showOrHideControlPanel));
 
         //隐藏/显示 上传列表
-        JButton showOrHideRequestListPanel = new JButton("隐藏上传列表");
+        JButton showOrHideRequestListPanel = new JButton("显示上传列表");
         showOrHideRequestListPanel.addActionListener(new ShowOrHideComponentActionListener(
-                requestListScrollPane, "上传列表", showOrHideRequestListPanel
+                requestListFrame, "上传列表", showOrHideRequestListPanel
         ));
+        requestListFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                showOrHideRequestListPanel.setText("显示上传列表");
+            }
+        });
 
         //复制 API 地址
         copyAddressButton.setVisible(false);
@@ -624,43 +512,103 @@ public class IntegratedServer {
         return statusPanel;
     }
 
-    /**
-     * 重置主窗口状态栏进度条
-     */
-    protected void resetStatusProgressBar() {
-        statusProgressBar.setVisible(false);
-        statusProgressBar.setIndeterminate(false);
-        statusProgressBar.reset();
-    }
+    protected Component loadControlPanel() {
+        //控制面板
+        controlPanel.setPreferredSize(new Dimension(350, 0));
+        controlPanel.setBorder(new TitledBorder("控制面板"));
 
-    protected Box loadIPPortBox() {
-        //IP 配置
-        Box IPPortBox = Box.createHorizontalBox();
-        IPPortBox.add(new JLabel("监听 IP:"));
-        IPPortBox.add(IPTextField);
-        //端口配置
-        SpinnerNumberModel portSpinnerModel = new SpinnerNumberModel(8080, 1, 65535, 1);
-        portSpinner.setModel(portSpinnerModel);
-        JSpinner.NumberEditor portSpinnerEditor = new JSpinner.NumberEditor(portSpinner, "#");
-        portSpinner.setEditor(portSpinnerEditor);
-        IPPortBox.add(new JLabel(" 端口:"));
-        IPPortBox.add(portSpinner);
+        //配置窗口
+        JPanel configPanel = new JPanel(new VFlowLayout());
 
-        return IPPortBox;
-    }
-
-    protected Box loadMainDirBox() {
+        //IP 端口
+        configPanel.add(loadIPPortBox());
         //资源文件夹
-        Box mainDirBox = Box.createHorizontalBox();
-        JLabel mainDirLabel = new JLabel("资源文件夹:");
-        mainDirTextField.putClientProperty("JTextField.showClearButton", true);
-        mainDirTextField.setToolTipText("""
-                仅支持程序当前目录下的文件夹或子文件夹，请勿输入其他文件夹。
-                默认为 /res , 也可输入其他文件夹, 如 /resources、/content、/.minecraft 等.""");
-        mainDirBox.add(mainDirLabel);
-        mainDirBox.add(mainDirTextField);
+        configPanel.add(loadMainDirBox());
+        //SSL 证书框，仅用于显示。实际操作为右方按钮。
+        configPanel.add(loadJksSslBox());
+        //Jks 证书密码框
+        configPanel.add(loadJksSslPassBox());
+        //额外功能
+        configPanel.add(loadExtraFeaturesPanel());
+        //普通模式
+        configPanel.add(loadCommonModePanel());
+        //补全模式
+        configPanel.add(loadOnceModePanel());
 
-        return mainDirBox;
+        JPanel southControlPanel = new JPanel(new VFlowLayout());
+        JLabel tipLabel = new JLabel("注意：配置修改后, 请点击保存配置按钮以应用配置.");
+        tipLabel.setForeground(ModernColors.RED);
+        southControlPanel.add(tipLabel);
+
+        //存储当前配置
+        JButton saveConfigButton = new JButton("保存并重载配置");
+        saveConfigButton.setToolTipText("以控制面板当前的配置应用到服务器, 并保存配置到磁盘.");
+        southControlPanel.add(saveConfigButton);
+        saveConfigButton.addActionListener(e -> saveConfigurationToFile());
+
+        //重新生成资源文件夹缓存
+        JButton regenDirectoryStructureCache = new JButton("重新生成资源文件夹缓存");
+        southControlPanel.add(regenDirectoryStructureCache);
+        regenDirectoryStructureCache.addActionListener(e -> {
+            if (isGenerating.get()) {
+                JOptionPane.showMessageDialog(MAIN_FRAME,
+                        "当前正在生成资源缓存, 请稍后再试。", BalloonServer.TITLE,
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            regenResCache();
+        });
+
+        //启动/关闭 服务器
+        startOrStop.addActionListener(e -> {
+            if (isGenerating.get()) {
+                JOptionPane.showMessageDialog(MAIN_FRAME,
+                        "当前正在生成资源缓存, 请稍后再试。", BalloonServer.TITLE,
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (isStarting.get()) {
+                JOptionPane.showMessageDialog(MAIN_FRAME,
+                        "当前正在启动服务器, 请稍后再试。", BalloonServer.TITLE,
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            //如果启动则关闭服务器
+            if (!isStarted.get()) {
+                saveConfigurationToFile();
+                startServer();
+            } else {
+                stopServer();
+            }
+        });
+        southControlPanel.add(startOrStop);
+
+        JScrollPane configScroll = new JScrollPane(configPanel,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        configScroll.getVerticalScrollBar().setUnitIncrement(15);
+        configScroll.setBorder(new TitledBorder("程序配置"));
+
+        //组装控制面板
+        controlPanel.add(configScroll);
+        controlPanel.add(southControlPanel, BorderLayout.SOUTH);
+
+        return controlPanel;
+    }
+
+    protected void loadRequestList() {
+        //上传列表
+        requestListScrollPane.getVerticalScrollBar().setUnitIncrement(50);
+        requestListScrollPane.setBorder(new TitledBorder("上传列表"));
+
+        requestListFrame.add(requestListScrollPane);
+
+        requestListFrame.setTitle(StrUtil.format("{} 的上传列表", serverName));
+        requestListFrame.setIconImage(SvgIcons.DEFAULT_SERVER_ICON.getImage());
+        requestListFrame.setMinimumSize(new Dimension(400,750));
+        requestListFrame.setResizable(false);
+        requestListFrame.setLocationRelativeTo(null);
     }
 
     protected Box loadJksSslBox() {
@@ -688,190 +636,5 @@ public class IntegratedServer {
         JksSslBox.add(selectJksSslFile);
 
         return JksSslBox;
-    }
-
-    protected Box loadJksSslPassBox() {
-        Box JksSslPassBox = Box.createHorizontalBox();
-        JksSslPassBox.add(new JLabel("JKS 证书密码:"));
-        JksSslPassBox.add(JksSslPassField);
-        return JksSslPassBox;
-    }
-
-    protected JPanel loadCommonModePanel() {
-        //普通更新模式
-        JPanel commonModePanel = new JPanel(new VFlowLayout());
-        commonModePanel.setBorder(new TitledBorder("普通更新模式"));
-        commonMode.setVisibleRowCount(6);
-        JScrollPane common_ModeScrollPane = new JScrollPane(
-                commonMode,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        commonModePanel.add(common_ModeScrollPane);
-
-        //菜单
-        JPopupMenu commonModeMenu = new JPopupMenu();
-        JMenuItem openCommonModeRuleEditor = new JMenuItem("打开更新规则编辑器");
-        openCommonModeRuleEditor.setIcon(EDIT_ICON);
-        //普通更新规则编辑器
-        openCommonModeRuleEditor.addActionListener(new RuleEditorActionListener(commonMode, commonModeList));
-        commonModeMenu.add(openCommonModeRuleEditor);
-        commonModeMenu.addSeparator();
-        //添加更新规则
-        JMenuItem addNewCommonRule = new JMenuItem("添加更新规则");
-        addNewCommonRule.setIcon(PLUS_ICON);
-        addNewCommonRule.addActionListener(new AddUpdateRule(commonMode, commonModeList, MAIN_FRAME));
-        commonModeMenu.add(addNewCommonRule);
-        //删除指定规则
-        JMenuItem deleteCommonRule = new JMenuItem("删除选定的规则");
-        deleteCommonRule.setIcon(REMOVE_ICON);
-        deleteCommonRule.addActionListener(new DeleteUpdateRule(commonMode, commonModeList, MAIN_FRAME));
-        commonModeMenu.add(deleteCommonRule);
-        //鼠标监听
-        commonMode.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    commonModeMenu.show(commonMode, e.getX(), e.getY());
-                }
-            }
-        });
-
-        return commonModePanel;
-    }
-
-    protected JPanel loadOnceModePanel() {
-        //补全更新模式
-        JPanel onceModePanel = new JPanel(new VFlowLayout());
-        onceModePanel.setBorder(new TitledBorder("补全更新模式"));
-        onceMode.setVisibleRowCount(6);
-        JScrollPane once_ModeScrollPane = new JScrollPane(
-                onceMode,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
-        onceModePanel.add(once_ModeScrollPane);
-
-        //菜单
-        JPopupMenu onceModeMenu = new JPopupMenu();
-        JMenuItem openOnceModeRuleEditor = new JMenuItem("打开更新规则编辑器");
-        openOnceModeRuleEditor.setIcon(EDIT_ICON);
-        //补全更新规则编辑器
-        openOnceModeRuleEditor.addActionListener(new RuleEditorActionListener(onceMode, onceModeList));
-        onceModeMenu.add(openOnceModeRuleEditor);
-        onceModeMenu.addSeparator();
-        //添加更新规则
-        JMenuItem addNewOnceRule = new JMenuItem("添加更新规则");
-        addNewOnceRule.setIcon(PLUS_ICON);
-        addNewOnceRule.addActionListener(new AddUpdateRule(onceMode, onceModeList, MAIN_FRAME));
-        onceModeMenu.add(addNewOnceRule);
-        //删除指定规则
-        JMenuItem deleteOnceRule = new JMenuItem("删除选定的规则");
-        deleteOnceRule.setIcon(REMOVE_ICON);
-        deleteOnceRule.addActionListener(new DeleteUpdateRule(onceMode, onceModeList, MAIN_FRAME));
-        //鼠标监听
-        onceMode.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    onceModeMenu.show(onceMode, e.getX(), e.getY());
-                }
-            }
-        });
-        onceModeMenu.add(deleteOnceRule);
-
-        return onceModePanel;
-    }
-
-    protected JPanel loadExtraFeaturesPanel() {
-        JPanel extraFeaturesPanel = new JPanel(new BorderLayout());
-        //实时文件监听
-        fileChangeListener.setToolTipText("""
-                开启后，启动服务器的同时会启动文件监听服务.
-                文件监听服务会每隔 5 - 7 秒会监听资源文件夹的变化，如果资源一有变化会立即重新生成资源缓存.
-                注意:不推荐在超大文件夹(10000 文件/文件夹 以上)上使用此功能，可能会造成 I/O 卡顿.""");
-
-        compatibleMode.setToolTipText("""
-                开启后，服务端将兼容 4.x.x 版本的所有类型客户端.
-                但是同时也会造成一定的性能下降.""");
-
-        extraFeaturesPanel.add(fileChangeListener, BorderLayout.WEST);
-        extraFeaturesPanel.add(compatibleMode, BorderLayout.EAST);
-
-        return extraFeaturesPanel;
-    }
-
-    //更新规则编辑器类
-    protected class RuleEditorActionListener implements ActionListener {
-        protected final JList<String> ruleList;
-        protected final List<String> rules;
-
-        protected RuleEditorActionListener(JList<String> ruleList, List<String> rules) {
-            this.ruleList = ruleList;
-            this.rules = rules;
-        }
-
-        protected void showRuleEditorDialog(JSONArray jsonArray) {
-            ThreadUtil.execute(() -> {
-                //锁定窗口，防止用户误操作
-                MAIN_FRAME.setEnabled(false);
-                RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
-                editorDialog.setModal(true);
-
-                MAIN_FRAME.setEnabled(true);
-                editorDialog.setVisible(true);
-
-                ruleList.setListData(rules.toArray(new String[0]));
-            });
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (isGenerating.get()) {
-                JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "当前正在生成资源缓存，请稍后再试。",
-                        BalloonServer.TITLE,
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            File file = new File(String.format("./%s.%s.json", serverName, resJsonFileExtensionName));
-            if (file.exists()) {
-                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                        "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
-                        BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
-                if (!(selection == JOptionPane.YES_OPTION)) return;
-
-                try {
-                    String json = new FileReader(file).readString();
-                    showRuleEditorDialog(JSONArray.parseArray(json));
-                } catch (IORuntimeException ex) {
-                    JOptionPane.showMessageDialog(MAIN_FRAME,
-                            "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
-                            JOptionPane.ERROR_MESSAGE);
-                }
-                return;
-            }
-
-            int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                    "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
-                    BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
-            if (!(selection == JOptionPane.YES_OPTION)) return;
-
-            ThreadUtil.execute(() -> {
-                new JsonCacheUtils(serverInterface, httpServerInterface, startOrStop).updateDirCache(null, HashCalculator.CRC32);
-                if (file.exists()) {
-                    try {
-                        String json = new FileReader(file).readString();
-                        showRuleEditorDialog(JSONArray.parseArray(json));
-
-                    } catch (IORuntimeException ex) {
-                        JOptionPane.showMessageDialog(MAIN_FRAME,
-                                "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
-                                JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            });
-        }
     }
 }

@@ -28,7 +28,7 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
     public HttpServerInitializer(IntegratedServerInterface serverInterface) {
         this.serverInterface = serverInterface;
 
-        IntegratedServerConfig config = serverInterface.getConfig();
+        IntegratedServerConfig config = serverInterface.getIntegratedServerConfig();
         this.logger = serverInterface.getLogger();
 
         if (config.getJksFilePath().isEmpty() || config.getJksSslPassword().isEmpty()) {
