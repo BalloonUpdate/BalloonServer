@@ -48,4 +48,16 @@ public class MiscUtils {
         pw.flush();
         return sw.toString();
     }
+
+    public static String formatTime(long time) {
+        if (time < 1000 * 10) {
+            return String.format("%.3fs", (double) time / 1000);
+        } else if (time < 1000 * 100) {
+            return String.format("%.2fs", (double) time / 1000);
+        } else if (time < 1000 * 1000) {
+            return String.format("%.1fs", (double) time / 1000);
+        } else {
+            return String.format("%ss", time / 1000);
+        }
+    }
 }

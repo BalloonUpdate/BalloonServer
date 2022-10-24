@@ -1,6 +1,12 @@
 package github.kasuminova.balloonserver.updatechecker;
 
-public class ApplicationVersion {
+import java.io.Serial;
+import java.io.Serializable;
+
+public class ApplicationVersion implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1;
+
     public static final String BETA = "BETA";
     public static final String STABLE = "STABLE";
     private final int bigVersion;

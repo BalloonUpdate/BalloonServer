@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
+import static github.kasuminova.balloonserver.utils.MiscUtils.formatTime;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
@@ -247,18 +248,6 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
                 decodedURI,
                 msg
                 ));
-    }
-
-    private static String formatTime(long time) {
-        if (time < 1000 * 10) {
-            return String.format("%.3fs", (double) time / 1000);
-        } else if (time < 1000 * 100) {
-            return String.format("%.2fs", (double) time / 1000);
-        } else if (time < 1000 * 1000) {
-            return String.format("%.1fs", (double) time / 1000);
-        } else {
-            return String.format("%ss", time / 1000);
-        }
     }
 
     /**

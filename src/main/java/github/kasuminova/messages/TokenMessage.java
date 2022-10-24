@@ -1,21 +1,23 @@
 package github.kasuminova.messages;
 
+import github.kasuminova.balloonserver.updatechecker.ApplicationVersion;
+
 public class TokenMessage extends AbstractMessage {
     private String token;
-    private String clientVersion;
+    private ApplicationVersion clientVersion;
 
-    public TokenMessage(String token, String clientVersion) {
+    public TokenMessage(String token, ApplicationVersion clientVersion) {
         this.token = token;
         this.clientVersion = clientVersion;
 
         messageType = TokenMessage.class.getName();
     }
 
-    public String getClientVersion() {
+    public ApplicationVersion getClientVersion() {
         return clientVersion;
     }
 
-    public void setClientVersion(String clientVersion) {
+    public void setClientVersion(ApplicationVersion clientVersion) {
         this.clientVersion = clientVersion;
     }
 

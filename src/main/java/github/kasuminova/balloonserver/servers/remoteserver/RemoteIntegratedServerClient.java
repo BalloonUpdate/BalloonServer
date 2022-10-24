@@ -10,7 +10,7 @@ import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.utils.IPAddressUtil;
 import github.kasuminova.balloonserver.utils.ModernColors;
-import github.kasuminova.messages.MethodMessage;
+import github.kasuminova.messages.RequestMessage;
 import github.kasuminova.messages.StringMessage;
 import github.kasuminova.balloonserver.remoteclient.RemoteClient;
 import github.kasuminova.balloonserver.utils.GUILogger;
@@ -23,6 +23,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.File;
+import java.util.List;
 
 import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 
@@ -109,10 +110,9 @@ public class RemoteIntegratedServerClient {
         controlPanel.add(disconnect);
 
         JButton openFileList = new JButton("打开服务端文件夹列表");
-        openFileList.addActionListener(e -> remoteChannel.writeAndFlush(new MethodMessage(
-                "github.kasuminova.hyperserver.remoteserver.Methods",
-                "sendFileList",
-                new String[]{clientIP, "./"})));
+        openFileList.addActionListener(e -> remoteChannel.writeAndFlush(
+                new RequestMessage("GetFileList",
+                        List.of(new String[]{"./"}))));
         controlPanel.add(openFileList);
     }
 
@@ -134,7 +134,8 @@ public class RemoteIntegratedServerClient {
         JButton GC = new JButton("清理");
         GC.setPreferredSize(new Dimension(65, 21));
         GC.addActionListener(e -> {
-            if (remoteChannel != null) remoteChannel.writeAndFlush(new MethodMessage("java.lang.System", "gc"));
+            if (remoteChannel != null) remoteChannel.writeAndFlush(
+                    new RequestMessage("MemoryGC"));
         });
         memBarBox.add(GC);
 
@@ -236,7 +237,7 @@ public class RemoteIntegratedServerClient {
                 clientIP = null;
 
                 isConnected = false;
-                pingLabel.setText("延迟: 连接至服务器");
+                pingLabel.setText("延迟: 未连接至服务器");
                 runningThreadCount.setText("远程服务器运行的线程数: 未连接至服务器");
                 memBar.setValue(0);
                 memBar.setString("未连接至服务器");

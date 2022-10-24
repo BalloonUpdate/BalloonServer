@@ -6,9 +6,7 @@ import github.kasuminova.balloonserver.utils.GUILogger;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 
@@ -74,18 +72,14 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
             pipeline.addFirst("ssl", new SslHandler(engine));
         }
 
+        pipeline.addLast("http-codec", new HttpServerCodec());
         //反向代理适配器
-        pipeline.addLast("decoder", new DecodeProxy(logger));
-
-        pipeline.addLast("http-decoder", new HttpRequestDecoder());
-        pipeline.addLast("http-aggregator", new HttpObjectAggregator(65536));
-        pipeline.addLast("http-encoder", new HttpResponseEncoder());
+        pipeline.addLast("proxy-decoder", new DecodeProxy(logger));
         pipeline.addLast("http-chunked", new ChunkedWriteHandler());
-
+        pipeline.addLast("http-aggregator", new HttpObjectAggregator(65536));
         //gzip 压缩
-//        pipeline.addLast("compressor",new HttpContentCompressor());
+        pipeline.addLast("http-compressor",new HttpContentCompressor());
         //请求处理器
         pipeline.addLast("http-handler", new HttpRequestHandler(serverInterface));
-//        pipeline.addLast("http-handler", new TestHttpRequestHandler("/"));
     }
 }

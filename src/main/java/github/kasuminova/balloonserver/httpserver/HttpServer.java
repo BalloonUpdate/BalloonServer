@@ -64,24 +64,24 @@ public class HttpServer {
         ServerBootstrap bootstrap = new ServerBootstrap();
         boss = new NioEventLoopGroup();
         work = new NioEventLoopGroup();
+
         HttpServerInitializer httpServerInitializer = new HttpServerInitializer(serverInterface);
         bootstrap.group(boss, work)
                 .handler(new LoggingHandler(LogLevel.INFO))
                 .channel(NioServerSocketChannel.class)
                 .childHandler(httpServerInitializer);
+
         try {
             future = bootstrap.bind(new InetSocketAddress(ip, port)).sync();
             String addressType = IPAddressUtil.checkAddress(ip);
             assert addressType != null;
             logger.info(String.format("服务器已启动! (%sms)", System.currentTimeMillis() - start), ModernColors.GREEN);
 
-            if ("v6".equals(addressType)) {
+            if (addressType.equals("v6")) {
                 if (httpServerInitializer.isUseSsl()) {
                     apiAddress = String.format("https://%s:%s/index.json",
                             StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
-
-                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果下方输出的域名不正确, 请自行更换域名。");
                 } else {
                     apiAddress = String.format("https://[%s]:%s/index.json",
                             ip,
@@ -92,8 +92,6 @@ public class HttpServer {
                     apiAddress = String.format("https://%s:%s/index.json",
                             StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
-
-                    logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果下方输出的域名不正确, 请自行更换域名。");
                 } else if (ip.equals("0.0.0.0")) {
                     apiAddress = String.format("http://localhost:%s/index.json",
                             port);
@@ -102,6 +100,10 @@ public class HttpServer {
                             ip,
                             port);
                 }
+            }
+
+            if (httpServerInitializer.isUseSsl()) {
+                logger.info("注意: 已启用 HTTPS 协议, 你只能通过域名来访问 API 地址。如果下方输出的域名不正确, 请自行更换域名。");
             }
             logger.info(String.format("API 地址: %s", apiAddress), ModernColors.GREEN);
             serverInterface.setStatusLabelText("已启动", ModernColors.GREEN);

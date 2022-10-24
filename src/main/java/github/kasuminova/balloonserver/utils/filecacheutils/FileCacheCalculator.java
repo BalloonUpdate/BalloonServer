@@ -28,24 +28,6 @@ public class FileCacheCalculator {
     }
 
     /**
-     * 统计目标文件夹内包含的 文件/文件夹 大小,
-     * 并将其大小整合在一起至一个变量, 用于轮询线程的查询
-     * size[0] 为总大小
-     * size[1] 为总文件数量
-     */
-    public static long[] getDirSize(File dir, SmoothProgressBar statusProgressBar) {
-        return new FileCounter().getFiles(dir, statusProgressBar);
-    }
-
-    public long getCompletedBytes() {
-        return completedBytes.get();
-    }
-
-    public int getCompletedFiles() {
-        return completedFiles.get();
-    }
-
-    /**
      * 扫描目标文件夹内的文件与文件夹
      *
      * @param directory 目标文件夹
@@ -121,5 +103,34 @@ public class FileCacheCalculator {
             }
             return new long[]{totalSize.get(), totalFiles.get()};
         }
+    }
+
+    /**
+     * <p>
+     * 统计目标文件夹内包含的 文件/文件夹 大小.
+     * </p>
+     *
+     * <p>
+     * 并将其大小整合在一起至一个变量, 用于轮询线程的查询.
+     * </p>
+     *
+     * <p>
+     * size[0] 为总大小
+     * </p>
+     *
+     * <p>
+     * size[1] 为总文件数量
+     * </p>
+     */
+    public static long[] getDirSize(File dir, SmoothProgressBar statusProgressBar) {
+        return new FileCounter().getFiles(dir, statusProgressBar);
+    }
+
+    public long getCompletedBytes() {
+        return completedBytes.get();
+    }
+
+    public int getCompletedFiles() {
+        return completedFiles.get();
     }
 }

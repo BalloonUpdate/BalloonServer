@@ -252,6 +252,7 @@ public class GUILogger {
     public void error(String format, Object... params) {
         log(format, ERROR_ATTRIBUTE, ERROR, params);
     }
+
     /**
      * 输出 ERROR 日志
      *

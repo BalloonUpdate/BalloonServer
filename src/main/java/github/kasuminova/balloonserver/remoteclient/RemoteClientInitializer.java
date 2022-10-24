@@ -1,6 +1,5 @@
 package github.kasuminova.balloonserver.remoteclient;
 
-import github.kasuminova.messages.AbstractMessage;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import io.netty.channel.ChannelInitializer;
@@ -22,8 +21,12 @@ public class RemoteClientInitializer extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
 
-        pipeline.addLast(new ObjectEncoder());//编码器
-        pipeline.addLast(new ObjectDecoder(ClassResolvers.weakCachingResolver(AbstractMessage.class.getClassLoader())));//解码器
+        //编码器
+        pipeline.addLast(new ObjectEncoder());
+        //解码器
+        pipeline.addLast(new ObjectDecoder(ClassResolvers.weakCachingResolver(Object.class.getClassLoader())));
+
         pipeline.addLast("mainChannel", new RemoteClientChannel(logger, serverInterface));
+        pipeline.addLast("fileObjectChannel", new RemoteClientFileObjectChannel(logger, serverInterface));
     }
 }

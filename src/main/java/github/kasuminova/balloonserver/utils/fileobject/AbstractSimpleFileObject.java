@@ -2,10 +2,16 @@ package github.kasuminova.balloonserver.utils.fileobject;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import github.kasuminova.messages.AbstractMessage;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class AbstractSimpleFileObject {
+public abstract class AbstractSimpleFileObject implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     String name;
 
     public String getName() {

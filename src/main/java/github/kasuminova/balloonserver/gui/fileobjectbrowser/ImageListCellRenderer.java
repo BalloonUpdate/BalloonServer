@@ -2,20 +2,20 @@ package github.kasuminova.balloonserver.gui.fileobjectbrowser;
 
 import github.kasuminova.balloonserver.utils.ModernColors;
 import github.kasuminova.balloonserver.utils.SvgIcons;
-import github.kasuminova.messages.fileobject.AbstractLiteFileObject;
-import github.kasuminova.messages.fileobject.LiteDirectoryObject;
-import github.kasuminova.messages.fileobject.LiteFileObject;
+import github.kasuminova.balloonserver.utils.fileobject.AbstractSimpleFileObject;
+import github.kasuminova.balloonserver.utils.fileobject.SimpleDirectoryObject;
+import github.kasuminova.balloonserver.utils.fileobject.SimpleFileObject;
 
 import java.awt.*;
 import javax.swing.*;
 
 public class ImageListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value instanceof AbstractLiteFileObject abstractFileObject) {
+        if (value instanceof AbstractSimpleFileObject abstractFileObject) {
             setText(abstractFileObject.getName());		//设置文字
-            if (abstractFileObject instanceof LiteFileObject) {
+            if (abstractFileObject instanceof SimpleFileObject) {
                 setIcon(SvgIcons.FILE_ICON);
-            } else if (abstractFileObject instanceof LiteDirectoryObject){
+            } else if (abstractFileObject instanceof SimpleDirectoryObject) {
                 setIcon(SvgIcons.DIR_ICON);
             }
         } else {
