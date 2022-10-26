@@ -27,6 +27,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -358,11 +359,11 @@ public class RemoteIntegratedServerClient extends AbstractServer {
                 int ping = (int) (System.currentTimeMillis() - lastStatusUpdated - 1000);
                 pingLabel.setText(StrUtil.format("延迟: {}ms", Math.max(ping, 0)));
 
-                if (ping < 75) {
+                if (ping < 100) {
                     pingLabel.setForeground(ModernColors.GREEN);
-                } else if (ping < 150) {
+                } else if (ping < 200) {
                     pingLabel.setForeground(ModernColors.BLUE);
-                } else if (ping < 275) {
+                } else if (ping < 400) {
                     pingLabel.setForeground(ModernColors.YELLOW);
                 } else {
                     pingLabel.setForeground(ModernColors.RED);
@@ -377,7 +378,9 @@ public class RemoteIntegratedServerClient extends AbstractServer {
                 remoteChannel = null;
                 clientIP = null;
 
+                isConnecting = false;
                 isConnected = false;
+
                 pingLabel.setText("延迟: 未连接至服务器");
                 runningThreadCount.setText("远程服务器运行的线程数: 未连接至服务器");
                 memBar.setValue(0);
@@ -397,6 +400,11 @@ public class RemoteIntegratedServerClient extends AbstractServer {
                 connectPanel.setVisible(false);
 
                 lastStatusUpdated = System.currentTimeMillis();
+            }
+
+            @Override
+            public void updateConfig(IntegratedServerConfig config) {
+                ThreadUtil.execute(() -> updateGUIConfig(config));
             }
 
             @Override
@@ -448,6 +456,33 @@ public class RemoteIntegratedServerClient extends AbstractServer {
 
         saveConfiguration();
         logger.info("已加载配置.");
+    }
+
+    private void updateGUIConfig(IntegratedServerConfig config) {
+        //IP
+        IPTextField.setText(config.getIp());
+        //端口
+        portSpinner.setValue(config.getPort());
+        //资源文件夹
+        mainDirTextField.setText(config.getMainDirPath());
+        //实时文件监听器
+        fileChangeListener.setSelected(config.isFileChangeListener());
+        //旧版兼容模式
+        compatibleMode.setSelected(config.isCompatibleMode());
+        //Jks 证书
+        JksSslTextField.setText(config.getJksFilePath());
+        //Jks 证书密码
+        JksSslPassField.setText(config.getJksSslPassword());
+        //普通模式
+        commonModeList.clear();
+        commonModeList.addAll(Arrays.asList(config.getCommonMode()));
+        commonMode.setListData(config.getCommonMode());
+        //补全模式
+        onceModeList.clear();
+        onceModeList.addAll(Arrays.asList(config.getOnceMode()));
+        onceMode.setListData(config.getOnceMode());
+
+        logger.info("已载入 API 服务器配置文件.");
     }
 
     protected void saveConfiguration() {

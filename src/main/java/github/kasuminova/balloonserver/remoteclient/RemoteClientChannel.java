@@ -11,10 +11,14 @@ import github.kasuminova.balloonserver.utils.GUILogger;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
     private final GUILogger logger;
     private final RemoteClientInterface serverInterface;
     private final RemoteClientConfig config;
+    private final Timer timeOutListener = new Timer();
     public RemoteClientChannel(GUILogger logger, RemoteClientInterface serverInterface) {
         this.logger = logger;
         this.serverInterface = serverInterface;
@@ -24,9 +28,15 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         logger.info("已连接至服务器, 认证中...");
+        timeOutListener.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                logger.warn("认证超时.");
+                timeOutListener.cancel();
+                ctx.close();
+            }
+        }, 5000, 5000);
         ctx.writeAndFlush(new TokenMessage(config.getToken(), BalloonServer.VERSION));
-        serverInterface.onConnected(ctx);
-
         ctx.fireChannelActive();
     }
 
@@ -47,7 +57,11 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) {
-        if (msg instanceof StringMessage strMsg) {
+        if (msg instanceof AuthSuccessMessage authSuccessMessage) {
+            serverInterface.onConnected(ctx);
+            timeOutListener.cancel();
+            serverInterface.updateConfig(authSuccessMessage.getConfig());
+        } else if (msg instanceof StringMessage strMsg) {
             logger.info(strMsg.getMessage());
         } else if (msg instanceof ErrorMessage errMsg) {
             printErrLog(errMsg, logger);

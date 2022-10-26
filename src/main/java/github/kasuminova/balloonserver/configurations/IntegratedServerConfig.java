@@ -2,7 +2,13 @@ package github.kasuminova.balloonserver.configurations;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 
-public class IntegratedServerConfig extends Configuration {
+import java.io.Serial;
+import java.io.Serializable;
+
+public class IntegratedServerConfig extends Configuration implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     @JSONField(ordinal = 1)
     private String ip = "127.0.0.1";
     @JSONField(ordinal = 2)

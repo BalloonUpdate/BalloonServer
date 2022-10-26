@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.remoteclient;
 
+import github.kasuminova.balloonserver.configurations.RemoteClientConfig;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import io.netty.bootstrap.Bootstrap;
@@ -11,12 +12,14 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 public class RemoteClient {
     private final GUILogger logger;
     private final RemoteClientInterface serverInterface;
+    private final RemoteClientConfig config;
     EventLoopGroup group;
     ChannelFuture future;
 
     public RemoteClient(GUILogger logger, RemoteClientInterface serverInterface) {
         this.logger = logger;
         this.serverInterface = serverInterface;
+        config = serverInterface.getRemoteClientConfig();
     }
 
     public void connect() throws Exception {
@@ -28,7 +31,7 @@ public class RemoteClient {
                 .handler(new RemoteClientInitializer(logger, serverInterface));
 
         logger.info("连接中...");
-        future = bootstrap.connect("127.0.0.1", 10000).sync();
+        future = bootstrap.connect(config.getIp(), config.getPort()).sync();
     }
 
     public void disconnect() {

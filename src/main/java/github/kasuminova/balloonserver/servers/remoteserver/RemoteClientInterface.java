@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver.servers.remoteserver;
 
 import com.alibaba.fastjson2.JSONArray;
+import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.configurations.RemoteClientConfig;
 import github.kasuminova.balloonserver.servers.ServerInterface;
 import io.netty.channel.ChannelHandlerContext;
@@ -15,6 +16,8 @@ public interface RemoteClientInterface extends ServerInterface {
     void onDisconnected();
 
     void onConnected(ChannelHandlerContext ctx);
+
+    void updateConfig(IntegratedServerConfig config);
 
     void showCommonRuleEditorDialog(JSONArray jsonArray);
     void showOnceRuleEditorDialog(JSONArray jsonArray);
