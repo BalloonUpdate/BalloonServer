@@ -11,6 +11,5 @@ import javax.swing.*;
 public interface IntegratedServerInterface extends ServerInterface {
     GUILogger getLogger();
 
-
     JPanel getRequestListPanel();
 }

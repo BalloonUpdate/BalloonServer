@@ -16,7 +16,9 @@ import github.kasuminova.balloonserver.utils.ModernColors;
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,6 +38,12 @@ public class JsonCacheUtils {
     private final JSONArray jsonArray = new JSONArray();
     //fileObjList，用于序列化 JSON
     private final ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
+    //线程池
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            0, Runtime.getRuntime().availableProcessors() * 2,
+            0, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>());
+
     //公用定时器
     private Timer timer;
     private Thread counterThread;
@@ -66,6 +74,7 @@ public class JsonCacheUtils {
             //等待线程结束
             ThreadUtil.waitForDie(counterThread);
 
+            executor.shutdown();
             timer.stop();
             logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
 
@@ -80,6 +89,7 @@ public class JsonCacheUtils {
             //等待线程结束
             ThreadUtil.waitForDie(counterThread);
 
+            executor.shutdown();
             timer.stop();
             logger.info(String.format("资源变化计算完毕, 正在向磁盘生成 JSON 缓存. (%sms)", System.currentTimeMillis() - start));
 
@@ -200,8 +210,7 @@ public class JsonCacheUtils {
         jsonArray.clear();
 
         counterThread = new Thread(() -> jsonArray.addAll(new JsonCacheCheckerTask(
-                dir, AbstractSimpleFileObject.jsonArrToFileObjArr(jsonCache), hashAlgorithm, logger, completedFiles,
-                Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2))
+                dir, AbstractSimpleFileObject.jsonArrToFileObjArr(jsonCache), hashAlgorithm, logger, completedFiles, executor)
                 .call().getChildren()));
         counterThread.start();
 

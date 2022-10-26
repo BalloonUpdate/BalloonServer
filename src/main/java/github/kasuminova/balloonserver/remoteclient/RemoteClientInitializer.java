@@ -24,9 +24,9 @@ public class RemoteClientInitializer extends ChannelInitializer<SocketChannel> {
         //编码器
         pipeline.addLast(new ObjectEncoder());
         //解码器
-        pipeline.addLast(new ObjectDecoder(ClassResolvers.weakCachingResolver(Object.class.getClassLoader())));
+        pipeline.addLast(new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.weakCachingResolver(null)));
 
         pipeline.addLast("mainChannel", new RemoteClientChannel(logger, serverInterface));
-        pipeline.addLast("fileObjectChannel", new RemoteClientFileObjectChannel(logger, serverInterface));
+        pipeline.addLast("fileObjectChannel", new RemoteClientFileChannel(logger, serverInterface));
     }
 }

@@ -2,12 +2,18 @@ package github.kasuminova.balloonserver.utils;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * SVG 格式贴图集合
  */
 public class SvgIcons {
+    public static final Map<String, FlatSVGIcon> svgIconMap = new HashMap<>();
+    public static void load() {
+
+    }
     public static final FlatSVGIcon SERVER_LIST_ICON = new FlatSVGIcon(Objects.requireNonNull(
             SvgIcons.class.getResource("/icons/serverList.svg")));
     public static final FlatSVGIcon DEFAULT_SERVER_ICON = new FlatSVGIcon(Objects.requireNonNull(

@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.utils;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
@@ -111,17 +113,15 @@ public class GUILogger {
 
             //检查父文件夹
             if (!logFile.getParentFile().exists()) {
-                if (!logFile.mkdirs()) {
-                    logger.warn("日志文件夹创建失败！");
+                try {
+                    FileUtil.touch(logFile);
+                } catch (IORuntimeException e) {
+                    logger.warn("日志文件夹创建失败！{}", MiscUtils.stackTraceToString(e));
                     return null;
                 }
             }
 
-            if (logFile.createNewFile()) {
-                return new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
-            } else {
-                logger.warn("创建日志文件失败！");
-            }
+            return new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
         } catch (Exception e) {
             logger.warn(MiscUtils.stackTraceToString(e));
         }
@@ -225,6 +225,10 @@ public class GUILogger {
      */
     public void debug(String msg) {
         log(msg, DEBUG_ATTRIBUTE, DEBUG);
+    }
+
+    public void debug(String format, Object... params) {
+        log(format, DEBUG_ATTRIBUTE, DEBUG, params);
     }
 
     /**

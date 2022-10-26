@@ -7,8 +7,10 @@ import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.servers.ServerInterface;
 import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
+import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.HashCalculator;
 import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
+import github.kasuminova.messages.RequestMessage;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,20 +31,6 @@ public class RuleEditorActionListener implements ActionListener {
         this.serverInterface = serverInterface;
     }
 
-    protected void showRuleEditorDialog(JSONArray jsonArray) {
-        ThreadUtil.execute(() -> {
-            //锁定窗口，防止用户误操作
-            MAIN_FRAME.setEnabled(false);
-            RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
-            editorDialog.setModal(true);
-
-            MAIN_FRAME.setEnabled(true);
-            editorDialog.setVisible(true);
-
-            ruleList.setListData(rules.toArray(new String[0]));
-        });
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (serverInterface.isGenerating().get()) {
@@ -53,42 +41,61 @@ public class RuleEditorActionListener implements ActionListener {
             return;
         }
 
-        File file = new File(String.format("./%s.%s.json", serverInterface.getServerName(), serverInterface.getResJsonFileExtensionName()));
-        if (file.exists()) {
+        if (serverInterface instanceof IntegratedServerInterface) {
+            File file = new File(String.format("./%s.%s.json", serverInterface.getServerName(), serverInterface.getResJsonFileExtensionName()));
+            if (file.exists()) {
+                int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
+                        "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
+                        BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
+                if (!(selection == JOptionPane.YES_OPTION)) return;
+
+                try {
+                    String json = new FileReader(file).readString();
+                    showRuleEditorDialog(JSONArray.parseArray(json), ruleList, rules);
+                } catch (IORuntimeException ex) {
+                    JOptionPane.showMessageDialog(MAIN_FRAME,
+                            "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
+                            JOptionPane.ERROR_MESSAGE);
+                }
+                return;
+            }
+
             int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                    "检测到本地 JSON 缓存，是否以 JSON 缓存启动规则编辑器？",
+                    "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
                     BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
             if (!(selection == JOptionPane.YES_OPTION)) return;
 
-            try {
-                String json = new FileReader(file).readString();
-                showRuleEditorDialog(JSONArray.parseArray(json));
-            } catch (IORuntimeException ex) {
-                JOptionPane.showMessageDialog(MAIN_FRAME,
-                        "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
-                        JOptionPane.ERROR_MESSAGE);
-            }
-            return;
-        }
+            ThreadUtil.execute(() -> {
+                new JsonCacheUtils((IntegratedServerInterface) serverInterface, null, null).updateDirCache(null, HashCalculator.CRC32);
+                if (file.exists()) {
+                    try {
+                        String json = new FileReader(file).readString();
+                        showRuleEditorDialog(JSONArray.parseArray(json), ruleList, rules);
 
-        int selection = JOptionPane.showConfirmDialog(MAIN_FRAME,
-                "未检测到 JSON 缓存，是否立即生成 JSON 缓存并启动规则编辑器？",
-                BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
-        if (!(selection == JOptionPane.YES_OPTION)) return;
-
-        ThreadUtil.execute(() -> {
-            new JsonCacheUtils((IntegratedServerInterface) serverInterface, null, null).updateDirCache(null, HashCalculator.CRC32);
-            if (file.exists()) {
-                try {
-                    String json = new FileReader(file).readString();
-                    showRuleEditorDialog(JSONArray.parseArray(json));
-
-                } catch (IORuntimeException ex) {
-                    JOptionPane.showMessageDialog(MAIN_FRAME,
-                            "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
-                            JOptionPane.ERROR_MESSAGE);
+                    } catch (IORuntimeException ex) {
+                        JOptionPane.showMessageDialog(MAIN_FRAME,
+                                "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
+                                JOptionPane.ERROR_MESSAGE);
+                    }
                 }
-            }
+            });
+        } else if (serverInterface instanceof RemoteClientInterface remoteClientInterface) {
+            remoteClientInterface.getMainChannel().writeAndFlush(new RequestMessage(
+                    "GetJsonCache", List.of(new String[]{"RuleEditor"})));
+        }
+    }
+
+    public static void showRuleEditorDialog(JSONArray jsonArray, JList<String> ruleList, List<String> rules) {
+        ThreadUtil.execute(() -> {
+            //锁定窗口，防止用户误操作
+            MAIN_FRAME.setEnabled(false);
+            RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
+            editorDialog.setModal(true);
+
+            MAIN_FRAME.setEnabled(true);
+            editorDialog.setVisible(true);
+
+            ruleList.setListData(rules.toArray(new String[0]));
         });
     }
 }

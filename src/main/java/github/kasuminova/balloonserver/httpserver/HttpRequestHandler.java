@@ -153,8 +153,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //发送文件
         ChannelFuture sendFileFuture = ctx.write(
-                new ChunkedFile(randomAccessFile,
-                        ranges.getStart(), contentLength, 8192),
+                new ChunkedFile(randomAccessFile, ranges.getStart(), contentLength, 8192),
                 ctx.newProgressivePromise()).addListener(ChannelFutureListener.CLOSE);
         SmoothProgressBar progressBar = createUploadPanel(clientIP, file.getName());
 

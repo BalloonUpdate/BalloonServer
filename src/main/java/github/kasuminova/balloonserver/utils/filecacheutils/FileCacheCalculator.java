@@ -9,9 +9,7 @@ import github.kasuminova.balloonserver.utils.GUILogger;
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -22,7 +20,12 @@ public class FileCacheCalculator {
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
     private final String hashAlgorithm;
-    private final ExecutorService fileThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    //线程池
+    private final ThreadPoolExecutor fileThreadPool = new ThreadPoolExecutor(
+            0, Runtime.getRuntime().availableProcessors() * 2,
+            0, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>());
+
     public FileCacheCalculator(String hashAlgorithm) {
         this.hashAlgorithm = hashAlgorithm;
     }
@@ -47,7 +50,7 @@ public class FileCacheCalculator {
             if (file.isFile()) {
                 FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileInfoTask);
-                fileThreadPool.execute(fileInfoTask);
+                fileThreadPool.submit(fileInfoTask);
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
@@ -69,7 +72,7 @@ public class FileCacheCalculator {
 
         //回收线程池
         ThreadUtil.execute(() -> {
-            fileThreadPool.shutdown();
+            fileThreadPool.shutdownNow();
             logger.info("已回收所有闲置线程.");
         });
 

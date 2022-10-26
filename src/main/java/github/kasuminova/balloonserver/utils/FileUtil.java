@@ -41,7 +41,7 @@ public class FileUtil {
      */
     public static int formatFileSizeInt(long size) {
         if (size <= 1024) {
-            return 1024;
+            return (int) size;
         } else if (size <= 1024 * 1024) {
             return 1024 * 8;
         } else if (size <= 1024 * 1024 * 128) {

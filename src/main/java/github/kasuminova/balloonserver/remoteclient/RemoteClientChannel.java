@@ -3,6 +3,8 @@ package github.kasuminova.balloonserver.remoteclient;
 import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.configurations.RemoteClientConfig;
+import github.kasuminova.balloonserver.gui.fileobjectbrowser.FileObjectBrowser;
+import github.kasuminova.balloonserver.utils.fileobject.SimpleDirectoryObject;
 import github.kasuminova.messages.*;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.GUILogger;
@@ -24,6 +26,8 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
         logger.info("已连接至服务器, 认证中...");
         ctx.writeAndFlush(new TokenMessage(config.getToken(), BalloonServer.VERSION));
         serverInterface.onConnected(ctx);
+
+        ctx.fireChannelActive();
     }
 
     @Override
@@ -37,6 +41,8 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
     public void channelInactive(ChannelHandlerContext ctx) {
         serverInterface.onDisconnected();
         logger.info("已从服务器断开连接.");
+
+        ctx.fireChannelInactive();
     }
 
     @Override
@@ -47,6 +53,8 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
             printErrLog(errMsg, logger);
         } else if (msg instanceof StatusMessage statusMessage) {
             updateStatus(statusMessage, serverInterface);
+        } else if (msg instanceof SimpleDirectoryObject directoryObject) {
+            showFileObjectBrowser(directoryObject);
         } else {
             ctx.fireChannelRead(msg);
         }
@@ -67,5 +75,10 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
                 (int) ((double) (statusMessage.getUsed() * 500) / statusMessage.getTotal()),
                 statusMessage.getRunningThreadCount(),
                 statusMessage.getClientIP());
+    }
+
+    private static void showFileObjectBrowser(SimpleDirectoryObject directoryObject) {
+        FileObjectBrowser objectBrowser = new FileObjectBrowser(directoryObject);
+        objectBrowser.setVisible(true);
     }
 }
