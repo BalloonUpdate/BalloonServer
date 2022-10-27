@@ -618,7 +618,7 @@ public class IntegratedServer extends AbstractServer {
         JksSslTextField.setEditable(false);
         JButton selectJksSslFile = new JButton("...");
 
-        selectJksSslFile.addActionListener(e -> {
+        selectJksSslFile.addActionListener(e -> ThreadUtil.execute(() -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"jks"}, null, "JKS 证书 (*.jks)"));
 
@@ -630,7 +630,7 @@ public class IntegratedServer extends AbstractServer {
                     logger.info("已载入证书 " + JKS.getName());
                 }
             }
-        });
+        }));
 
         JksSslBox.add(JksSslTextField);
         JksSslBox.add(selectJksSslFile);

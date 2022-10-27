@@ -390,21 +390,18 @@ public class RemoteIntegratedServerClient extends AbstractServer {
             }
 
             @Override
-            public void onConnected(ChannelHandlerContext ctx) {
+            public void onConnected(ChannelHandlerContext ctx, IntegratedServerConfig config) {
                 remoteChannel = ctx;
 
                 isConnecting = false;
                 isConnected = true;
 
+                updateGUIConfig(config);
+
                 controlPanel.setVisible(true);
                 connectPanel.setVisible(false);
 
                 lastStatusUpdated = System.currentTimeMillis();
-            }
-
-            @Override
-            public void updateConfig(IntegratedServerConfig config) {
-                ThreadUtil.execute(() -> updateGUIConfig(config));
             }
 
             @Override

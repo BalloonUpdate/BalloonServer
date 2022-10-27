@@ -15,9 +15,7 @@ public interface RemoteClientInterface extends ServerInterface {
 
     void onDisconnected();
 
-    void onConnected(ChannelHandlerContext ctx);
-
-    void updateConfig(IntegratedServerConfig config);
+    void onConnected(ChannelHandlerContext ctx, IntegratedServerConfig config);
 
     void showCommonRuleEditorDialog(JSONArray jsonArray);
     void showOnceRuleEditorDialog(JSONArray jsonArray);

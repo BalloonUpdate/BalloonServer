@@ -84,7 +84,7 @@ public class Checker {
             BatchUtils.runBatch(commands);
             if (exitThisProgram) {
                 //如果主服务端正在运行，则打开自动启动服务器（仅一次）选项并保存，下次启动服务端时自动启动服务器
-                if (availableCustomServerInterfaces.get(0).isStarted().get()) {
+                if (AVAILABLE_SERVER_INTERFACES.get(0).isStarted().get()) {
                     CONFIG.setAutoStartServerOnce(true);
                 }
                 BalloonServer.saveConfig();

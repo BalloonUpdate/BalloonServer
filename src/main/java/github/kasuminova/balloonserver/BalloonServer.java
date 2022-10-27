@@ -67,10 +67,10 @@ public final class BalloonServer {
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
     public static final SmoothProgressBar GLOBAL_STATUS_PROGRESSBAR = new SmoothProgressBar(1000, 250);
     //主面板
-    public static final JPanel mainPanel = new JPanel(new BorderLayout());
+    public static final JPanel MAIN_PANEL = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
     //可用服务端接口列表，与 SERVER_TABBED_PANE 中的标签页同步
-    public static final List<IntegratedServerInterface> availableCustomServerInterfaces = Collections.synchronizedList(new ArrayList<>());
+    public static final List<IntegratedServerInterface> AVAILABLE_SERVER_INTERFACES = Collections.synchronizedList(new ArrayList<>());
     //支持放入多个任务的 Timer
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);
     private static final long START = System.currentTimeMillis();
@@ -85,8 +85,8 @@ public final class BalloonServer {
         //标签页配置
         PRE_LOAD_PROGRESS_BAR.setString("载入主面板...");
         TABBED_PANE.putClientProperty("JTabbedPane.tabAreaAlignment", "fill");
-        mainPanel.add(TABBED_PANE, BorderLayout.CENTER);
-        MAIN_FRAME.add(mainPanel);
+        MAIN_PANEL.add(TABBED_PANE, BorderLayout.CENTER);
+        MAIN_FRAME.add(MAIN_PANEL);
 
         //载入主配置文件
         loadConfig();
@@ -192,12 +192,12 @@ public final class BalloonServer {
                 return;
             }
             //定义变量
-            IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(tabIndex);
+            IntegratedServerInterface serverInterface = AVAILABLE_SERVER_INTERFACES.get(tabIndex);
             String serverName = serverInterface.getServerName();
             if (!stopIntegratedServer(serverInterface, serverName, tabIndex, true)) return;
 
             SERVER_TABBED_PANE.removeTabAt(tabIndex);
-            availableCustomServerInterfaces.remove((int) tabIndex);
+            AVAILABLE_SERVER_INTERFACES.remove((int) tabIndex);
         });
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabsPopupPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
@@ -238,7 +238,7 @@ public final class BalloonServer {
             abstractIntegratedServer = new IntegratedServer("littleserver", false);
         }
         SERVER_TABBED_PANE.addTab("集成服务端", DEFAULT_SERVER_ICON, abstractIntegratedServer.getPanel());
-        availableCustomServerInterfaces.add(abstractIntegratedServer.getServerInterface());
+        AVAILABLE_SERVER_INTERFACES.add(abstractIntegratedServer.getServerInterface());
     }
 
     /**
@@ -256,12 +256,12 @@ public final class BalloonServer {
      */
     public static void stopAllServers(boolean inquireUser) {
         //停止所有运行的实例
-        for (int i = 0; i < availableCustomServerInterfaces.size(); i++) {
-            IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(i);
+        for (int i = 0; i < AVAILABLE_SERVER_INTERFACES.size(); i++) {
+            IntegratedServerInterface serverInterface = AVAILABLE_SERVER_INTERFACES.get(i);
             if (stopIntegratedServer(serverInterface, serverInterface.getServerName(), i, inquireUser)) {
                 if (i > 1) {
                     SERVER_TABBED_PANE.removeTabAt(i);
-                    availableCustomServerInterfaces.remove(i);
+                    AVAILABLE_SERVER_INTERFACES.remove(i);
                     i--;
                 }
             }
@@ -328,7 +328,7 @@ public final class BalloonServer {
 
                 IntegratedServer customServer = new IntegratedServer(serverName, false);
 
-                availableCustomServerInterfaces.add(customServer.getServerInterface());
+                AVAILABLE_SERVER_INTERFACES.add(customServer.getServerInterface());
                 SERVER_TABBED_PANE.addTab(serverName, CUSTOM_SERVER_ICON, customServer.getPanel());
                 SERVER_TABBED_PANE.setSelectedIndex(SERVER_TABBED_PANE.getTabCount() - 1);
 
@@ -342,7 +342,7 @@ public final class BalloonServer {
 
         JMenuItem loadLittleServer = new JMenuItem("载入集成服务端实例", PLAY_ICON);
         loadMenu.add(loadLittleServer);
-        loadLittleServer.addActionListener(e -> {
+        loadLittleServer.addActionListener(e -> ThreadUtil.execute(() -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setMultiSelectionEnabled(true);
             fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"}, "LittleServer 配置文件 (*.lscfg.json)"));
@@ -388,19 +388,19 @@ public final class BalloonServer {
             //按顺序添加面板和接口
             for (int i = 0; i < customServers.length; i++) {
                 SERVER_TABBED_PANE.addTab(serverNames[i], CUSTOM_SERVER_ICON, customServers[i].getPanel());
-                availableCustomServerInterfaces.add(customServers[i].getServerInterface());
+                AVAILABLE_SERVER_INTERFACES.add(customServers[i].getServerInterface());
             }
 
             //设置为最后一个面板
             SERVER_TABBED_PANE.setSelectedIndex(SERVER_TABBED_PANE.getTabCount() - 1);
-        });
+        }));
 
         JMenuItem resetLittleServer = new JMenuItem("重置当前显示的集成服务端实例", RELOAD_ICON);
         loadMenu.add(resetLittleServer);
         resetLittleServer.addActionListener(e -> {
             int selected = SERVER_TABBED_PANE.getSelectedIndex();
             //定义变量
-            IntegratedServerInterface serverInterface = availableCustomServerInterfaces.get(selected);
+            IntegratedServerInterface serverInterface = AVAILABLE_SERVER_INTERFACES.get(selected);
             String serverName = serverInterface.getServerName();
 
             if (stopIntegratedServer(serverInterface, serverName, selected, true)) {
@@ -411,7 +411,7 @@ public final class BalloonServer {
                     } else {
                         littleServer = new IntegratedServer(serverName, false);
                     }
-                    availableCustomServerInterfaces.set(selected, littleServer.getServerInterface());
+                    AVAILABLE_SERVER_INTERFACES.set(selected, littleServer.getServerInterface());
                     SERVER_TABBED_PANE.setComponentAt(selected, littleServer.getPanel());
                     //回收旧实例内存
                     System.gc();
@@ -510,7 +510,7 @@ public final class BalloonServer {
         GLOBAL_STATUS_PROGRESSBAR.setStringPainted(true);
         GLOBAL_STATUS_PROGRESSBAR.setBorder(new EmptyBorder(0, 25, 0, 25));
         STATUS_PANEL.add(GLOBAL_STATUS_PROGRESSBAR);
-        mainPanel.add(STATUS_PANEL, BorderLayout.SOUTH);
+        MAIN_PANEL.add(STATUS_PANEL, BorderLayout.SOUTH);
         //新建循环任务，每 500ms 更新一次内存占用和线程数量
         GLOBAL_QUERY_TIMER.schedule(new TimerTask() {
             @Override

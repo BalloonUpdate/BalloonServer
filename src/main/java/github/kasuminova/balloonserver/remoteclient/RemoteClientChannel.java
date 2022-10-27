@@ -58,9 +58,8 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof AuthSuccessMessage authSuccessMessage) {
-            serverInterface.onConnected(ctx);
+            serverInterface.onConnected(ctx, authSuccessMessage.getConfig());
             timeOutListener.cancel();
-            serverInterface.updateConfig(authSuccessMessage.getConfig());
         } else if (msg instanceof StringMessage strMsg) {
             logger.info(strMsg.getMessage());
         } else if (msg instanceof ErrorMessage errMsg) {
