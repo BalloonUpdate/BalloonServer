@@ -10,19 +10,17 @@ import github.kasuminova.balloonserver.utils.ModernColors;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.stream.ChunkedFile;
 import io.netty.util.Attribute;
 import io.netty.util.CharsetUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
@@ -122,17 +120,17 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
      * @throws IOException 如果文件读取错误
      */
     private void sendFile(ChannelHandlerContext ctx, FullHttpRequest req, File file, long start) throws IOException {
-        RandomAccessFile randomAccessFile;
+        FileChannel fileChannel;
 
         try {
-            randomAccessFile = new RandomAccessFile(file, "r");
+            fileChannel = FileChannel.open(file.toPath(), StandardOpenOption.READ);
         } catch (FileNotFoundException e) {
             sendError(ctx, logger, HttpResponseStatus.NOT_FOUND, "", clientIP, decodedURI);
             return;
         }
 
         //文件大小
-        long fileLength = randomAccessFile.length();
+        long fileLength = fileChannel.size();
 
         ContentRanges ranges = new ContentRanges(req.headers().get(HttpHeaderNames.RANGE), "bytes", fileLength);
 
@@ -144,8 +142,8 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
         response.headers().set(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES);
         response.headers().set(HttpHeaderNames.CONTENT_RANGE, String.format("bytes %s-%s/%s", ranges.getStart(), ranges.getEnd(), fileLength));
-
         setContentLength(response, contentLength);
+
         if (isKeepAlive(req)) {
             response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
         }
@@ -153,7 +151,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //发送文件
         ChannelFuture sendFileFuture = ctx.write(
-                new ChunkedFile(randomAccessFile, ranges.getStart(), contentLength, 8192),
+                new DefaultFileRegion(fileChannel, ranges.getStart(), contentLength),
                 ctx.newProgressivePromise()).addListener(ChannelFutureListener.CLOSE);
         SmoothProgressBar progressBar = createUploadPanel(clientIP, file.getName());
 
@@ -174,7 +172,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
             @Override
             public void operationComplete(ChannelProgressiveFuture channelProgressiveFuture) throws IOException {
-                randomAccessFile.close();
+                fileChannel.close();
 
                 //移除进度条的容器面板
                 timer.stop();
