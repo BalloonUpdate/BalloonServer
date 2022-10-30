@@ -34,10 +34,10 @@ public class GUILogger {
     private static final SimpleAttributeSet WARN_ATTRIBUTE   = new SimpleAttributeSet();
     private static final SimpleAttributeSet ERROR_ATTRIBUTE  = new SimpleAttributeSet();
     private static final SimpleAttributeSet DEBUG_ATTRIBUTE  = new SimpleAttributeSet();
-    private static final String INFO  = "INFO";
-    private static final String WARN  = "WARN";
-    private static final String ERROR = "ERROR";
-    private static final String DEBUG = "DEBUG";
+    public static final String INFO  = "INFO";
+    public static final String WARN  = "WARN";
+    public static final String ERROR = "ERROR";
+    public static final String DEBUG = "DEBUG";
     private final JTextPane logPane;
     private final Log logger;
     private final Writer logWriter;

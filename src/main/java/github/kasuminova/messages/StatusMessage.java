@@ -13,7 +13,7 @@ public class StatusMessage extends AbstractMessage {
         this.max = max;
         this.runningThreadCount = runningThreadCount;
         this.clientID = clientID;
-        messageType = StringMessage.class.getName();
+        messageType = StatusMessage.class.getName();
     }
 
     public int getUsed() {

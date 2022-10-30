@@ -60,24 +60,19 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
         if (msg instanceof AuthSuccessMessage authSuccessMessage) {
             serverInterface.onConnected(ctx, authSuccessMessage.getConfig());
             timeOutListener.cancel();
-        } else if (msg instanceof StringMessage strMsg) {
-            logger.info(strMsg.getMessage());
-        } else if (msg instanceof ErrorMessage errMsg) {
-            printErrLog(errMsg, logger);
+        } else if (msg instanceof LogMessage logMsg) {
+            switch (logMsg.getLevel()) {
+                case "INFO" -> logger.info(logMsg.getMessage());
+                case "WARN" -> logger.warn(logMsg.getMessage());
+                case "ERROR" -> logger.error(logMsg.getMessage());
+                case "DEBUG" -> logger.debug(logMsg.getMessage());
+            }
         } else if (msg instanceof StatusMessage statusMessage) {
             updateStatus(statusMessage, serverInterface);
         } else if (msg instanceof SimpleDirectoryObject directoryObject) {
             showFileObjectBrowser(directoryObject);
         } else {
             ctx.fireChannelRead(msg);
-        }
-    }
-
-    private static void printErrLog(ErrorMessage errMsg, GUILogger logger) {
-        if (errMsg.getStackTrace().isEmpty()) {
-            logger.error(errMsg.getMessage());
-        } else {
-            logger.error("{}\n{}", errMsg.getMessage(), errMsg.getStackTrace());
         }
     }
 

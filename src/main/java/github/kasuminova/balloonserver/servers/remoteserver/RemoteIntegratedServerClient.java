@@ -15,8 +15,8 @@ import github.kasuminova.balloonserver.servers.AbstractServer;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.balloonserver.utils.IPAddressUtil;
 import github.kasuminova.balloonserver.utils.ModernColors;
+import github.kasuminova.messages.LogMessage;
 import github.kasuminova.messages.RequestMessage;
-import github.kasuminova.messages.StringMessage;
 import github.kasuminova.messages.filemessages.FileRequestMsg;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -126,7 +126,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
         JButton sendMessage = new JButton("发送消息");
         sendMessage.addActionListener(e -> {
             ChannelHandlerContext mainChannel = serverInterface.getMainChannel();
-            mainChannel.writeAndFlush(new StringMessage(textField.getText()));
+            mainChannel.writeAndFlush(new LogMessage(GUILogger.INFO, textField.getText()));
             textField.setText("");
         });
 

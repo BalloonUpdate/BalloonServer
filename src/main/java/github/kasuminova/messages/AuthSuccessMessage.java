@@ -9,7 +9,7 @@ public class AuthSuccessMessage extends AbstractMessage {
     public AuthSuccessMessage(String clientID, IntegratedServerConfig config) {
         this.clientID = clientID;
         this.config = config;
-        messageType = "AuthSuccessMessage";
+        messageType = AuthSuccessMessage.class.getName();
     }
 
     public String getClientID() {
