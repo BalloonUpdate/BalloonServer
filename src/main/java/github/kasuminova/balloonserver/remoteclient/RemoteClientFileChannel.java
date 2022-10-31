@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object> {
     private final GUILogger logger;
@@ -50,7 +51,6 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
                     receiveFile(ctx, path, file, fileObjMsg);
                 } catch (IOException e) {
                     logger.error(e);
-                    ctx.writeAndFlush(new FileTransStopMsg(fileMessage.getFilePath(), fileMessage.getFileName()));
                 }
             }
         } else {
@@ -60,37 +60,42 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
 
     private void receiveFile(ChannelHandlerContext ctx, String path, File file, FileObjMessage fileObjMsg) throws IOException {
         NetworkFile networkFile = networkFiles.get(path);
-        if (networkFile == null) {
-            if (!file.exists()) {
-                if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
-                    throw new IOException("Failed To Create Directory " + file.getParentFile().getPath());
-                }
-                if (!file.createNewFile()) {
-                    throw new IOException("Failed To Create File " + file.getPath());
-                }
-            }
-            networkFile = new NetworkFile(System.currentTimeMillis(), new RandomAccessFile(file, "rw"));
-            networkFiles.put(path, networkFile);
-        }
+        if (networkFile == null) networkFile = createNewNetworkFile(path, file);
 
         RandomAccessFile randomAccessFile = networkFile.randomAccessFile;
 
         randomAccessFile.seek(fileObjMsg.getOffset());
         randomAccessFile.write(fileObjMsg.getData());
         networkFile.lastUpdateTime = System.currentTimeMillis();
-        networkFile.completedBytes = networkFile.completedBytes + fileObjMsg.getLength();
+        networkFile.completedBytes.getAndAdd(fileObjMsg.getLength());
 
-        if (networkFile.completedBytes >= fileObjMsg.getTotal()) {
+        if (networkFile.completedBytes.get() >= fileObjMsg.getTotal()) {
             networkFiles.get(path).randomAccessFile.close();
             networkFiles.remove(path);
             logger.info("Successfully To Received File {}", path);
         } else {
-            long len = fileObjMsg.getTotal() - networkFile.completedBytes;
+            long len = fileObjMsg.getTotal() - networkFile.completedBytes.get();
             ctx.writeAndFlush(new FileRequestMsg(
                     fileObjMsg.getFilePath(), fileObjMsg.getFileName(),
-                    networkFile.completedBytes,
+                    networkFile.completedBytes.get(),
                     len > 8192 ? 8192 : len));
         }
+    }
+
+    private NetworkFile createNewNetworkFile(String path, File file) throws IOException {
+        NetworkFile networkFile;
+        if (!file.exists()) {
+            if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
+                throw new IOException("Failed To Create Directory " + file.getParentFile().getPath());
+            }
+            if (!file.createNewFile()) {
+                throw new IOException("Failed To Create File " + file.getPath());
+            }
+        }
+        networkFile = new NetworkFile(System.currentTimeMillis(), new RandomAccessFile(file, "rw"));
+        networkFiles.put(path, networkFile);
+
+        return networkFile;
     }
 
     @Override
@@ -126,7 +131,7 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
     private static class NetworkFile {
         private long lastUpdateTime;
         private final RandomAccessFile randomAccessFile;
-        private long completedBytes = 0;
+        private final AtomicLong completedBytes = new AtomicLong(0);
 
         public NetworkFile(long lastUpdateTime, RandomAccessFile file) {
             this.lastUpdateTime = lastUpdateTime;

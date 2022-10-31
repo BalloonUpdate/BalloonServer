@@ -1,10 +1,10 @@
 package github.kasuminova.balloonserver.configurations;
 
-public class CloseOperations {
+public class CloseOperation {
     private final int operation;
     private String desc;
 
-    public CloseOperations(int operation, String desc) {
+    public CloseOperation(int operation, String desc) {
         this.operation = operation;
         this.desc = desc;
     }

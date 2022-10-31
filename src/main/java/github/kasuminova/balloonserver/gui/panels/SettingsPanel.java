@@ -8,7 +8,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.intellijthemes.FlatMaterialDesignDarkIJTheme;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.*;
 import github.kasuminova.balloonserver.configurations.BalloonServerConfig;
-import github.kasuminova.balloonserver.configurations.CloseOperations;
+import github.kasuminova.balloonserver.configurations.CloseOperation;
 import github.kasuminova.balloonserver.configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 
@@ -29,8 +29,8 @@ public class SettingsPanel {
     private static final JCheckBox autoStartDefaultServerOnce = new JCheckBox("自动启动主服务端（单次）");
     private static final JCheckBox autoCheckUpdates = new JCheckBox("自动检查更新");
     private static final JCheckBox autoUpdate = new JCheckBox("自动更新");
-    private static final Vector<CloseOperations> operations = new Vector<>();
-    private static final JComboBox<CloseOperations> closeOperationComboBox = new JComboBox<>(operations);
+    private static final Vector<CloseOperation> operations = new Vector<>();
+    private static final JComboBox<CloseOperation> closeOperationComboBox = new JComboBox<>(operations);
     private static final JCheckBox enableDebugMode = new JCheckBox("启用 Debug 模式");
     public static JPanel getPanel() {
         //主面板

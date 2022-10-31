@@ -3,9 +3,9 @@ package github.kasuminova.balloonserver.configurations;
 import com.alibaba.fastjson2.annotation.JSONField;
 
 public class BalloonServerConfig extends Configuration {
-    public static final CloseOperations QUERY = new CloseOperations(0, "每次询问");
-    public static final CloseOperations HIDE_ON_CLOSE = new CloseOperations(1, "最小化至托盘");
-    public static final CloseOperations EXIT_ON_CLOSE = new CloseOperations(2, "退出程序");
+    public static final CloseOperation QUERY = new CloseOperation(0, "每次询问");
+    public static final CloseOperation HIDE_ON_CLOSE = new CloseOperation(1, "最小化至托盘");
+    public static final CloseOperation EXIT_ON_CLOSE = new CloseOperation(2, "退出程序");
     //自动启动服务器
     @JSONField(ordinal = 1)
     private boolean autoStartServer = false;
