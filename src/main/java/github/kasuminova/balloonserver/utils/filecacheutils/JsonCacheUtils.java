@@ -217,7 +217,7 @@ public class JsonCacheUtils {
         serverInterface.resetStatusProgressBar();
         statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件", totalFiles));
         timer = new Timer(250, e -> {
-            statusProgressBar.setValue((int) ((double) completedFiles.get() * 1000 / totalFiles));
+            statusProgressBar.setValue((int) ((double) completedFiles.get() * statusProgressBar.getMaximum() / totalFiles));
             statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles.get(), totalFiles));
         });
         //启动轮询
@@ -241,7 +241,7 @@ public class JsonCacheUtils {
             long completedBytes = fileCacheCalculator.getCompletedBytes();
             long completedFiles = fileCacheCalculator.getCompletedFiles();
             String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
-            statusProgressBar.setValue((int) ((double) completedBytes * 1000 / totalFileSize));
+            statusProgressBar.setValue((int) ((double) completedBytes * statusProgressBar.getMaximum() / totalFileSize));
             statusProgressBar.setString(String.format("生成缓存中: %s / %s - %s 文件 / %s 文件",
                     completedSize,
                     totalSize,

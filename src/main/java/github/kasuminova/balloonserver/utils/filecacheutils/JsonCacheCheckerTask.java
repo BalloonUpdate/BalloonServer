@@ -47,6 +47,7 @@ public record JsonCacheCheckerTask(
         ArrayList<FutureTask<SimpleDirectoryObject>> dirTaskList = new ArrayList<>();
         ArrayList<FutureTask<SimpleDirectoryObject>> checkTaskList = new ArrayList<>();
         ArrayList<AbstractSimpleFileObject> fileObjectList = new ArrayList<>();
+        ArrayList<AbstractSimpleFileObject> fileObjectListTmp = new ArrayList<>();
 
         //遍历目标文件夹内所有文件并检查差异
         for (File childFile : childFiles) {
@@ -108,7 +109,7 @@ public record JsonCacheCheckerTask(
 
                 //如果本地文件依然为文件，则检查目标是否被修改
                 if (fileObjIsNotChanged((SimpleFileObject) obj, childFile)) {
-                    fileObjectList.add(obj);
+                    fileObjectListTmp.add(obj);
                     completedFiles.getAndIncrement();
 
                     //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
@@ -141,6 +142,8 @@ public record JsonCacheCheckerTask(
             } catch (Exception ignored) {
             }
         });
+
+        fileObjectList.addAll(fileObjectListTmp);
 
         return new SimpleDirectoryObject(dir.getName(), fileObjectList);
     }

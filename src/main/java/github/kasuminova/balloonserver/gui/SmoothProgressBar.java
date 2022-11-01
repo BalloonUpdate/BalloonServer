@@ -15,7 +15,7 @@ public class SmoothProgressBar extends JProgressBar {
     //单线程线程池，用于保证进度条的操作顺序
     private final ExecutorService singleThreadExecutor = new ThreadPoolExecutor(1, 1,
             0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(10));
+            new LinkedBlockingQueue<>());
     private final int flowTime;
     //每秒刷新频率
     private final int frequency;
@@ -75,27 +75,25 @@ public class SmoothProgressBar extends JProgressBar {
         int finalFrequency = Math.min(frequency, value);
         for (int i = 1; i <= finalFrequency; i++) {
             int queueSize = ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size();
-            //防止任务过多
-            if (queueSize > 5) break;
 
             super.setValue(currentValue + ((value / finalFrequency) * i));
 
             //如果线程池中的任务过多则加快进度条速度（即降低 sleep 时间）
-            if (queueSize == 0) {
-                ThreadUtil.sleep(flowTime / (finalFrequency + i));
+            if (queueSize >= 1) {
+                ThreadUtil.sleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
             } else {
-                ThreadUtil.sleep(flowTime / (finalFrequency + i) / queueSize);
+                ThreadUtil.sleep(flowTime / (finalFrequency + (i * 3L)));
             }
         }
 
         //如果最后进度条的值差异过大，则重新进行一次 increment
         int lastValue = (currentValue + value) - getValue();
-        if (lastValue >= 5 && ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() <= 1) {
+        if (lastValue >= 3) {
             increment(lastValue);
+        } else {
+            //防止差异，设置为最终结果值
+            super.setValue(currentValue + value);
         }
-
-        //防止差异，设置为最终结果值
-        super.setValue(currentValue + value);
     }
 
     /**
@@ -109,26 +107,24 @@ public class SmoothProgressBar extends JProgressBar {
         int finalFrequency = Math.min(frequency, value);
         for (int i = 0; i < finalFrequency; i++) {
             int queueSize = ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size();
-            //防止任务过多
-            if (queueSize > 5) break;
 
             super.setValue(currentValue - ((value / finalFrequency) * i));
 
             //如果线程池中的任务过多则加快进度条速度（即降低 sleep 时间）
-            if (queueSize == 0) {
-                ThreadUtil.sleep(flowTime / (finalFrequency + i));
+            if (queueSize >= 1) {
+                ThreadUtil.sleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
             } else {
-                ThreadUtil.sleep(flowTime / (finalFrequency + i) / queueSize);
+                ThreadUtil.sleep(flowTime / (finalFrequency + (i * 3L)));
             }
         }
 
         //如果最后进度条的值差异过大，则重新进行一次 increment
         int lastValue = (currentValue - value) - getValue();
-        if (lastValue >= 5 && ((ThreadPoolExecutor) singleThreadExecutor).getQueue().size() <= 1) {
+        if (lastValue >= 3) {
             decrement(lastValue);
+        } else {
+            //防止差异，设置为最终结果值
+            super.setValue(currentValue - value);
         }
-
-        //防止差异，设置为最终结果值
-        super.setValue(currentValue - value);
     }
 }
