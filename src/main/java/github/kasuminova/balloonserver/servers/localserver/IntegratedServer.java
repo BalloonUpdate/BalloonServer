@@ -110,14 +110,16 @@ public class IntegratedServer extends AbstractServer {
             }
         });
 
+        //初始化 HTTP 服务端
+        loadHttpServer();
+
         //服务器窗口组装
         JPanel rightPanel = new JPanel(new BorderLayout());
         //控制面板
         rightPanel.add(loadControlPanel(), BorderLayout.WEST);
 
-        //载入配置文件并初始化 HTTP 服务端
+        //载入配置文件
         loadConfigurationFromFile();
-        loadHttpServer();
 
         //上传列表窗口
         loadRequestList();
