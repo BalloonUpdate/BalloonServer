@@ -36,7 +36,9 @@ public class ConfigurationManager {
                 .setDebugMode(config.isDebugMode())
                 .setCloseOperation(config.getCloseOperation())
                 .setAutoCheckUpdates(config.isAutoCheckUpdates())
-                .setAutoUpdate(config.isAutoUpdate());
+                .setAutoUpdate(config.isAutoUpdate())
+                .setLowIOPerformanceMode(config.isLowIOPerformanceMode())
+                .setFileThreadPoolSize(config.getFileThreadPoolSize());
     }
 
     public static void loadRemoteClientConfigFromFile(String path, RemoteClientConfig oldConfig) throws IOException {

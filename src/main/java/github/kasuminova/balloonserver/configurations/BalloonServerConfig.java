@@ -21,8 +21,14 @@ public class BalloonServerConfig extends Configuration {
     //关闭窗口的操作
     @JSONField(ordinal = 5)
     private int closeOperation = 0;
-    //DEBUG 模式
+    //低性能模式
     @JSONField(ordinal = 6)
+    private boolean lowIOPerformanceMode = false;
+    //文件线程池大小
+    @JSONField(ordinal = 7)
+    private int fileThreadPoolSize = 0;
+    //DEBUG 模式
+    @JSONField(ordinal = 8)
     private boolean debugMode = false;
 
     public BalloonServerConfig() {
@@ -86,6 +92,24 @@ public class BalloonServerConfig extends Configuration {
 
     public BalloonServerConfig setAutoCheckUpdates(boolean autoCheckUpdates) {
         this.autoCheckUpdates = autoCheckUpdates;
+        return this;
+    }
+
+    public boolean isLowIOPerformanceMode() {
+        return lowIOPerformanceMode;
+    }
+
+    public BalloonServerConfig setLowIOPerformanceMode(boolean lowIOPerformanceMode) {
+        this.lowIOPerformanceMode = lowIOPerformanceMode;
+        return this;
+    }
+
+    public int getFileThreadPoolSize() {
+        return fileThreadPoolSize;
+    }
+
+    public BalloonServerConfig setFileThreadPoolSize(int fileThreadPoolSize) {
+        this.fileThreadPoolSize = fileThreadPoolSize;
         return this;
     }
 }

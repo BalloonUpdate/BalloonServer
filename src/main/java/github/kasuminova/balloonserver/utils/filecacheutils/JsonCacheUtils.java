@@ -2,6 +2,7 @@ package github.kasuminova.balloonserver.utils.filecacheutils;
 
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
@@ -55,13 +56,13 @@ public class JsonCacheUtils {
      * 传入的参数如果为 null，则完整生成一次缓存
      */
     public void updateDirCache(JSONArray jsonCache, String hashAlgorithm) {
-        long start = System.currentTimeMillis();
-
         logger.info(String.format("正在计算 %s 资源缓存结构中...", hashAlgorithm));
         if (jsonCache != null) {
             if (!genDirCache(jsonCache, hashAlgorithm)) {
                 return;
             }
+            long start = System.currentTimeMillis();
+
             //等待线程结束
             ThreadUtil.waitForDie(counterThread);
 
@@ -76,6 +77,8 @@ public class JsonCacheUtils {
             //重置变量
             isGenerating.set(false);
         } else if (genDirCache(null, hashAlgorithm)) {
+            long start = System.currentTimeMillis();
+
             //等待线程结束
             ThreadUtil.waitForDie(counterThread);
 
@@ -150,6 +153,8 @@ public class JsonCacheUtils {
      * @return 如果资源文件夹为空返回 false, 否则返回 true
      */
     private boolean genDirCache(JSONArray jsonCache, String hashAlgorithm) {
+        long start = System.currentTimeMillis();
+
         File dir = new File("." + config.getMainDirPath());
         if (!dir.exists()) {
             logger.warn(String.format("设定中的资源目录: %s 不存在, 使用默认路径", dir.getPath()));
@@ -180,7 +185,7 @@ public class JsonCacheUtils {
 
         String totalSize = FileUtil.formatFileSizeToStr(dirSize[0]);
 
-        logger.info(String.format("文件夹大小: %s, 文件数量: %s", totalSize, dirSize[1]));
+        logger.info(StrUtil.format("文件夹大小: {}, 文件数量: {} ({}ms)", totalSize, dirSize[1], System.currentTimeMillis() - start));
 
         if (jsonCache != null) {
             logger.info("检测到已缓存的 JSON, 正在检查变化...");

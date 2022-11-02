@@ -49,10 +49,7 @@ public final class BalloonServer {
         SetupSwing.init();
     }
 
-    public static final ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2,
-            10, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>());
+    public static ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL;
     public static final ThreadPoolExecutor GLOBAL_DIR_THREAD_POOL = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
             30, TimeUnit.SECONDS,
@@ -100,6 +97,8 @@ public final class BalloonServer {
 
         //载入主配置文件
         loadConfig();
+        //载入文件计算线程池
+        initFileThreadPool();
 
         //创建一个子面板，存放 SERVER_TABBED_PANE.
         //关于为什么要这么做，因为直接向 TABBED_PANE 放入 SERVER_TABBED_PANE 会导致服务端列表标签页可被删除，目前暂时不清楚问题所在...
@@ -212,6 +211,25 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabsPopupPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
+    }
+
+    private static void initFileThreadPool() {
+        if (CONFIG.isLowIOPerformanceMode()) {
+            GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
+                    2, 2,
+                    10, TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<>());
+        } else if (CONFIG.getFileThreadPoolSize() == 0){
+            GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
+                    Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2,
+                    10, TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<>());
+        } else {
+            GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
+                    CONFIG.getFileThreadPoolSize(), CONFIG.getFileThreadPoolSize(),
+                    10, TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<>());
+        }
     }
 
     private static void loadRemoteServerTabbedPaneProperty() {
