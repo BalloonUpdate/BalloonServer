@@ -310,6 +310,7 @@ public class GUILogger {
                 info("日志窗口过长, 已清空当前服务器实例日志窗口.");
             }
             document.insertString(document.getLength(), str, ATTRIBUTE);
+            logPane.setCaretPosition(document.getLength());
         } catch (BadLocationException e) {
             logger.warn(MiscUtils.stackTraceToString(e));
         }
