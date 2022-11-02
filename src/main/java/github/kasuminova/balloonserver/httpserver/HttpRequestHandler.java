@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.httpserver;
 
+import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
@@ -61,7 +62,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         }
 
         //index 请求监听
-        if (decodedURI.equals("/index.json")) {
+        if (StrUtil.startWith(decodedURI, "/index.json")) {
             sendJson(indexJsonString, ctx);
             //打印日志
             printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
@@ -69,14 +70,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         }
 
         //资源结构 JSON 请求监听
-        if (decodedURI.equals(config.getMainDirPath() + "_crc32.json")) {
+        if (StrUtil.startWith(decodedURI, config.getMainDirPath() + "_crc32.json")) {
             sendJson(resJson, ctx);
             //打印日志
             printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
             return;
         }
 
-        if (decodedURI.equals(config.getMainDirPath() + ".json")) {
+        if (StrUtil.startWith(decodedURI, config.getMainDirPath() + ".json")) {
             //如果服务端未启用旧版兼容模式，且使用了旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户启用旧版兼容模式
             if (!config.isCompatibleMode() || legacyResJson == null) {
                 sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端未启用兼容模式.（仅兼容 4.1.15+）\n".repeat(6), clientIP, decodedURI);
@@ -92,7 +93,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         }
 
         //安全性检查
-        if (!decodedURI.startsWith(config.getMainDirPath())) {
+        if (!StrUtil.startWith(decodedURI, config.getMainDirPath())) {
             sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "", clientIP, decodedURI);
             return;
         }
@@ -200,7 +201,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
 
         //响应写回给客户端,并在协会后断开这个连接
-        ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
+        ctx.write(jsonResponse).addListener(ChannelFutureListener.CLOSE);
     }
 
     /**
@@ -277,7 +278,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(fullMessage, CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+        ctx.write(response).addListener(ChannelFutureListener.CLOSE);
         printWarnLog(String.valueOf(status.code()), System.currentTimeMillis() - start, clientIP, decodedURI, logger);
     }
 

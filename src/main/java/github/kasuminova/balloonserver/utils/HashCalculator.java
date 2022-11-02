@@ -28,18 +28,7 @@ public class HashCalculator {
      * @return SHA1 值
      **/
     public static String getSHA1(File file) throws IOException, NoSuchAlgorithmException {
-        FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
-        ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-        int len;
-        MessageDigest md = MessageDigest.getInstance("SHA1");
-        while ((len = fc.read(byteBuffer)) > 0) {
-            md.update(byteBuffer.array(), 0, len);
-            byteBuffer.clear();
-        }
-        fc.close();
-
-        //转换为 16 进制
-        return HexUtil.encodeHexStr(md.digest());
+        return getSHA1(file, null);
     }
 
     /**
@@ -49,18 +38,7 @@ public class HashCalculator {
      * @return CRC32 值
      */
     public static String getCRC32(File file) throws IOException {
-        FileChannel fc = FileChannel.open(Paths.get(file.toURI()), StandardOpenOption.READ);
-        ByteBuffer byteBuffer = ByteBuffer.allocate(FileUtil.formatFileSizeInt(file.length()));
-        int len;
-        CRC32 crc32 = new CRC32();
-        while ((len = fc.read(byteBuffer)) > 0) {
-            crc32.update(byteBuffer.array(), 0, len);
-            byteBuffer.clear();
-        }
-        fc.close();
-
-        //转换为 16 进制
-        return HexUtil.toHex(crc32.getValue());
+        return getCRC32(file, null);
     }
 
     /**
@@ -79,7 +57,7 @@ public class HashCalculator {
         while ((len = fc.read(byteBuffer)) > 0) {
             md.update(byteBuffer.array(), 0, len);
             byteBuffer.clear();
-            progress.getAndAdd(len);
+            if (progress != null) progress.getAndAdd(len);
         }
         fc.close();
 
@@ -102,7 +80,7 @@ public class HashCalculator {
         while ((len = fc.read(byteBuffer)) > 0) {
             crc32.update(byteBuffer.array(), 0, len);
             byteBuffer.clear();
-            progress.getAndAdd(len);
+            if (progress != null) progress.getAndAdd(len);
         }
         fc.close();
 

@@ -80,9 +80,9 @@ public class SmoothProgressBar extends JProgressBar {
 
             //如果线程池中的任务过多则加快进度条速度（即降低 sleep 时间）
             if (queueSize >= 1) {
-                ThreadUtil.sleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
+                ThreadUtil.safeSleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
             } else {
-                ThreadUtil.sleep(flowTime / (finalFrequency + (i * 3L)));
+                ThreadUtil.safeSleep(flowTime / (finalFrequency + (i * 3L)));
             }
         }
 
@@ -112,9 +112,9 @@ public class SmoothProgressBar extends JProgressBar {
 
             //如果线程池中的任务过多则加快进度条速度（即降低 sleep 时间）
             if (queueSize >= 1) {
-                ThreadUtil.sleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
+                ThreadUtil.safeSleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
             } else {
-                ThreadUtil.sleep(flowTime / (finalFrequency + (i * 3L)));
+                ThreadUtil.safeSleep(flowTime / (finalFrequency + (i * 3L)));
             }
         }
 
