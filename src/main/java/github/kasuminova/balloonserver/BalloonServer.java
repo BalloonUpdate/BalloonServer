@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
@@ -47,6 +48,15 @@ public final class BalloonServer {
         //设置全局主题，字体等
         SetupSwing.init();
     }
+
+    public static final ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2,
+            10, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>());
+    public static final ThreadPoolExecutor GLOBAL_DIR_THREAD_POOL = new ThreadPoolExecutor(
+            0, Integer.MAX_VALUE,
+            30, TimeUnit.SECONDS,
+            new SynchronousQueue<>());
 
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.4.0-BETA");
     public static final String TITLE = "BalloonServer " + VERSION;

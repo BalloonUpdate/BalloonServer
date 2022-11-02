@@ -2,10 +2,12 @@ package github.kasuminova.balloonserver.utils.fileobject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_DIR_THREAD_POOL;
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
 
 /**
  * 获取文件夹内所有文件信息的线程
@@ -33,12 +35,12 @@ public record DirInfoTask(File directory, String hashAlgorithm, AtomicLong compl
                 FutureTask<SimpleFileObject> fileCounterTask = new FutureTask<>(
                         new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileCounterTask);
-                new Thread(fileCounterTask).start();
+                GLOBAL_FILE_THREAD_POOL.execute(fileCounterTask);
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(
                         new DirInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
-                new Thread(dirCounterTask).start();
+                GLOBAL_DIR_THREAD_POOL.execute(dirCounterTask);
             }
         }
 

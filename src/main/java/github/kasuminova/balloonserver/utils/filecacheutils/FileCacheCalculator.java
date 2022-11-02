@@ -1,6 +1,5 @@
 package github.kasuminova.balloonserver.utils.filecacheutils;
 
-import cn.hutool.core.thread.ThreadUtil;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.utils.fileobject.*;
 import github.kasuminova.balloonserver.utils.FileUtil;
@@ -11,6 +10,9 @@ import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_DIR_THREAD_POOL;
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
 
 /**
  * 计算资源缓存的公用类
@@ -42,11 +44,11 @@ public class FileCacheCalculator {
             if (file.isFile()) {
                 FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileInfoTask);
-                new Thread(fileInfoTask).start();
+                GLOBAL_FILE_THREAD_POOL.execute(fileInfoTask);
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
-                ThreadUtil.execute(dirCounterTask);
+                GLOBAL_DIR_THREAD_POOL.execute(dirCounterTask);
             }
         }
 
