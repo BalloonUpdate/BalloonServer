@@ -51,13 +51,13 @@ public class SwingSystemTray {
         //创建JPopupMenu
         //重写firePopupMenuWillBecomeInvisible
         //消失后将绑定的组件一起消失
-        JPopupMenu jPopupMenu = new JPopupMenu() {
+        JPopupMenu trayMenu = new JPopupMenu() {
             @Override
             public void firePopupMenuWillBecomeInvisible() {
                 dialog.setVisible(false);
             }
         };
-        jPopupMenu.setSize(100, 30);
+        trayMenu.setSize(100, 30);
 
         //添加菜单选项
         JMenuItem exit = new JMenuItem("退出程序", STOP_ICON);
@@ -79,8 +79,8 @@ public class SwingSystemTray {
             frame.toFront();
         });
 
-        jPopupMenu.add(showMainFrame);
-        jPopupMenu.add(exit);
+        trayMenu.add(showMainFrame);
+        trayMenu.add(exit);
 
         URL resource = SwingSystemTray.class.getResource("/image/icon_16x16.png");
         // 创建托盘图标
@@ -101,12 +101,17 @@ public class SwingSystemTray {
                     frame.setVisible(true);
                     frame.toFront();
                 } else if (e.getButton() == MouseEvent.BUTTON3 && e.isPopupTrigger()) {
+                    int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+                    float scale = (float) (1 + (((dpi - 96) / 24) * 0.25));
+
                     // 右键点击弹出JPopupMenu绑定的载体以及JPopupMenu
-                    dialog.setLocation(e.getX() + 5, e.getY() - 5 - jPopupMenu.getHeight());
+                    dialog.setLocation(
+                            (int) (e.getXOnScreen() / scale) + 5,
+                            (int) (e.getYOnScreen() / scale) - trayMenu.getHeight() - 5);
                     // 显示载体
                     dialog.setVisible(true);
                     // 在载体的 0,0 处显示对话框
-                    jPopupMenu.show(dialog, 0, 0);
+                    trayMenu.show(dialog, 0, 0);
                 }
             }
         });
