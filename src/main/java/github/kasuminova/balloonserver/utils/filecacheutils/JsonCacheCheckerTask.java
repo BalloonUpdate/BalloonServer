@@ -1,13 +1,11 @@
 package github.kasuminova.balloonserver.utils.filecacheutils;
 
-import cn.hutool.core.thread.ThreadUtil;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.balloonserver.utils.fileobject.*;
 
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -22,11 +20,10 @@ import java.util.stream.Collectors;
  * @param hashAlgorithm 如果有差异, 则使用何种算法计算校验码
  * @param logger 日志输出器
  * @param completedFiles 进度
- * @param fileThreadPool 计算线程池
  */
 public record JsonCacheCheckerTask(
         File dir, ArrayList<AbstractSimpleFileObject> fileObjList,
-        String hashAlgorithm, GUILogger logger, AtomicInteger completedFiles, ExecutorService fileThreadPool)
+        String hashAlgorithm, GUILogger logger, AtomicInteger completedFiles)
         implements Callable<SimpleDirectoryObject> {
 
     @Override
@@ -59,13 +56,13 @@ public record JsonCacheCheckerTask(
                 if (childFile.isFile()) {
                     FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     fileTaskList.add(fileInfoTask);
-                    fileThreadPool.execute(fileInfoTask);
+                    new Thread(fileInfoTask).start();
 
                     logger.info(String.format("%s 是新文件, 更新缓存数据.", childFile.getPath()));
                 } else {
                     FutureTask<SimpleDirectoryObject> dirInfoTask = new FutureTask<>(new DirInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     dirTaskList.add(dirInfoTask);
-                    ThreadUtil.execute(dirInfoTask);
+                    new Thread(dirInfoTask).start();
 
                     logger.info(String.format("%s 是新文件夹, 更新缓存数据.", childFile.getPath()));
                 }
@@ -78,7 +75,7 @@ public record JsonCacheCheckerTask(
                 if (childFile.isFile()) {
                     FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     fileTaskList.add(fileInfoTask);
-                    fileThreadPool.execute(fileInfoTask);
+                    new Thread(fileInfoTask).start();
 
                     //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
                     fileObjectMap.remove(fileName);
@@ -88,9 +85,9 @@ public record JsonCacheCheckerTask(
 
                 //如果本地文件依然为文件夹，则递归检查
                 FutureTask<SimpleDirectoryObject> checkTask = new FutureTask<>(new JsonCacheCheckerTask(
-                        childFile, ((SimpleDirectoryObject) obj).getChildren() , hashAlgorithm, logger, completedFiles, fileThreadPool));
+                        childFile, ((SimpleDirectoryObject) obj).getChildren() , hashAlgorithm, logger, completedFiles));
                 checkTaskList.add(checkTask);
-                ThreadUtil.execute(checkTask);
+                new Thread(checkTask).start();
 
                 //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
                 fileObjectMap.remove(fileName);
@@ -99,7 +96,7 @@ public record JsonCacheCheckerTask(
                 if (childFile.isDirectory()) {
                     FutureTask<SimpleDirectoryObject> dirInfoTask = new FutureTask<>(new DirInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     dirTaskList.add(dirInfoTask);
-                    ThreadUtil.execute(dirInfoTask);
+                    new Thread(dirInfoTask).start();
 
                     //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
                     fileObjectMap.remove(fileName);

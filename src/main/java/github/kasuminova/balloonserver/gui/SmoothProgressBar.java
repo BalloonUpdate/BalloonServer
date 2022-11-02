@@ -127,4 +127,10 @@ public class SmoothProgressBar extends JProgressBar {
             super.setValue(currentValue - value);
         }
     }
+
+    @Override
+    public void removeNotify() {
+        super.removeNotify();
+        singleThreadExecutor.shutdownNow();
+    }
 }

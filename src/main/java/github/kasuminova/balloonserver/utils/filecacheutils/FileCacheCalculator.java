@@ -4,7 +4,6 @@ import cn.hutool.core.thread.ThreadUtil;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.utils.fileobject.*;
 import github.kasuminova.balloonserver.utils.FileUtil;
-import github.kasuminova.balloonserver.utils.GUILogger;
 
 import javax.swing.*;
 import java.io.File;
@@ -20,12 +19,6 @@ public class FileCacheCalculator {
     private final AtomicLong completedBytes = new AtomicLong(0);
     private final AtomicInteger completedFiles = new AtomicInteger(0);
     private final String hashAlgorithm;
-    //线程池
-    private final ThreadPoolExecutor fileThreadPool = new ThreadPoolExecutor(
-            0, Runtime.getRuntime().availableProcessors() * 2,
-            0, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>());
-
     public FileCacheCalculator(String hashAlgorithm) {
         this.hashAlgorithm = hashAlgorithm;
     }
@@ -34,10 +27,9 @@ public class FileCacheCalculator {
      * 扫描目标文件夹内的文件与文件夹
      *
      * @param directory 目标文件夹
-     * @param logger    日志输出器
      * @return ArrayList<AbstractSimpleFileObject>, 如果文件夹内容为空则返回空 ArrayList
      */
-    public ArrayList<AbstractSimpleFileObject> scanDir(File directory, GUILogger logger) {
+    public ArrayList<AbstractSimpleFileObject> scanDir(File directory) {
         File[] fileList = directory.listFiles();
         if (fileList == null) {
             return new ArrayList<>();
@@ -50,7 +42,7 @@ public class FileCacheCalculator {
             if (file.isFile()) {
                 FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileInfoTask);
-                fileThreadPool.submit(fileInfoTask);
+                new Thread(fileInfoTask).start();
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
@@ -69,12 +61,6 @@ public class FileCacheCalculator {
                 abstractSimpleFileObjectList.add(simpleFileObjectFutureTask.get());
             } catch (Exception ignored) {}
         }
-
-        //回收线程池
-        ThreadUtil.execute(() -> {
-            fileThreadPool.shutdownNow();
-            logger.info("已回收所有闲置线程.");
-        });
 
         return abstractSimpleFileObjectList;
     }

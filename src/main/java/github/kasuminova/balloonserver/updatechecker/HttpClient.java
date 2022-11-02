@@ -1,6 +1,5 @@
 package github.kasuminova.balloonserver.updatechecker;
 
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.http.HttpException;
 import cn.hutool.http.HttpUtil;
 import github.kasuminova.balloonserver.BalloonServer;
@@ -164,7 +163,7 @@ public class HttpClient {
             return true;
         });
 
-        ThreadUtil.execAsync(downloadTask);
+        new Thread(downloadTask).start();
         downloadTask.get();
     }
 }
