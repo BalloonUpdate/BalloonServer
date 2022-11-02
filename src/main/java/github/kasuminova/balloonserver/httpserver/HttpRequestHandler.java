@@ -137,12 +137,19 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         long contentLength = ranges.getEnd() - ranges.getStart();
 
-        HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.PARTIAL_CONTENT);
+        HttpResponse response;
+
+        if (ranges.getStart() == 0 && ranges.getEnd() == contentLength) {
+            response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+        } else {
+            response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.PARTIAL_CONTENT);
+            response.headers().set(HttpHeaderNames.CONTENT_RANGE, String.format("bytes %s-%s/%s", ranges.getStart(), ranges.getEnd(), fileLength));
+        }
 
         //设置类型为二进制流
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM);
         response.headers().set(HttpHeaderNames.ACCEPT_RANGES, HttpHeaderValues.BYTES);
-        response.headers().set(HttpHeaderNames.CONTENT_RANGE, String.format("bytes %s-%s/%s", ranges.getStart(), ranges.getEnd(), fileLength));
+
         setContentLength(response, contentLength);
 
         if (isKeepAlive(req)) {

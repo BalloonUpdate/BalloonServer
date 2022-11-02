@@ -87,7 +87,7 @@ public final class BalloonServer {
 
     private static void init() {
         //大小设置
-        MAIN_FRAME.setMinimumSize(new Dimension(1125,725));
+        MAIN_FRAME.setMinimumSize(new Dimension(1150,725));
 
         //标签页配置
         PRE_LOAD_PROGRESS_BAR.setString("载入主面板...");
@@ -216,7 +216,7 @@ public final class BalloonServer {
     private static void initFileThreadPool() {
         if (CONFIG.isLowIOPerformanceMode()) {
             GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
-                    2, 2,
+                    1, 1,
                     10, TimeUnit.SECONDS,
                     new LinkedBlockingQueue<>());
         } else if (CONFIG.getFileThreadPoolSize() == 0){
@@ -230,6 +230,7 @@ public final class BalloonServer {
                     10, TimeUnit.SECONDS,
                     new LinkedBlockingQueue<>());
         }
+        GLOBAL_LOGGER.info("文件计算线程池大小为 {} 线程", GLOBAL_FILE_THREAD_POOL.getMaximumPoolSize());
     }
 
     private static void loadRemoteServerTabbedPaneProperty() {

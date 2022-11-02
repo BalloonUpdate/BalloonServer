@@ -8,17 +8,15 @@ import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.httpserver.HttpServerInterface;
 import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
+import github.kasuminova.balloonserver.utils.*;
 import github.kasuminova.balloonserver.utils.fileobject.AbstractSimpleFileObject;
-import github.kasuminova.balloonserver.utils.FileUtil;
-import github.kasuminova.balloonserver.utils.GUILogger;
-import github.kasuminova.balloonserver.utils.HashCalculator;
-import github.kasuminova.balloonserver.utils.ModernColors;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -209,10 +207,18 @@ public class JsonCacheUtils {
         counterThread.start();
 
         serverInterface.resetStatusProgressBar();
-        statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件", totalFiles));
-        timer = new Timer(250, e -> {
+        statusProgressBar.setString(String.format("检查变化中: 0 文件 / %s 文件 - ETA: 0s", totalFiles));
+
+        AtomicInteger lastCompletedFiles = new AtomicInteger(0);
+
+        timer = new Timer(500, e -> {
             statusProgressBar.setValue((int) ((double) completedFiles.get() * statusProgressBar.getMaximum() / totalFiles));
-            statusProgressBar.setString(String.format("检查变化中: %s 文件 / %s 文件", completedFiles.get(), totalFiles));
+            statusProgressBar.setString(StrUtil.format("检查变化中: {} 文件 / {} 文件 - ETA: {}s",
+                    completedFiles.get(),
+                    totalFiles,
+                    (totalFiles - completedFiles.get()) / ((completedFiles.get() - lastCompletedFiles.get()) * 2L)));
+
+            lastCompletedFiles.set(completedFiles.get());
         });
         //启动轮询
         timer.start();
@@ -230,17 +236,22 @@ public class JsonCacheUtils {
         counterThread.start();
 
         serverInterface.resetStatusProgressBar();
+
+        AtomicLong lastCompletedBytes = new AtomicLong(0);
         //轮询线程, 读取进度
-        timer = new Timer(250, e -> {
+        timer = new Timer(500, e -> {
             long completedBytes = fileCacheCalculator.getCompletedBytes();
             long completedFiles = fileCacheCalculator.getCompletedFiles();
             String completedSize = FileUtil.formatFileSizeToStr(completedBytes);
             statusProgressBar.setValue((int) ((double) completedBytes * statusProgressBar.getMaximum() / totalFileSize));
-            statusProgressBar.setString(String.format("生成缓存中: %s / %s - %s 文件 / %s 文件",
+            statusProgressBar.setString(StrUtil.format("生成缓存中: {} / {} - {} 文件 / {} 文件 - ETA: {}s",
                     completedSize,
                     totalSize,
                     completedFiles,
-                    totalFiles));
+                    totalFiles,
+                    (totalFileSize - completedBytes) / ((completedBytes - lastCompletedBytes.get()) * 2)));
+
+            lastCompletedBytes.set(completedBytes);
         });
         //启动轮询
         timer.start();

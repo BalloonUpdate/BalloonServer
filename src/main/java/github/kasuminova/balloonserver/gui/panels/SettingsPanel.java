@@ -78,7 +78,7 @@ public class SettingsPanel {
         closeOperationsDesc.setForeground(ModernColors.BLUE);
 
         //低性能模式
-        JLabel lowIOPerformanceModeDesc0 = new JLabel("此项选中后, 将会限制生成缓存的线程数至 2 线程, 对于机械盘等低 IO 性能的服务器可能会有性能提升.");
+        JLabel lowIOPerformanceModeDesc0 = new JLabel("此项选中后, 将会限制生成缓存的线程数至单线程, 对于机械盘等低 IO 性能的服务器可能会有性能提升.");
         lowIOPerformanceModeDesc0.setForeground(ModernColors.BLUE);
         JLabel lowIOPerformanceModeDesc1 = new JLabel("此项会覆盖 \"文件计算线程池大小\" 配置.");
         lowIOPerformanceModeDesc1.setForeground(ModernColors.YELLOW);

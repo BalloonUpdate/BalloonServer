@@ -28,12 +28,12 @@ import static github.kasuminova.balloonserver.utils.ModernColors.*;
  */
 public class GUILogger {
     //日期格式
-    private static final SimpleDateFormat NORMAL_DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
-    private static final SimpleDateFormat FULL_DATE_FORMAT   = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-    private static final SimpleAttributeSet INFO_ATTRIBUTE   = new SimpleAttributeSet();
-    private static final SimpleAttributeSet WARN_ATTRIBUTE   = new SimpleAttributeSet();
-    private static final SimpleAttributeSet ERROR_ATTRIBUTE  = new SimpleAttributeSet();
-    private static final SimpleAttributeSet DEBUG_ATTRIBUTE  = new SimpleAttributeSet();
+    public static final SimpleDateFormat NORMAL_DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
+    public static final SimpleDateFormat FULL_DATE_FORMAT   = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    public static final SimpleAttributeSet INFO_ATTRIBUTE   = new SimpleAttributeSet();
+    public static final SimpleAttributeSet WARN_ATTRIBUTE   = new SimpleAttributeSet();
+    public static final SimpleAttributeSet ERROR_ATTRIBUTE  = new SimpleAttributeSet();
+    public static final SimpleAttributeSet DEBUG_ATTRIBUTE  = new SimpleAttributeSet();
     public static final String INFO  = "INFO";
     public static final String WARN  = "WARN";
     public static final String ERROR = "ERROR";
