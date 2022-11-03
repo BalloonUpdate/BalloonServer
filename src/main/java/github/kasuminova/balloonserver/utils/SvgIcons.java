@@ -10,7 +10,7 @@ import java.util.Objects;
  * SVG 格式贴图集合
  */
 public class SvgIcons {
-    public static final Map<String, FlatSVGIcon> svgIconMap = new HashMap<>();
+    public static final Map<String, FlatSVGIcon> svgIconMap = new HashMap<>(64);
     public static void load() {
 
     }

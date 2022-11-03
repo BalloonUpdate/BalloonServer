@@ -38,6 +38,10 @@ public class GUILogger {
     public static final String WARN  = "WARN";
     public static final String ERROR = "ERROR";
     public static final String DEBUG = "DEBUG";
+    private static final int MAX_LOGFILES = 50;
+    private static final int LOG_PANE_MAX_LENGTH = 200000;
+    //行距, 0.1 相当于 1.1 倍行距
+    private static final float LINE_SPACE_SIZE = 0.1F;
     private final JTextPane logPane;
     private final Log logger;
     private final Writer logWriter;
@@ -58,6 +62,11 @@ public class GUILogger {
     public GUILogger(String name, JTextPane logPane) {
         logger = LogFactory.get(name);
         this.logPane = logPane;
+
+        //行距设置
+        SimpleAttributeSet lineSpaceAttribute = new SimpleAttributeSet();
+        StyleConstants.setLineSpacing(lineSpaceAttribute, LINE_SPACE_SIZE);
+        logPane.setParagraphAttributes(lineSpaceAttribute, false);
 
         logWriter = createLogFile(name, logger);
 
@@ -97,7 +106,7 @@ public class GUILogger {
         try {
             if (logFile.exists()) {
                 int count = 1;
-                while (count <= 50) {
+                while (count <= MAX_LOGFILES) {
                     File oldLogFile = new File(String.format("./logs/%s-%s.log", name, count));
                     if (oldLogFile.exists()) {
                         count++;
@@ -305,7 +314,7 @@ public class GUILogger {
         if (logPane == null) return;
         try {
             Document document = logPane.getDocument();
-            if (document.getLength() > 200000) {
+            if (document.getLength() > LOG_PANE_MAX_LENGTH) {
                 document.remove(0, logPane.getDocument().getLength());
                 info("日志窗口过长, 已清空当前服务器实例日志窗口.");
             }

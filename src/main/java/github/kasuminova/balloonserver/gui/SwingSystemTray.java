@@ -13,8 +13,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URL;
 
-import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
-import static github.kasuminova.balloonserver.BalloonServer.stopAllServers;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 import static github.kasuminova.balloonserver.utils.SvgIcons.STOP_ICON;
 import static github.kasuminova.balloonserver.utils.SvgIcons.TERMINAL_ICON;
 
@@ -137,7 +136,7 @@ public class SwingSystemTray {
         try {
             tray.add(trayIcon);
         } catch (AWTException ex) {
-            ex.printStackTrace();
+            GLOBAL_LOGGER.error(ex);
         }
     }
 }

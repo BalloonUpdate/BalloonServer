@@ -69,7 +69,7 @@ public class Checker {
      */
     public static void startProgram(String fileName, boolean exitThisProgram) {
         try {
-            String[] commands = new String[]{
+            String[] commands = {
                     "echo Starting Program...",
                     "echo Waiting Old Program Exit...",
 

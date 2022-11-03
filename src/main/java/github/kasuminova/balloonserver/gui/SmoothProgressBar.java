@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
  * 平滑进度条
  */
 public class SmoothProgressBar extends JProgressBar {
+    public static final long TIME_MULTIPLIER = 3L;
     //单线程线程池，用于保证进度条的操作顺序
     private final ThreadPoolExecutor singleThreadExecutor;
     private final int flowTime;
@@ -80,9 +81,9 @@ public class SmoothProgressBar extends JProgressBar {
 
             //如果线程池中的任务过多则加快进度条速度（即降低 sleep 时间）
             if (queueSize >= 1) {
-                ThreadUtil.safeSleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
+                ThreadUtil.safeSleep((flowTime / (finalFrequency + (i * TIME_MULTIPLIER))) * (1 / queueSize));
             } else {
-                ThreadUtil.safeSleep(flowTime / (finalFrequency + (i * 3L)));
+                ThreadUtil.safeSleep(flowTime / (finalFrequency + (i * TIME_MULTIPLIER)));
             }
         }
 
@@ -112,9 +113,9 @@ public class SmoothProgressBar extends JProgressBar {
 
             //如果线程池中的任务过多则加快进度条速度（即降低 sleep 时间）
             if (queueSize >= 1) {
-                ThreadUtil.safeSleep((flowTime / (finalFrequency + (i * 3L))) * (1 / queueSize));
+                ThreadUtil.safeSleep((flowTime / (finalFrequency + (i * TIME_MULTIPLIER))) * (1 / queueSize));
             } else {
-                ThreadUtil.safeSleep(flowTime / (finalFrequency + (i * 3L)));
+                ThreadUtil.safeSleep(flowTime / (finalFrequency + (i * TIME_MULTIPLIER)));
             }
         }
 

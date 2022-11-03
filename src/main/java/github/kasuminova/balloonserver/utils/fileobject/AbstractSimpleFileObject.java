@@ -46,7 +46,7 @@ public abstract class AbstractSimpleFileObject implements Serializable {
      * @return SimpleFileObject 或 SimpleDirectoryObject
      */
     public static ArrayList<AbstractSimpleFileObject> jsonArrToFileObjArr(JSONArray arr) {
-        ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
+        ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>(0);
         arr.toList(JSONObject.class).forEach(jsonObject -> {
             if (fileObjIsDirectoryObj(jsonObject)) {
                 fileObjList.add(jsonObjectToFileObject(jsonObject));

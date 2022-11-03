@@ -6,8 +6,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
 
-import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
-import static github.kasuminova.balloonserver.BalloonServer.TITLE;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 
 public class MiscUtils {
     /**
@@ -21,7 +20,7 @@ public class MiscUtils {
             try {
                 desktop.browse(URI.create(url));
             } catch (Exception ex) {
-                ex.printStackTrace();
+                GLOBAL_LOGGER.error(ex);
             }
         } else {
             JOptionPane.showMessageDialog(MAIN_FRAME,

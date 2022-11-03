@@ -18,8 +18,8 @@ public class RemoteClientInitializer extends ChannelInitializer<SocketChannel> {
     }
 
     @Override
-    protected void initChannel(SocketChannel ch) {
-        ChannelPipeline pipeline = ch.pipeline();
+    protected void initChannel(SocketChannel channel) {
+        ChannelPipeline pipeline = channel.pipeline();
 
         //编码器
         pipeline.addLast(new ObjectEncoder());

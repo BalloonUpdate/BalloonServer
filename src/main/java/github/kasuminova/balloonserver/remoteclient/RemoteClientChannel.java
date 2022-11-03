@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
+    private static final int TIMEOUT = 5000;
     private final GUILogger logger;
     private final RemoteClientInterface serverInterface;
     private final RemoteClientConfig config;
@@ -35,7 +36,7 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
                 timeOutListener.cancel();
                 ctx.close();
             }
-        }, 5000, 5000);
+        }, TIMEOUT, TIMEOUT);
         ctx.writeAndFlush(new TokenMessage(config.getToken(), BalloonServer.VERSION));
         ctx.fireChannelActive();
     }

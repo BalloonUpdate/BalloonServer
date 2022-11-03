@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * LittleServer 所绑定的服务器
  */
 public class HttpServer {
+    private static final int FILE_CHANGE_LISTENER_DELAY = 5000;
     private final GUILogger logger;
     private final AtomicBoolean isGenerating;
     private final AtomicBoolean isFileChanged = new AtomicBoolean(false);
@@ -117,7 +118,7 @@ public class HttpServer {
         if (config.isFileChangeListener()) {
             fileListener = new NextFileListener(String.format(".%s", config.getMainDirPath()), isFileChanged, logger, 10);
             fileListener.start();
-            fileChangeListener = new Timer(5000, e -> {
+            fileChangeListener = new Timer(FILE_CHANGE_LISTENER_DELAY, e -> {
                 if (isFileChanged.get() && !isGenerating.get()) {
                     logger.info("检测到文件变动, 开始更新资源文件夹缓存...");
                     serverInterface.regenCache();

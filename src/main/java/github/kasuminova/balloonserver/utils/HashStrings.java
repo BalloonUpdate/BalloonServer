@@ -1,24 +1,24 @@
 package github.kasuminova.balloonserver.utils;
 
 public class HashStrings {
-    private final String CRC32;
-    private final String SHA1;
+    private final String crc32;
+    private final String sha1;
 
     public HashStrings(String CRC32, String SHA1) {
-        this.CRC32 = CRC32;
-        this.SHA1 = SHA1;
+        this.crc32 = CRC32;
+        this.sha1 = SHA1;
     }
 
     public HashStrings(String CRC32) {
-        this.CRC32 = CRC32;
-        this.SHA1 = null;
+        this.crc32 = CRC32;
+        this.sha1 = null;
     }
 
-    public String getCRC32() {
-        return CRC32;
+    public String getCrc32() {
+        return crc32;
     }
 
-    public String getSHA1() {
-        return SHA1;
+    public String getSha1() {
+        return sha1;
     }
 }

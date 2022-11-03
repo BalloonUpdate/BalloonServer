@@ -14,35 +14,7 @@ public class NextFileListener {
     private final WatchMonitor monitor;
 
     public NextFileListener(String path, AtomicBoolean isFileChanged, GUILogger logger, int maxDepth) {
-        monitor = WatchMonitor.createAll(path, new Watcher() {
-            @Override
-            public void onCreate(WatchEvent<?> event, Path currentPath) {
-                Object obj = event.context();
-                logger.info(String.format("创建: %s -> %s", currentPath, obj));
-                isFileChanged.set(true);
-            }
-
-            @Override
-            public void onModify(WatchEvent<?> event, Path currentPath) {
-                Object obj = event.context();
-                logger.info(String.format("修改: %s -> %s", currentPath, obj));
-                isFileChanged.set(true);
-            }
-
-            @Override
-            public void onDelete(WatchEvent<?> event, Path currentPath) {
-                Object obj = event.context();
-                logger.info(String.format("删除: %s -> %s", currentPath, obj));
-                isFileChanged.set(true);
-            }
-
-            @Override
-            public void onOverflow(WatchEvent<?> event, Path currentPath) {
-                Object obj = event.context();
-                logger.info(String.format("Overflow: %s -> %s", currentPath, obj));
-                isFileChanged.set(true);
-            }
-        });
+        monitor = WatchMonitor.createAll(path, new FileWatcher(logger, isFileChanged));
         monitor.setMaxDepth(maxDepth);
     }
 
@@ -53,5 +25,35 @@ public class NextFileListener {
     public void stop() {
         monitor.close();
         monitor.interrupt();
+    }
+
+    private record FileWatcher(GUILogger logger, AtomicBoolean isFileChanged) implements Watcher {
+        @Override
+        public void onCreate(WatchEvent<?> event, Path currentPath) {
+            Object obj = event.context();
+            logger.info(String.format("创建: %s -> %s", currentPath, obj));
+            isFileChanged.set(true);
+        }
+
+        @Override
+        public void onModify(WatchEvent<?> event, Path currentPath) {
+            Object obj = event.context();
+            logger.info(String.format("修改: %s -> %s", currentPath, obj));
+            isFileChanged.set(true);
+        }
+
+        @Override
+        public void onDelete(WatchEvent<?> event, Path currentPath) {
+            Object obj = event.context();
+            logger.info(String.format("删除: %s -> %s", currentPath, obj));
+            isFileChanged.set(true);
+        }
+
+        @Override
+        public void onOverflow(WatchEvent<?> event, Path currentPath) {
+            Object obj = event.context();
+            logger.info(String.format("Overflow: %s -> %s", currentPath, obj));
+            isFileChanged.set(true);
+        }
     }
 }

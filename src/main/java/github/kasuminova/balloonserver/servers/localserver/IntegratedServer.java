@@ -18,9 +18,7 @@ import github.kasuminova.balloonserver.utils.*;
 import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
@@ -41,10 +39,11 @@ import static github.kasuminova.balloonserver.utils.SvgIcons.DELETE_ICON;
  * IntegratedServer 集成服务端面板实例
  */
 public class IntegratedServer extends AbstractServer {
+    protected static final Dimension REQUEST_LIST_FRAME_SIZE = new Dimension(400,750);
     protected final JSONObject index = new JSONObject();
-    protected final String resJsonFileExtensionName = "res-cache";
-    protected final String legacyResJsonFileExtensionName = "legacy_res-cache";
-    protected final String configFileSuffix = ".lscfg.json";
+    protected static final String RES_JSON_FILE_EXTENSION_NAME = "res-cache";
+    protected static final String LEGACY_RES_JSON_FILE_EXTENSION_NAME = "legacy_res-cache";
+    protected static final String CONFIG_FILE_SUFFIX = ".lscfg.json";
     protected final JLabel statusLabel = new JLabel("状态: 就绪", JLabel.LEFT);
     protected final JButton copyAddressButton = new JButton("复制 API 地址");
     protected final JButton openAddressButton = new JButton("在浏览器中打开 API 地址");
@@ -96,19 +95,10 @@ public class IntegratedServer extends AbstractServer {
             try {
                 logPane.getDocument().remove(0, logPane.getDocument().getLength());
                 logger.info("已清空当前服务器实例日志窗口.");
-            } catch (BadLocationException ex) {
-                ex.printStackTrace();
-            }
+            } catch (BadLocationException ignored) {}
         });
         logPaneMenu.add(cleanLogPane);
-        logPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    logPaneMenu.show(logPane, e.getX(), e.getY());
-                }
-            }
-        });
+        logPane.addMouseListener(new LogPaneMouseAdapter(logPaneMenu, logPane));
 
         //初始化 HTTP 服务端
         loadHttpServer();
@@ -177,11 +167,11 @@ public class IntegratedServer extends AbstractServer {
 
             if (config.isCompatibleMode()) {
                 jsonCacheUtils.updateDirCache(
-                        FileUtil.loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
+                        FileUtil.loadJsonArrayFromFile(serverName, LEGACY_RES_JSON_FILE_EXTENSION_NAME, logger),
                         HashCalculator.SHA1);
             }
             jsonCacheUtils.updateDirCacheAndStartServer(
-                    FileUtil.loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
+                    FileUtil.loadJsonArrayFromFile(serverName, RES_JSON_FILE_EXTENSION_NAME, logger),
                     HashCalculator.CRC32);
 
             copyAddressButton.setVisible(true);
@@ -248,12 +238,12 @@ public class IntegratedServer extends AbstractServer {
 
             @Override
             public String getResJsonFileExtensionName() {
-                return resJsonFileExtensionName;
+                return RES_JSON_FILE_EXTENSION_NAME;
             }
 
             @Override
             public String getLegacyResJsonFileExtensionName() {
-                return legacyResJsonFileExtensionName;
+                return LEGACY_RES_JSON_FILE_EXTENSION_NAME;
             }
 
             @Override
@@ -307,11 +297,11 @@ public class IntegratedServer extends AbstractServer {
 
             if (config.isCompatibleMode()) {
                 jsonCacheUtil.updateDirCache(
-                        FileUtil.loadJsonArrayFromFile(serverName, legacyResJsonFileExtensionName, logger),
+                        FileUtil.loadJsonArrayFromFile(serverName, LEGACY_RES_JSON_FILE_EXTENSION_NAME, logger),
                         HashCalculator.SHA1);
             }
             jsonCacheUtil.updateDirCache(
-                    FileUtil.loadJsonArrayFromFile(serverName, resJsonFileExtensionName, logger),
+                    FileUtil.loadJsonArrayFromFile(serverName, RES_JSON_FILE_EXTENSION_NAME, logger),
                     HashCalculator.CRC32);
 
             System.gc();
@@ -352,7 +342,7 @@ public class IntegratedServer extends AbstractServer {
     protected void saveConfigurationToFile() {
         reloadConfigurationFromGUI();
         try {
-            ConfigurationManager.saveConfigurationToFile(config, "./", serverName + configFileSuffix.replace(".json", ""));
+            ConfigurationManager.saveConfigurationToFile(config, "./", serverName + CONFIG_FILE_SUFFIX.replace(".json", ""));
             logger.info("已保存配置至磁盘.");
         } catch (IORuntimeException ex) {
             logger.error("保存配置文件的时候出现了问题...", ex);
@@ -363,7 +353,7 @@ public class IntegratedServer extends AbstractServer {
      * 从文件加载配置文件
      */
     protected void loadConfigurationFromFile() {
-        if (!new File("./" + serverName + configFileSuffix).exists()) {
+        if (!new File("./" + serverName + CONFIG_FILE_SUFFIX).exists()) {
             try {
                 logger.warn("未找到配置文件，正在尝试在程序当前目录生成配置文件...");
                 ConfigurationManager.saveConfigurationToFile(new IntegratedServerConfig(), "./", String.format("%s.lscfg", serverName));
@@ -376,7 +366,7 @@ public class IntegratedServer extends AbstractServer {
             return;
         }
         try {
-            ConfigurationManager.loadLittleServerConfigFromFile("./" + serverName + configFileSuffix, config);
+            ConfigurationManager.loadLittleServerConfigFromFile("./" + serverName + CONFIG_FILE_SUFFIX, config);
         } catch (IOException e) {
             logger.error("加载配置文件的时候出现了问题...", e);
             logger.info("目前正在使用程序默认配置.");
@@ -459,7 +449,7 @@ public class IntegratedServer extends AbstractServer {
 
     protected JPanel loadStatusBar() {
         JPanel statusPanel = new JPanel(new BorderLayout());
-        statusPanel.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(1, 4, 1, 0)));
+        statusPanel.setBorder(new EmptyBorder(0, 5, 2, 1));
 
         //设置字体颜色
         statusLabel.setForeground(ModernColors.BLUE);
@@ -481,12 +471,7 @@ public class IntegratedServer extends AbstractServer {
         showOrHideRequestListPanel.addActionListener(new ShowOrHideComponentActionListener(
                 requestListFrame, "上传列表", showOrHideRequestListPanel
         ));
-        requestListFrame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                showOrHideRequestListPanel.setText("显示上传列表");
-            }
-        });
+        requestListFrame.addWindowListener(new RequestListFrameWindowAdapter(showOrHideRequestListPanel));
 
         //复制 API 地址
         copyAddressButton.setVisible(false);
@@ -516,7 +501,7 @@ public class IntegratedServer extends AbstractServer {
 
     protected Component loadControlPanel() {
         //控制面板
-        controlPanel.setPreferredSize(new Dimension(350, 0));
+        controlPanel.setPreferredSize(new Dimension(CONTROL_PANEL_WIDTH, 0));
         controlPanel.setBorder(new TitledBorder("控制面板"));
 
         //配置窗口
@@ -608,7 +593,7 @@ public class IntegratedServer extends AbstractServer {
 
         requestListFrame.setTitle(StrUtil.format("{} 的上传列表", serverName));
         requestListFrame.setIconImage(SvgIcons.DEFAULT_SERVER_ICON.getImage());
-        requestListFrame.setMinimumSize(new Dimension(400,750));
+        requestListFrame.setMinimumSize(REQUEST_LIST_FRAME_SIZE);
         requestListFrame.setResizable(false);
         requestListFrame.setLocationRelativeTo(null);
     }
@@ -638,5 +623,35 @@ public class IntegratedServer extends AbstractServer {
         JksSslBox.add(selectJksSslFile);
 
         return JksSslBox;
+    }
+
+    private static class LogPaneMouseAdapter extends MouseAdapter {
+        private final JPopupMenu logPaneMenu;
+        private final JTextPane logPane;
+
+        private LogPaneMouseAdapter(JPopupMenu logPaneMenu, JTextPane logPane) {
+            this.logPaneMenu = logPaneMenu;
+            this.logPane = logPane;
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                logPaneMenu.show(logPane, e.getX(), e.getY());
+            }
+        }
+    }
+
+    private static class RequestListFrameWindowAdapter extends WindowAdapter {
+        private final JButton showOrHideRequestListPanel;
+
+        private RequestListFrameWindowAdapter(JButton showOrHideRequestListPanel) {
+            this.showOrHideRequestListPanel = showOrHideRequestListPanel;
+        }
+
+        @Override
+        public void windowClosing(WindowEvent e) {
+            showOrHideRequestListPanel.setText("显示上传列表");
+        }
     }
 }

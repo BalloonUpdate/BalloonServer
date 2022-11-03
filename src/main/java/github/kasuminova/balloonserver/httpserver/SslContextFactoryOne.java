@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_LOGGER;
+
 /**
  * 用于加载 SSL 证书的类（网上抄的）
  *
@@ -17,13 +19,13 @@ public class SslContextFactoryOne {
     /**
      * 服务器安全套接字协议
      */
-    private static SSLContext SERVER_CONTEXT;
+    private static SSLContext serverContext = null;
 
     // 使用KeyTool生成密钥库和密钥时配置的密码
 
     public static SSLContext getServerContext(InputStream jks, char[] pass) {
-        if (SERVER_CONTEXT != null) {
-            return SERVER_CONTEXT;
+        if (serverContext != null) {
+            return serverContext;
         }
         try {
             //密钥库KeyStore
@@ -37,19 +39,19 @@ public class SslContextFactoryOne {
             //初始化密钥管理器
             kmf.init(ks, pass);
             //获取安全套接字协议（TLS协议）的对象
-            SERVER_CONTEXT = SSLContext.getInstance(PROTOCOL);
+            serverContext = SSLContext.getInstance(PROTOCOL);
             //初始化此上下文
             //参数一：认证的密钥  参数二：对等信任认证  参数三：伪随机数生成器。由于单向认证，服务端不用验证客户端，所以第二个参数为 null
-            SERVER_CONTEXT.init(kmf.getKeyManagers(), null, null);
+            serverContext.init(kmf.getKeyManagers(), null, null);
         } catch (Exception e) {
             throw new Error("Failed to initialize the server-side SSLContext", e);
         } finally {
             try {
                 jks.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                GLOBAL_LOGGER.error(e);
             }
         }
-        return SERVER_CONTEXT;
+        return serverContext;
     }
 }

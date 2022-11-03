@@ -18,24 +18,29 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
 
 /**
  * 设置面板类, 一个主程序只能有一个设置面板。
+ * @author Kasumi_Nova
  */
 public class SettingsPanel {
-    private static final JCheckBox autoStartDefaultServer = new JCheckBox("自动启动主服务端");
-    private static final JCheckBox autoStartDefaultServerOnce = new JCheckBox("自动启动主服务端 (单次)");
-    private static final JCheckBox autoCheckUpdates = new JCheckBox("自动检查更新");
-    private static final JCheckBox autoUpdate = new JCheckBox("自动更新");
-    private static final Vector<CloseOperation> operations = new Vector<>();
-    private static final JComboBox<CloseOperation> closeOperationComboBox = new JComboBox<>(operations);
-    private static final JSpinner fileThreadPoolSizeSpinner = new JSpinner();
-    private static final JCheckBox lowIOPerformanceMode = new JCheckBox("低性能模式 (重启生效)");
-    private static final JCheckBox enableDebugMode = new JCheckBox("启用 Debug 模式");
-    public static JPanel getPanel() {
+    private static final JCheckBox AUTO_START_DEFAULT_SERVER = new JCheckBox("自动启动主服务端");
+    private static final JCheckBox AUTO_START_DEFAULT_SERVER_ONCE = new JCheckBox("自动启动主服务端 (单次)");
+    private static final JCheckBox AUTO_CHECK_UPDATES = new JCheckBox("自动检查更新");
+    private static final JCheckBox AUTO_UPDATE = new JCheckBox("自动更新");
+    private static final CloseOperation[] OPERATIONS = {
+            BalloonServerConfig.QUERY,
+            BalloonServerConfig.HIDE_ON_CLOSE,
+            BalloonServerConfig.EXIT_ON_CLOSE
+    };
+    private static final JComboBox<CloseOperation> CLOSE_OPERATION_COMBO_BOX = new JComboBox<>(OPERATIONS);
+    private static final JSpinner FILE_THREAD_POOL_SIZE_SPINNER = new JSpinner();
+    private static final JCheckBox LOW_IO_PERFORMANCE_MODE = new JCheckBox("低性能模式 (重启生效)");
+    private static final JCheckBox ENABLE_DEBUG_MODE = new JCheckBox("启用 Debug 模式");
+    private static final int MAXIMUM_FILE_THREAD_POOL_SIZE = 1024;
+    public static JPanel createPanel() {
         //主面板
         JPanel mainPanel = new JPanel(new BorderLayout());
         //子主面板
@@ -61,19 +66,14 @@ public class SettingsPanel {
         autoUpdateDesc.setForeground(ModernColors.BLUE);
         //如果程序非 exe 格式则设置为禁用
         if (!ARCHIVE_NAME.contains("e4j")) {
-            autoUpdate.setEnabled(false);
-            autoUpdate.setText("自动更新（不支持, 目前仅支持 exe 格式服务端）");
+            AUTO_UPDATE.setEnabled(false);
+            AUTO_UPDATE.setText("自动更新（不支持, 目前仅支持 exe 格式服务端）");
         }
 
-        //关闭选项
-        operations.add(BalloonServerConfig.QUERY);
-        operations.add(BalloonServerConfig.HIDE_ON_CLOSE);
-        operations.add(BalloonServerConfig.EXIT_ON_CLOSE);
-
         Box closeOperationBox = Box.createHorizontalBox();
-        closeOperationComboBox.setMaximumRowCount(3);
+        CLOSE_OPERATION_COMBO_BOX.setMaximumRowCount(3);
         closeOperationBox.add(new JLabel("窗口关闭选项: "));
-        closeOperationBox.add(closeOperationComboBox);
+        closeOperationBox.add(CLOSE_OPERATION_COMBO_BOX);
         JLabel closeOperationsDesc = new JLabel("此项决定点击 BalloonServer 窗口右上角关闭按钮后程序的操作.");
         closeOperationsDesc.setForeground(ModernColors.BLUE);
 
@@ -85,12 +85,12 @@ public class SettingsPanel {
 
         //文件线程池大小
         Box fileThreadPoolSizeBox = Box.createHorizontalBox();
-        SpinnerNumberModel fileThreadPoolSizeSpinnerModel = new SpinnerNumberModel(0, 0, 1024, 1);
-        fileThreadPoolSizeSpinner.setModel(fileThreadPoolSizeSpinnerModel);
-        JSpinner.NumberEditor portSpinnerEditor = new JSpinner.NumberEditor(fileThreadPoolSizeSpinner, "#");
-        fileThreadPoolSizeSpinner.setEditor(portSpinnerEditor);
+        SpinnerNumberModel fileThreadPoolSizeSpinnerModel = new SpinnerNumberModel(0, 0, MAXIMUM_FILE_THREAD_POOL_SIZE, 1);
+        FILE_THREAD_POOL_SIZE_SPINNER.setModel(fileThreadPoolSizeSpinnerModel);
+        JSpinner.NumberEditor portSpinnerEditor = new JSpinner.NumberEditor(FILE_THREAD_POOL_SIZE_SPINNER, "#");
+        FILE_THREAD_POOL_SIZE_SPINNER.setEditor(portSpinnerEditor);
         fileThreadPoolSizeBox.add(new JLabel("文件计算线程池大小 (重启生效): "));
-        fileThreadPoolSizeBox.add(fileThreadPoolSizeSpinner);
+        fileThreadPoolSizeBox.add(FILE_THREAD_POOL_SIZE_SPINNER);
         JLabel fileThreadPoolSizeDesc0 = new JLabel("此项决定在生成资源缓存时同时计算文件校验码的线程数, 默认为 0, 即为逻辑处理器数量 * 2.");
         fileThreadPoolSizeDesc0.setForeground(ModernColors.BLUE);
         JLabel fileThreadPoolSizeDesc1 = new JLabel("如果您不理解此选项, 请勿修改本设置.");
@@ -103,23 +103,23 @@ public class SettingsPanel {
         applyConfiguration();
 
         //组装
-        settingsPanel.add(autoStartDefaultServer);
+        settingsPanel.add(AUTO_START_DEFAULT_SERVER);
         settingsPanel.add(autoStartDefaultServerDesc);
-        settingsPanel.add(autoStartDefaultServerOnce);
+        settingsPanel.add(AUTO_START_DEFAULT_SERVER_ONCE);
         settingsPanel.add(autoStartDefaultServerOnceDesc);
-        settingsPanel.add(autoCheckUpdates);
+        settingsPanel.add(AUTO_CHECK_UPDATES);
         settingsPanel.add(autoCheckUpdatesDesc);
-        settingsPanel.add(autoUpdate);
+        settingsPanel.add(AUTO_UPDATE);
         settingsPanel.add(autoUpdateDesc);
         settingsPanel.add(closeOperationBox);
         settingsPanel.add(closeOperationsDesc);
-        settingsPanel.add(lowIOPerformanceMode);
+        settingsPanel.add(LOW_IO_PERFORMANCE_MODE);
         settingsPanel.add(lowIOPerformanceModeDesc0);
         settingsPanel.add(lowIOPerformanceModeDesc1);
         settingsPanel.add(fileThreadPoolSizeBox);
         settingsPanel.add(fileThreadPoolSizeDesc0);
         settingsPanel.add(fileThreadPoolSizeDesc1);
-        settingsPanel.add(enableDebugMode);
+        settingsPanel.add(ENABLE_DEBUG_MODE);
         settingsPanel.add(enableDebugModeDesc);
 
         JScrollPane settingsPanelScroll = new JScrollPane(
@@ -133,7 +133,7 @@ public class SettingsPanel {
         JPanel saveConfigPanel = new JPanel(new VFlowLayout());
         //保存提示
         JLabel tipLabel = new JLabel("上方配置修改后, 请点击保存配置按钮来应用配置.", SwingConstants.CENTER);
-        tipLabel.setForeground(new Color(255,75,75));
+        tipLabel.setForeground(new Color(255, 75, 75));
         saveConfigPanel.add(tipLabel);
 
         //保存配置
@@ -154,14 +154,14 @@ public class SettingsPanel {
      */
     public static void applyConfiguration()
     {
-        autoStartDefaultServer.setSelected(CONFIG.isAutoStartServer());
-        autoStartDefaultServerOnce.setSelected(CONFIG.isAutoStartServerOnce());
-        autoCheckUpdates.setSelected(CONFIG.isAutoCheckUpdates());
-        autoUpdate.setSelected(CONFIG.isAutoUpdate());
-        closeOperationComboBox.setSelectedIndex(CONFIG.getCloseOperation());
-        lowIOPerformanceMode.setSelected(CONFIG.isLowIOPerformanceMode());
-        fileThreadPoolSizeSpinner.setValue(CONFIG.getFileThreadPoolSize());
-        enableDebugMode.setSelected(CONFIG.isDebugMode());
+        AUTO_START_DEFAULT_SERVER.setSelected(CONFIG.isAutoStartServer());
+        AUTO_START_DEFAULT_SERVER_ONCE.setSelected(CONFIG.isAutoStartServerOnce());
+        AUTO_CHECK_UPDATES.setSelected(CONFIG.isAutoCheckUpdates());
+        AUTO_UPDATE.setSelected(CONFIG.isAutoUpdate());
+        CLOSE_OPERATION_COMBO_BOX.setSelectedIndex(CONFIG.getCloseOperation());
+        LOW_IO_PERFORMANCE_MODE.setSelected(CONFIG.isLowIOPerformanceMode());
+        FILE_THREAD_POOL_SIZE_SPINNER.setValue(CONFIG.getFileThreadPoolSize());
+        ENABLE_DEBUG_MODE.setSelected(CONFIG.isDebugMode());
     }
 
     /**
@@ -169,14 +169,14 @@ public class SettingsPanel {
      */
     private static void saveConfiguration()
     {
-        CONFIG.setAutoStartServer(autoStartDefaultServer.isSelected());
-        CONFIG.setAutoStartServerOnce(autoStartDefaultServerOnce.isSelected());
-        CONFIG.setAutoCheckUpdates(autoCheckUpdates.isSelected());
-        CONFIG.setAutoUpdate(autoUpdate.isSelected());
-        CONFIG.setCloseOperation(closeOperationComboBox.getSelectedIndex());
-        CONFIG.setLowIOPerformanceMode(lowIOPerformanceMode.isSelected());
-        CONFIG.setFileThreadPoolSize((int) fileThreadPoolSizeSpinner.getValue());
-        CONFIG.setDebugMode(enableDebugMode.isSelected());
+        CONFIG.setAutoStartServer(AUTO_START_DEFAULT_SERVER.isSelected());
+        CONFIG.setAutoStartServerOnce(AUTO_START_DEFAULT_SERVER_ONCE.isSelected());
+        CONFIG.setAutoCheckUpdates(AUTO_CHECK_UPDATES.isSelected());
+        CONFIG.setAutoUpdate(AUTO_UPDATE.isSelected());
+        CONFIG.setCloseOperation(CLOSE_OPERATION_COMBO_BOX.getSelectedIndex());
+        CONFIG.setLowIOPerformanceMode(LOW_IO_PERFORMANCE_MODE.isSelected());
+        CONFIG.setFileThreadPoolSize((int) FILE_THREAD_POOL_SIZE_SPINNER.getValue());
+        CONFIG.setDebugMode(ENABLE_DEBUG_MODE.isSelected());
 
         try {
             ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");
@@ -188,7 +188,7 @@ public class SettingsPanel {
 
     private static JPanel loadThemeListPanel() {
         //主题切换
-        List<String> themes = new ArrayList<>();
+        List<String> themes = new ArrayList<>(8);
         themes.add("FlatLaf Light");
         themes.add("FlatLaf Dark");
         themes.add("FlatLaf IntelIJ");
@@ -219,7 +219,7 @@ public class SettingsPanel {
                 }
                 SwingUtilities.updateComponentTreeUI(MAIN_FRAME);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                GLOBAL_LOGGER.error(ex);
             }
         });
         themeListPanel.add(themeList);

@@ -2,6 +2,9 @@ package github.kasuminova.balloonserver.configurations;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class RemoteClientConfig extends Configuration {
     @JSONField(ordinal = 1)
     private String ip = "127.0.0.1";

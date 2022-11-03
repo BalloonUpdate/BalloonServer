@@ -6,28 +6,44 @@ public class BalloonServerConfig extends Configuration {
     public static final CloseOperation QUERY = new CloseOperation(0, "每次询问");
     public static final CloseOperation HIDE_ON_CLOSE = new CloseOperation(1, "最小化至托盘");
     public static final CloseOperation EXIT_ON_CLOSE = new CloseOperation(2, "退出程序");
-    //自动启动服务器
+    /**
+     * 自动启动服务器
+     */
     @JSONField(ordinal = 1)
     private boolean autoStartServer = false;
-    //自动启动服务器（仅一次）
+    /**
+     * 自动启动服务器（仅一次）
+     */
     @JSONField(ordinal = 2)
     private boolean autoStartServerOnce = false;
-    //自动检查更新
+    /**
+     * 自动检查更新
+     */
     @JSONField(ordinal = 3)
     private boolean autoCheckUpdates = false;
-    //自动更新
+    /**
+     * 自动更新
+     */
     @JSONField(ordinal = 4)
     private boolean autoUpdate = false;
-    //关闭窗口的操作
+    /**
+     * 关闭窗口的操作
+     */
     @JSONField(ordinal = 5)
     private int closeOperation = 0;
-    //低性能模式
+    /**
+     * 低性能模式
+     */
     @JSONField(ordinal = 6)
     private boolean lowIOPerformanceMode = false;
-    //文件线程池大小
+    /**
+     * 文件线程池大小
+     */
     @JSONField(ordinal = 7)
     private int fileThreadPoolSize = 0;
-    //DEBUG 模式
+    /**
+     * DEBUG 模式
+     */
     @JSONField(ordinal = 8)
     private boolean debugMode = false;
 

@@ -65,7 +65,7 @@ public class DecodeProxy extends ByteToMessageDecoder {
     /**
      * 打印 byte 数组
      */
-    public byte[] printSz(ByteBuf newBuf) {
+    public static byte[] printSz(ByteBuf newBuf) {
         ByteBuf copy = newBuf.copy();
         byte[] bytes = new byte[copy.readableBytes()];
         copy.readBytes(bytes);

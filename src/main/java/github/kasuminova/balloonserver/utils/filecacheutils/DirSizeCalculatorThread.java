@@ -12,7 +12,7 @@ record DirSizeCalculatorThread(File dir, AtomicLong totalSize, AtomicLong totalF
     @Override
     public void run() {
         File[] fileList = dir.listFiles();
-        ArrayList<Thread> threadList = new ArrayList<>();
+        ArrayList<Thread> threadList = new ArrayList<>(4);
         if (fileList != null) {
             for (File value : fileList) {
                 if (!value.isDirectory()) {

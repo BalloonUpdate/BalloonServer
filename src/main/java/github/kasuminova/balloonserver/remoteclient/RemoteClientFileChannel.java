@@ -18,9 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object> {
+    private static final int TIMEOUT = 5000;
+    public static final int BUFFER_SIZE = 8192;
     private final GUILogger logger;
     private final RemoteClientInterface serverInterface;
-    private final Map<String, NetworkFile> networkFiles = new ConcurrentHashMap<>();
+    private final Map<String, NetworkFile> networkFiles = new ConcurrentHashMap<>(4);
     private Timer fileDaemon;
 
     public RemoteClientFileChannel(GUILogger logger, RemoteClientInterface serverInterface) {
@@ -78,7 +80,7 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
             ctx.writeAndFlush(new FileRequestMsg(
                     fileObjMsg.getFilePath(), fileObjMsg.getFileName(),
                     networkFile.completedBytes.get(),
-                    len > 8192 ? 8192 : len));
+                    len > BUFFER_SIZE ? BUFFER_SIZE : len));
         }
     }
 
@@ -101,7 +103,7 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         fileDaemon = new Timer(1000, e -> networkFiles.forEach((path, networkFile) -> {
-            if (networkFile.lastUpdateTime < System.currentTimeMillis() - 5000) {
+            if (networkFile.lastUpdateTime < System.currentTimeMillis() - TIMEOUT) {
                 try {
                     networkFile.randomAccessFile.close();
                     logger.warn("文件 {} 下载超时, 已停止占用本地文件.", path);
@@ -133,7 +135,7 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
         private final RandomAccessFile randomAccessFile;
         private final AtomicLong completedBytes = new AtomicLong(0);
 
-        public NetworkFile(long lastUpdateTime, RandomAccessFile file) {
+        private NetworkFile(long lastUpdateTime, RandomAccessFile file) {
             this.lastUpdateTime = lastUpdateTime;
             this.randomAccessFile = file;
         }

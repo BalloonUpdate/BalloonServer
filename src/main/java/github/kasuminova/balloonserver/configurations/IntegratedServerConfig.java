@@ -5,20 +5,28 @@ import com.alibaba.fastjson2.annotation.JSONField;
 import java.io.Serial;
 import java.io.Serializable;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class IntegratedServerConfig extends Configuration implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    public static final String DEFAULT_IP = "127.0.0.1";
+    public static final String DEFAULT_MAIN_DIR_PATH = "/res";
+    public static final boolean DEFAULT_FILE_CHANGE_LISTENER = true;
+    public static final boolean DEFAULT_COMPATIBLE_MODE = false;
+
     @JSONField(ordinal = 1)
-    private String ip = "127.0.0.1";
+    private String ip = DEFAULT_IP;
     @JSONField(ordinal = 2)
-    private int port = 8080;
+    private int port = DEFAULT_PORT;
     @JSONField(ordinal = 3)
-    private String mainDirPath = "/res";
+    private String mainDirPath = DEFAULT_MAIN_DIR_PATH;
     @JSONField(ordinal = 4)
-    private boolean fileChangeListener = true;
+    private boolean fileChangeListener = DEFAULT_FILE_CHANGE_LISTENER;
     @JSONField(ordinal = 5)
-    private boolean compatibleMode = false;
+    private boolean compatibleMode = DEFAULT_COMPATIBLE_MODE;
     @JSONField(ordinal = 6)
     private String jksFilePath = "";
     @JSONField(ordinal = 7)
@@ -38,7 +46,7 @@ public class IntegratedServerConfig extends Configuration implements Serializabl
     public IntegratedServerConfig reset() {
         configVersion = 1;
         ip = "127.0.0.1";
-        port = 8080;
+        port = DEFAULT_PORT;
         mainDirPath = "/res";
         fileChangeListener = true;
         jksFilePath = "";

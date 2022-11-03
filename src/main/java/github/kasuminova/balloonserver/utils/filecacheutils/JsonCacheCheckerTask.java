@@ -34,7 +34,7 @@ public record JsonCacheCheckerTask(
         File[] childFiles = dir.listFiles();
 
         if (childFiles == null || childFiles.length == 0) {
-            return new SimpleDirectoryObject(dir.getName(), new ArrayList<>());
+            return new SimpleDirectoryObject(dir.getName(), new ArrayList<>(0));
         }
 
         Map<String, AbstractSimpleFileObject> fileObjectMap = fileObjList.stream().collect(
@@ -43,11 +43,11 @@ public record JsonCacheCheckerTask(
 
         removeOldFiles(dir.getPath(), fileObjectMap, logger);
 
-        ArrayList<FutureTask<SimpleFileObject>> fileTaskList = new ArrayList<>();
-        ArrayList<FutureTask<SimpleDirectoryObject>> dirTaskList = new ArrayList<>();
-        ArrayList<FutureTask<SimpleDirectoryObject>> checkTaskList = new ArrayList<>();
-        ArrayList<AbstractSimpleFileObject> fileObjectList = new ArrayList<>();
-        ArrayList<AbstractSimpleFileObject> fileObjectListTmp = new ArrayList<>();
+        ArrayList<FutureTask<SimpleFileObject>> fileTaskList = new ArrayList<>(0);
+        ArrayList<FutureTask<SimpleDirectoryObject>> dirTaskList = new ArrayList<>(0);
+        ArrayList<FutureTask<SimpleDirectoryObject>> checkTaskList = new ArrayList<>(0);
+        ArrayList<AbstractSimpleFileObject> fileObjectList = new ArrayList<>(childFiles.length);
+        ArrayList<AbstractSimpleFileObject> fileObjectListTmp = new ArrayList<>(childFiles.length);
 
         //遍历目标文件夹内所有文件并检查差异
         for (File childFile : childFiles) {
@@ -155,7 +155,7 @@ public record JsonCacheCheckerTask(
      * @param logger 如果文件不存在用此 logger 输出内容
      */
     public static void removeOldFiles(String path, Map<String, AbstractSimpleFileObject> fileObjMap, GUILogger logger) {
-        final StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder(16);
 
         fileObjMap.forEach((key, value) -> {
             sb.setLength(0);

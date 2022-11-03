@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 从 LittleServer 的 cacheUtils 的内部类独立出来的一个工具，用于计算文件缓存并输出 JSON
  */
 public class JsonCacheUtils {
+    public static final int TIMER_DELAY = 500;
     private final HttpServerInterface httpServerInterface;
     private final IntegratedServerInterface serverInterface;
     private final JButton startOrStop;
@@ -33,7 +34,7 @@ public class JsonCacheUtils {
     //jsonArray 转化为资源文件夹缓存必要的变量
     private final JSONArray jsonArray = new JSONArray();
     //fileObjList，用于序列化 JSON
-    private final ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>();
+    private final ArrayList<AbstractSimpleFileObject> fileObjList = new ArrayList<>(8);
     //公用定时器
     private Timer timer;
     private Thread counterThread;
@@ -211,7 +212,7 @@ public class JsonCacheUtils {
 
         AtomicInteger lastCompletedFiles = new AtomicInteger(0);
 
-        timer = new Timer(500, e -> {
+        timer = new Timer(TIMER_DELAY, e -> {
             statusProgressBar.setValue((int) ((double) completedFiles.get() * statusProgressBar.getMaximum() / totalFiles));
             statusProgressBar.setString(StrUtil.format("检查变化中: {} 文件 / {} 文件 - ETA: {}s",
                     completedFiles.get(),
@@ -239,7 +240,7 @@ public class JsonCacheUtils {
 
         AtomicLong lastCompletedBytes = new AtomicLong(0);
         //轮询线程, 读取进度
-        timer = new Timer(500, e -> {
+        timer = new Timer(TIMER_DELAY, e -> {
             long completedBytes = fileCacheCalculator.getCompletedBytes();
             long completedFiles = fileCacheCalculator.getCompletedFiles();
             String completedSize = FileUtil.formatFileSizeToStr(completedBytes);

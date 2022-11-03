@@ -17,14 +17,19 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class FileObjectBrowser extends JDialog {
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.0.0-BETA");
     public static final String TITLE = "FileObjectBrowser " + VERSION;
+    public static final int WINDOW_WIDTH = 750;
+    public static final int WINDOW_HEIGHT = 600;
 
     public FileObjectBrowser(SimpleDirectoryObject directoryObject) {
         setTitle(TITLE);
         setIconImage(BalloonServer.ICON.getImage());
-        setSize(750, 600);
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         setResizable(false);
         setLocationRelativeTo(null);
 
@@ -57,7 +62,7 @@ public class FileObjectBrowser extends JDialog {
     }
 
     private static ArrayList<CheckBoxTreeNode> scanDirAndBuildTree(SimpleDirectoryObject directoryObject) {
-        ArrayList<CheckBoxTreeNode> treeNodes = new ArrayList<>();
+        ArrayList<CheckBoxTreeNode> treeNodes = new ArrayList<>(0);
 
         ArrayList<AbstractSimpleFileObject> fileObjects = directoryObject.getChildren();
         fileObjects.forEach((obj -> {

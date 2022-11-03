@@ -29,16 +29,17 @@ import static github.kasuminova.balloonserver.utils.SvgIcons.REMOVE_ICON;
 public class RuleEditor extends JDialog {
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.5.0-STABLE");
     public static final String TITLE = "RuleEditor " + VERSION;
+    public static final int WINDOW_WIDTH = 750;
+    public static final int WINDOW_HEIGHT = 840;
+
     /**
      * 可复用变量（降低内存使用率）
      */
-    private static final StringBuilder childPath = new StringBuilder();
-    private static final JSONObject jsonObject = new JSONObject();
-
+    private final StringBuilder childPath = new StringBuilder(16);
     public RuleEditor(JSONArray jsonArray, List<String> rules) {
         setTitle(TITLE);
         setIconImage(BalloonServer.ICON.getImage());
-        setSize(750, 840);
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         setResizable(false);
         setLocationRelativeTo(null);
 
@@ -54,7 +55,7 @@ public class RuleEditor extends JDialog {
         JTree tree = new JTree();
         CheckBoxTreeNode rootNode = new CheckBoxTreeNode("res");
 
-        for (CheckBoxTreeNode checkBoxTreeNode : scanDirAndBuildTree(jsonArray)) {
+        for (CheckBoxTreeNode checkBoxTreeNode : scanDirAndBuildTree(jsonArray, new JSONObject())) {
             rootNode.add(checkBoxTreeNode);
         }
 
@@ -85,14 +86,7 @@ public class RuleEditor extends JDialog {
         removeRule.setIcon(REMOVE_ICON);
         ruleListMenu.add(removeRule);
         //鼠标监听
-        ruleList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    ruleListMenu.show(ruleList, e.getX(), e.getY());
-                }
-            }
-        });
+        ruleList.addMouseListener(new RuleListMouseAdapter(ruleListMenu, ruleList));
 
         JScrollPane ruleListScrollPane = new JScrollPane(
                 ruleList,
@@ -106,7 +100,7 @@ public class RuleEditor extends JDialog {
         JButton complete = new JButton("完成");
         complete.addActionListener(e -> {
             //构建规则
-            rules.addAll(buildRules(rootNode));
+            rules.addAll(buildRules(rootNode, childPath));
 
             //复制
             List<String> listTmp = new ArrayList<>(rules);
@@ -130,8 +124,8 @@ public class RuleEditor extends JDialog {
      * @param root 节点
      * @return 选中的文件
      */
-    private static ArrayList<String> buildRules(CheckBoxTreeNode root) {
-        ArrayList<String> rules = new ArrayList<>();
+    private static ArrayList<String> buildRules(CheckBoxTreeNode root, StringBuilder childPath) {
+        ArrayList<String> rules = new ArrayList<>(0);
 
         if (root.isRoot() && root.isSelected()) {
             rules.add("**");
@@ -141,7 +135,7 @@ public class RuleEditor extends JDialog {
         if (!root.isSelected()) {
             if (!root.isLeaf()) {
                 for (int i = 0; i < root.getChildCount(); i++) {
-                    rules.addAll(buildRules(root.getChildAt(i)));
+                    rules.addAll(buildRules(root.getChildAt(i), childPath));
                 }
             }
         } else if (root.getAllowsChildren()) {
@@ -166,9 +160,9 @@ public class RuleEditor extends JDialog {
     /**
      * 遍历文件树，将匹配更新规则的对象选中
      */
-    private static void compareRules(CheckBoxTreeNode root, List<String> rules) {
+    private void compareRules(CheckBoxTreeNode root, List<String> rules) {
         for (String rule : rules) {
-            if (rule.equals("**")) {
+            if ("**".equals(rule)) {
                 root.setSelected(true);
                 return;
             }
@@ -178,7 +172,7 @@ public class RuleEditor extends JDialog {
         }
     }
 
-    private static void compareRule(CheckBoxTreeNode node, String rule) {
+    private void compareRule(CheckBoxTreeNode node, String rule) {
         childPath.setLength(0);
 
         if (node.getAllowsChildren()) {
@@ -211,8 +205,8 @@ public class RuleEditor extends JDialog {
      * @param jsonArray JSONArray
      * @return JTree 子节点
      */
-    private static ArrayList<CheckBoxTreeNode> scanDirAndBuildTree(JSONArray jsonArray) {
-        ArrayList<CheckBoxTreeNode> treeNodes = new ArrayList<>();
+    private static ArrayList<CheckBoxTreeNode> scanDirAndBuildTree(JSONArray jsonArray, JSONObject jsonObject) {
+        ArrayList<CheckBoxTreeNode> treeNodes = new ArrayList<>(8);
 
         for (int i = 0; i < jsonArray.size(); i++) {
             jsonObject.clear();
@@ -225,7 +219,7 @@ public class RuleEditor extends JDialog {
             } else {
                 CheckBoxTreeNode directory = new CheckBoxTreeNode(jsonObject.getString("name"));
 
-                for (CheckBoxTreeNode checkBoxTreeNode : scanDirAndBuildTree(jsonObject.getJSONArray("children"))) {
+                for (CheckBoxTreeNode checkBoxTreeNode : scanDirAndBuildTree(jsonObject.getJSONArray("children"), jsonObject)) {
                     directory.add(checkBoxTreeNode);
                 }
 
@@ -233,5 +227,22 @@ public class RuleEditor extends JDialog {
             }
         }
         return treeNodes;
+    }
+
+    private static class RuleListMouseAdapter extends MouseAdapter {
+        private final JPopupMenu ruleListMenu;
+        private final JList<String> ruleList;
+
+        private RuleListMouseAdapter(JPopupMenu ruleListMenu, JList<String> ruleList) {
+            this.ruleListMenu = ruleListMenu;
+            this.ruleList = ruleList;
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                ruleListMenu.show(ruleList, e.getX(), e.getY());
+            }
+        }
     }
 }

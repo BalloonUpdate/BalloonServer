@@ -37,7 +37,7 @@ public class ContentRanges {
             return;
         }
 
-        if (trueRangeContent.equals("0-0,-1")) {
+        if ("0-0,-1".equals(trueRangeContent)) {
             start = 0;
             end = fileRange;
             return;

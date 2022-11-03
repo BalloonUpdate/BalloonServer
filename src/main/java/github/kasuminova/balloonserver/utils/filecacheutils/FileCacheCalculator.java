@@ -34,11 +34,11 @@ public class FileCacheCalculator {
     public ArrayList<AbstractSimpleFileObject> scanDir(File directory) {
         File[] fileList = directory.listFiles();
         if (fileList == null) {
-            return new ArrayList<>();
+            return new ArrayList<>(0);
         }
-        ArrayList<FutureTask<SimpleFileObject>> fileCounterTaskList = new ArrayList<>();
-        ArrayList<FutureTask<SimpleDirectoryObject>> direCounterTaskList = new ArrayList<>();
-        ArrayList<AbstractSimpleFileObject> abstractSimpleFileObjectList = new ArrayList<>();
+        ArrayList<FutureTask<SimpleFileObject>> fileCounterTaskList = new ArrayList<>(32);
+        ArrayList<FutureTask<SimpleDirectoryObject>> direCounterTaskList = new ArrayList<>(8);
+        ArrayList<AbstractSimpleFileObject> abstractSimpleFileObjectList = new ArrayList<>(32);
 
         for (File file : fileList) {
             if (file.isFile()) {
@@ -85,13 +85,9 @@ public class FileCacheCalculator {
             statusProgressBar.setVisible(true);
             statusProgressBar.setIndeterminate(true);
 
-            try {
-                new DirSizeCalculatorThread(dir, totalSize, totalFiles).run();
-                timer.stop();
-            } catch (Exception e) {
-                e.printStackTrace();
-                return new long[]{0, 0};
-            }
+            new DirSizeCalculatorThread(dir, totalSize, totalFiles).run();
+            timer.stop();
+
             return new long[]{totalSize.get(), totalFiles.get()};
         }
     }

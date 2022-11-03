@@ -21,9 +21,7 @@ import github.kasuminova.messages.filemessages.FileRequestMsg;
 import io.netty.channel.ChannelHandlerContext;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.File;
@@ -35,6 +33,7 @@ import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 
 /**
  * RemoteIntegratedClient 远程服务器客户端实例
+ * @author Kasumi_Nova
  */
 public class RemoteIntegratedServerClient extends AbstractServer {
     protected final RemoteClientConfig config = new RemoteClientConfig();
@@ -169,7 +168,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
     }
 
     protected JPanel loadStatusBar() {
-        statusPanel.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(5, 4, 5, 4)));
+        statusPanel.setBorder(new EmptyBorder(5, 5, 5, 6));
 
         Box leftBox = Box.createHorizontalBox();
         pingLabel.setBorder(new EmptyBorder(0, 0, 0, 20));

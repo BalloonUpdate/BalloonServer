@@ -31,15 +31,21 @@ import static github.kasuminova.balloonserver.utils.MiscUtils.formatTime;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 
+/**
+ * @author Kasumi_Nova
+ * HTTP 服务器的主要处理类
+ */
 public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+    private static final int TIMER_DELAY = 250;
+    private static final int PROGRESSBAR_MAX = 500;
     private final String resJson;
     private final String legacyResJson;
     private final IntegratedServerConfig config;
     private final GUILogger logger;
     private final JPanel requestListPanel;
     private final String indexJsonString;
-    private String clientIP = null;
-    private String decodedURI = null;
+    private String clientIP;
+    private String decodedURI;
 
     public HttpRequestHandler(IntegratedServerInterface serverInterface) {
         resJson = serverInterface.getResJson();
@@ -161,14 +167,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //发送文件
         ChannelFuture sendFileFuture = ctx.write(
-                new ChunkedFile(randomAccessFile, ranges.getStart(), contentLength, 8192),
+                new ChunkedFile(randomAccessFile, ranges.getStart(), contentLength, FileUtil.formatFileSizeSmallInt(contentLength)),
                 ctx.newProgressivePromise()).addListener(ChannelFutureListener.CLOSE);
         SmoothProgressBar progressBar = createUploadPanel(clientIP, file.getName());
 
         AtomicLong fileProgress = new AtomicLong(0);
         AtomicLong totalProgress = new AtomicLong(contentLength);
 
-        Timer timer = new Timer(250, e -> {
+        Timer timer = new Timer(TIMER_DELAY, e -> {
             progressBar.setString(String.format("%s / %s", FileUtil.formatFileSizeToStr(fileProgress.get()), FileUtil.formatFileSizeToStr(totalProgress.get())));
             progressBar.setValue((int) (fileProgress.get() * progressBar.getMaximum() / totalProgress.get()));
         });
@@ -210,7 +216,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         jsonResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=UTF-8");
 
         //响应写回给客户端,并在协会后断开这个连接
-        ctx.write(jsonResponse).addListener(ChannelFutureListener.CLOSE);
+        ctx.writeAndFlush(jsonResponse).addListener(ChannelFutureListener.CLOSE);
     }
 
     /**
@@ -287,7 +293,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, Unpooled.copiedBuffer(fullMessage, CharsetUtil.UTF_8));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
-        ctx.write(response).addListener(ChannelFutureListener.CLOSE);
+        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
         printWarnLog(String.valueOf(status.code()), System.currentTimeMillis() - start, clientIP, decodedURI, logger);
     }
 
@@ -312,7 +318,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         //状态
         box.add(new JLabel("进度: "), BorderLayout.WEST);
         //进度条
-        SmoothProgressBar progressBar = new SmoothProgressBar(500, 250);
+        SmoothProgressBar progressBar = new SmoothProgressBar(PROGRESSBAR_MAX, TIMER_DELAY);
         progressBar.setStringPainted(true);
         //向 Box 添加进度条
         box.add(progressBar, BorderLayout.EAST);

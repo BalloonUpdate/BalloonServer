@@ -1,7 +1,8 @@
 package github.kasuminova.balloonserver.gui;
 
 import cn.hutool.core.thread.ThreadUtil;
-import cn.hutool.log.StaticLog;
+import cn.hutool.log.Log;
+import cn.hutool.log.LogFactory;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
 import github.kasuminova.balloonserver.gui.panels.AboutPanel;
 
@@ -10,18 +11,17 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.io.InputStream;
-import java.util.Enumeration;
 
 /**
  * @author Kasumi_Nova
  * 一个工具类，用于初始化 Swing（即美化）
  */
 public class SetupSwing {
+    public static final float DEFAULT_FONT_SIZE = 13.5F;
     public static void init() {
+        Log logger = LogFactory.get("SwingThemeLoader");
+
         long start1 = System.currentTimeMillis();
-        //抗锯齿字体
-        System.setProperty("awt.useSystemAAFontSettings", "lcd");
-        System.setProperty("swing.aatext", "true");
 
         //UI 配置线程
         Thread uiThread = new Thread(() -> {
@@ -51,18 +51,21 @@ public class SetupSwing {
             //窗口标题居中
             UIManager.put("TitlePane.centerTitle", true);
             //进度条
-            UIManager.put("ProgressBar.repaintInterval", 16);
+            UIManager.put("ProgressBar.repaintInterval", 15);
             UIManager.put("ProgressBar.cycleTime", 7500);
             //提示框
             UIManager.put("ToolTip.border", lineBorder);
 
-            StaticLog.info("UIThread Completed, Used {}ms", System.currentTimeMillis() - start);
+            logger.info("UI Load Completed, Used {}ms", System.currentTimeMillis() - start);
         });
         uiThread.start();
 
         //字体更换线程
         Thread fontThread = new Thread(() -> {
             long start = System.currentTimeMillis();
+            //抗锯齿字体
+            System.setProperty("awt.useSystemAAFontSettings", "lcd");
+            System.setProperty("swing.aatext", "true");
             //设置字体
             try {
                 InputStream HMOSSansAndJBMono = SetupSwing.class.getResourceAsStream("/font/HarmonyOS_Sans_SC+JetBrains_Mono.ttf");
@@ -70,19 +73,19 @@ public class SetupSwing {
                 Font font;
                 //日志窗口字体
                 if (HMOSSansAndJBMono != null) {
-                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndJBMono).deriveFont(13f);
+                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndJBMono).deriveFont(DEFAULT_FONT_SIZE - 0.5F);
                     UIManager.put("TextPane.font", font);
                 }
                 //全局字体 + 标题字体
                 if (HMOSSansAndSaira != null) {
-                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndSaira);
-                    initGlobalFont(font.deriveFont(13f));
-                    UIManager.put("TitlePane.font", font.deriveFont(15f));
+                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndSaira).deriveFont(DEFAULT_FONT_SIZE);
+                    initGlobalFont(font);
+                    UIManager.put("TitlePane.font", font.deriveFont(DEFAULT_FONT_SIZE + 2.5F));
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error(e);
             }
-            StaticLog.info("FontThread Completed, Used {}ms", System.currentTimeMillis() - start);
+            logger.info("Font Load Completed, Used {}ms", System.currentTimeMillis() - start);
         });
         fontThread.start();
 
@@ -92,10 +95,9 @@ public class SetupSwing {
             try {
                 UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
             } catch (Exception e) {
-                System.err.println("Failed to initialize LaF");
-                e.printStackTrace();
+                logger.error("Failed to initialize LaF", e);
             }
-            StaticLog.info("ThemeThread Completed, Used {}ms", System.currentTimeMillis() - start);
+            logger.info("Theme Load Completed, Used {}ms", System.currentTimeMillis() - start);
         });
         themeThread.start();
 
@@ -103,7 +105,7 @@ public class SetupSwing {
         ThreadUtil.waitForDie(fontThread);
         ThreadUtil.waitForDie(themeThread);
 
-        StaticLog.info("Swing Setup Completed, Used {}ms", System.currentTimeMillis() - start1);
+        logger.info("Swing UI Load Completed, Used {}ms", System.currentTimeMillis() - start1);
     }
 
     /**
@@ -113,12 +115,10 @@ public class SetupSwing {
      */
     private static void initGlobalFont(Font font) {
         FontUIResource fontResource = new FontUIResource(font);
-        for (Enumeration<Object> keys = UIManager.getDefaults().keys(); keys.hasMoreElements(); ) {
-            Object key = keys.nextElement();
-            Object value = UIManager.get(key);
-            if (value instanceof FontUIResource) {
+        UIManager.getDefaults().keySet().forEach((key) -> {
+            if (UIManager.get(key) instanceof FontUIResource) {
                 UIManager.put(key, fontResource);
             }
-        }
+        });
     }
 }

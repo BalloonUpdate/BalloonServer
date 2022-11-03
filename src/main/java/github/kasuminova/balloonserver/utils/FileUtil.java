@@ -9,6 +9,10 @@ import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
 public class FileUtil {
+    public static final int KB = 1024;
+    public static final int MB = 1024 * 1024;
+    public static final int GB = 1024 * 1024 * 1024;
+
     /**
      * 生成.json格式文件
      */
@@ -40,16 +44,34 @@ public class FileUtil {
      * @return 根据大小适应的 int 大小
      */
     public static int formatFileSizeInt(long size) {
-        if (size <= 1024) {
+        if (size <= KB) {
             return (int) size;
-        } else if (size <= 1024 * 1024) {
-            return 1024 * 8;
-        } else if (size <= 1024 * 1024 * 128) {
-            return 1024 * 64;
-        } else if (size <= 1024 * 1024 * 512) {
-            return 1024 * 1024;
+        } else if (size <= MB) {
+            return KB * 8;
+        } else if (size <= MB * 128) {
+            return KB * 64;
+        } else if (size <= MB * 512) {
+            return MB;
         } else {
-            return 1024 * 1024 * 8;
+            return MB * 8;
+        }
+    }
+
+    /**
+     * 根据传入大小返回合适的 int 大小
+     *
+     * @param size 文件大小
+     * @return 根据大小适应的 int 大小
+     */
+    public static int formatFileSizeSmallInt(long size) {
+        if (size <= KB) {
+            return (int) size;
+        } else if (size <= MB) {
+            return KB * 8;
+        } else if (size <= MB * 128) {
+            return KB * 16;
+        } else {
+            return KB * 32;
         }
     }
 
@@ -60,14 +82,14 @@ public class FileUtil {
      * @return Byte 或 KB 或 MB 或 GB
      */
     public static String formatFileSizeToStr(long size) {
-        if (size <= 1024) {
+        if (size <= KB) {
             return size + " Byte";
-        } else if (size <= 1024 * 1024) {
-            return String.format("%.2f", (double) size / 1024) + " KB";
-        } else if (size <= 1024 * 1024 * 1024) {
-            return String.format("%.2f", (double) size / (1024 * 1024)) + " MB";
+        } else if (size <= MB) {
+            return String.format("%.2f", (double) size / KB) + " KB";
+        } else if (size <= GB) {
+            return String.format("%.2f", (double) size / MB) + " MB";
         } else {
-            return String.format("%.2f", (double) size / (1024 * 1024 * 1024)) + " GB";
+            return String.format("%.2f", (double) size / GB) + " GB";
         }
     }
 

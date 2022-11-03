@@ -9,6 +9,9 @@ import github.kasuminova.balloonserver.utils.fileobject.SimpleFileObject;
 import java.awt.*;
 import javax.swing.*;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class ImageListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value instanceof AbstractSimpleFileObject abstractFileObject) {

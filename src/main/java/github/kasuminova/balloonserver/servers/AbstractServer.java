@@ -23,9 +23,10 @@ import static github.kasuminova.balloonserver.utils.SvgIcons.*;
  * 抽象服务端面板示例
  */
 public abstract class AbstractServer {
+    protected static final int CONTROL_PANEL_WIDTH = 350;
     protected final JPanel controlPanel = new JPanel(new BorderLayout());
-    protected final List<String> commonModeList = new ArrayList<>();
-    protected final List<String> onceModeList = new ArrayList<>();
+    protected final List<String> commonModeList = new ArrayList<>(0);
+    protected final List<String> onceModeList = new ArrayList<>(0);
     //服务器启动状态
     protected final AtomicBoolean isStarted = new AtomicBoolean(false);
     protected final AtomicBoolean isStarting = new AtomicBoolean(false);

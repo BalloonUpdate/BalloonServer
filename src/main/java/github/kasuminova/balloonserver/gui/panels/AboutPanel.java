@@ -8,8 +8,16 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class AboutPanel {
-    static final int GLOBAL_BUTTON_WIDTH = 170;
+    private static final int ABOUT_BUTTON_WIDTH = 170;
+    private static final int ABOUT_BUTTON_HEIGHT = 30;
+    private static final int DEFAULT_ICON_SIZE = 64;
+    private static final float TITLE_FONT_SIZE = 36F;
+    private static final float LICENSE_LABEL_FONT_SIZE = 18F;
+
     public static JPanel createPanel() {
         //主面板
         JPanel aboutPanel = new JPanel(new BorderLayout());
@@ -18,12 +26,12 @@ public class AboutPanel {
         Box titleBox = Box.createHorizontalBox();
         titleBox.setBorder(new EmptyBorder(10,0,0,0));
         //LOGO, 并缩放图标
-        titleBox.add(new JLabel(new ImageIcon(BalloonServer.ICON.getImage().getScaledInstance(64,64, Image.SCALE_DEFAULT))));
+        titleBox.add(new JLabel(new ImageIcon(BalloonServer.ICON.getImage().getScaledInstance(DEFAULT_ICON_SIZE, DEFAULT_ICON_SIZE, Image.SCALE_DEFAULT))));
         //标题
         JLabel title = new JLabel("BalloonServer " + BalloonServer.VERSION);
         title.setBorder(new EmptyBorder(0,10,0,0));
         //设置字体
-        title.setFont(title.getFont().deriveFont(35f));
+        title.setFont(title.getFont().deriveFont(TITLE_FONT_SIZE));
         titleBox.add(title);
         //描述
         JPanel descPanel = new JPanel(new VFlowLayout(0, VFlowLayout.MIDDLE, 5, 5, 5, 5, false, false));
@@ -36,17 +44,17 @@ public class AboutPanel {
         //仓库链接
         JButton openProjectLink = new JButton("点击打开仓库链接");
         openProjectLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate/BalloonServer"));
-        openProjectLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
+        openProjectLink.setPreferredSize(new Dimension(ABOUT_BUTTON_WIDTH, ABOUT_BUTTON_HEIGHT));
         linkPanel.add(openProjectLink);
         //项目链接
         JButton openOrganizationLink = new JButton("点击打开项目链接");
         openOrganizationLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate"));
-        openOrganizationLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
+        openOrganizationLink.setPreferredSize(new Dimension(ABOUT_BUTTON_WIDTH, ABOUT_BUTTON_HEIGHT));
         linkPanel.add(openOrganizationLink);
         //Issues 链接
         JButton openIssuesLink = new JButton("戳我提交 Issue!");
         openIssuesLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate/BalloonServer/issues/new"));
-        openIssuesLink.setPreferredSize(new Dimension(GLOBAL_BUTTON_WIDTH,30));
+        openIssuesLink.setPreferredSize(new Dimension(ABOUT_BUTTON_WIDTH, ABOUT_BUTTON_HEIGHT));
         linkPanel.add(openIssuesLink);
         descPanel.add(linkPanel);
 
@@ -59,7 +67,7 @@ public class AboutPanel {
 
         //协议
         JLabel licenseLabel = new JLabel("本软件使用 AGPLv3 协议.", JLabel.RIGHT);
-        licenseLabel.setFont(licenseLabel.getFont().deriveFont(18f));
+        licenseLabel.setFont(licenseLabel.getFont().deriveFont(LICENSE_LABEL_FONT_SIZE));
         licenseLabel.setBorder(new EmptyBorder(0,0,10,10));
 
         descBox.add(titleBox);

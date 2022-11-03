@@ -22,13 +22,13 @@ public record DirInfoTask(File directory, String hashAlgorithm, AtomicLong compl
     @Override
     public SimpleDirectoryObject call() {
         File[] fileList = directory.listFiles();
-        if (fileList == null) {
-            return new SimpleDirectoryObject(directory.getName(), new ArrayList<>());
+        if (fileList == null || fileList.length == 0) {
+            return new SimpleDirectoryObject(directory.getName(), new ArrayList<>(0));
         }
 
-        ArrayList<FutureTask<SimpleFileObject>> fileCounterTaskList = new ArrayList<>();
-        ArrayList<FutureTask<SimpleDirectoryObject>> direCounterTaskList = new ArrayList<>();
-        ArrayList<AbstractSimpleFileObject> abstractSimpleFileObjectList = new ArrayList<>();
+        ArrayList<FutureTask<SimpleFileObject>> fileCounterTaskList = new ArrayList<>(0);
+        ArrayList<FutureTask<SimpleDirectoryObject>> direCounterTaskList = new ArrayList<>(0);
+        ArrayList<AbstractSimpleFileObject> abstractSimpleFileObjectList = new ArrayList<>(fileList.length);
 
         for (File file : fileList) {
             if (file.isFile()) {

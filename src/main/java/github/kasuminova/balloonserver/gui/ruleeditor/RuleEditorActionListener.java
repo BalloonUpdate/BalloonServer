@@ -54,7 +54,7 @@ public class RuleEditorActionListener implements ActionListener {
                     showRuleEditorDialog(JSONArray.parseArray(json), ruleList, rules);
                 } catch (IORuntimeException ex) {
                     JOptionPane.showMessageDialog(MAIN_FRAME,
-                            "无法读取本地 JSON 缓存" + ex, BalloonServer.TITLE,
+                            "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
                             JOptionPane.ERROR_MESSAGE);
                 }
                 return;

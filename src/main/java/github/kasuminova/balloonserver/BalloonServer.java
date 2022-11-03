@@ -44,12 +44,20 @@ import static github.kasuminova.balloonserver.utils.SvgIcons.*;
  * 主 窗口/程序。
  */
 public final class BalloonServer {
+    public static final int PROGRESSBAR_FLOW_TIME = 250;
+    public static final int ICON_SIZE = 96;
+    public static final int MAIN_FRAME_WIDTH = 1150;
+    public static final int MAIN_FRAME_HEIGHT = 725;
+
     static {
         //设置全局主题，字体等
         SetupSwing.init();
     }
 
-    public static ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL;
+    public static final ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2,
+            10, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>());
     public static final ThreadPoolExecutor GLOBAL_DIR_THREAD_POOL = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
             30, TimeUnit.SECONDS,
@@ -77,7 +85,7 @@ public final class BalloonServer {
     public static final JPanel MAIN_PANEL = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
     //可用服务端接口列表，与 SERVER_TABBED_PANE 中的标签页同步
-    public static final List<IntegratedServerInterface> AVAILABLE_SERVER_INTERFACES = Collections.synchronizedList(new ArrayList<>());
+    public static final List<IntegratedServerInterface> AVAILABLE_SERVER_INTERFACES = Collections.synchronizedList(new ArrayList<>(1));
     //支持放入多个任务的 Timer
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);
     private static final long START = System.currentTimeMillis();
@@ -87,7 +95,7 @@ public final class BalloonServer {
 
     private static void init() {
         //大小设置
-        MAIN_FRAME.setMinimumSize(new Dimension(1150,725));
+        MAIN_FRAME.setMinimumSize(new Dimension(MAIN_FRAME_WIDTH, MAIN_FRAME_HEIGHT));
 
         //标签页配置
         PRE_LOAD_PROGRESS_BAR.setString("载入主面板...");
@@ -109,7 +117,7 @@ public final class BalloonServer {
 
         TABBED_PANE.addTab("本地服务端实例列表", SERVER_LIST_ICON, localServerPanel);
         TABBED_PANE.addTab("远程服务端实例列表", SERVER_LIST_ICON, remoteServerPanel);
-        TABBED_PANE.addTab("主程序控制面板", SETTINGS_ICON, SettingsPanel.getPanel());
+        TABBED_PANE.addTab("主程序控制面板", SETTINGS_ICON, SettingsPanel.createPanel());
         TABBED_PANE.addTab("关于本程序", ABOUT_ICON, AboutPanel.createPanel());
 
         loadServerTabbedPaneProperty();
@@ -215,20 +223,11 @@ public final class BalloonServer {
 
     private static void initFileThreadPool() {
         if (CONFIG.isLowIOPerformanceMode()) {
-            GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
-                    1, 1,
-                    10, TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>());
-        } else if (CONFIG.getFileThreadPoolSize() == 0){
-            GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
-                    Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2,
-                    10, TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>());
-        } else {
-            GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
-                    CONFIG.getFileThreadPoolSize(), CONFIG.getFileThreadPoolSize(),
-                    10, TimeUnit.SECONDS,
-                    new LinkedBlockingQueue<>());
+            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(1);
+            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(1);
+        } else if (CONFIG.getFileThreadPoolSize() > 0) {
+            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(CONFIG.getFileThreadPoolSize());
+            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(CONFIG.getFileThreadPoolSize());
         }
         GLOBAL_LOGGER.info("文件计算线程池大小为 {} 线程", GLOBAL_FILE_THREAD_POOL.getMaximumPoolSize());
     }
@@ -388,7 +387,7 @@ public final class BalloonServer {
             }
 
             IntegratedServer[] customServers = new IntegratedServer[serverNames.length];
-            ArrayList<Thread> threadList = new ArrayList<>();
+            ArrayList<Thread> threadList = new ArrayList<>(1);
             //检查是否存在非法名称或已存在的名称
             for (String serverName : serverNames) {
                 if (Security.stringIsUnsafe(MAIN_FRAME, serverName, null)) return;
@@ -518,16 +517,18 @@ public final class BalloonServer {
      */
     private static void loadStatusBar() {
         //状态栏
-        STATUS_PANEL.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(3, 4, 2, 4)));
+        STATUS_PANEL.setBorder(new CompoundBorder(new LineBorder(Color.DARK_GRAY), new EmptyBorder(5, 5, 4, 5)));
         JLabel threadCount = new JLabel("当前运行的线程数量: 0");
         STATUS_PANEL.add(threadCount, BorderLayout.WEST);
         //线程数监控 + 内存监控
         Box memBarBox = Box.createHorizontalBox();
-        SmoothProgressBar memBar = new SmoothProgressBar(250, 250);
+        SmoothProgressBar memBar = new SmoothProgressBar(250, PROGRESSBAR_FLOW_TIME);
         memBar.setPreferredSize(new Dimension(memBar.getMaximum(), memBar.getHeight()));
         memBar.setBorder(new EmptyBorder(1, 0, 0, 5));
         memBar.setStringPainted(true);
-        memBarBox.add(new JLabel("JVM 内存使用情况: "));
+        JLabel memLabel = new JLabel("JVM 内存使用情况: ");
+        memLabel.setBorder(new EmptyBorder(2,0,0,0));
+        memBarBox.add(memLabel);
         memBarBox.add(memBar);
         //内存清理
         JButton GC = new JButton("清理");
@@ -551,9 +552,9 @@ public final class BalloonServer {
 
                 memBar.setValue((int) ((double) (memoryTotal - memoryFree) * memBar.getMaximum() / memoryTotal));
                 memBar.setString(String.format("%s M / %s M - Max: %s M",
-                        (memoryTotal - memoryFree) / (1024 * 1024),
-                        memoryTotal / (1024 * 1024),
-                        SystemUtil.getMaxMemory() / (1024 * 1024)
+                        (memoryTotal - memoryFree) / FileUtil.MB,
+                        memoryTotal / FileUtil.MB,
+                        SystemUtil.getMaxMemory() / FileUtil.MB
                 ));
             }
         }, 0, 500);
@@ -564,7 +565,7 @@ public final class BalloonServer {
      */
     private static void preInit() {
         JPanel panel = new JPanel(new VFlowLayout());
-        panel.add(new JLabel(new ImageIcon(ICON.getImage().getScaledInstance(96, 96, Image.SCALE_DEFAULT))));
+        panel.add(new JLabel(new ImageIcon(ICON.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_DEFAULT))));
         panel.add(new JLabel("程序启动中，请稍等..."));
         PRE_LOAD_PROGRESS_BAR.setStringPainted(true);
         PRE_LOAD_PROGRESS_BAR.setIndeterminate(true);

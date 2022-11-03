@@ -9,6 +9,8 @@ public class ApplicationVersion implements Serializable {
 
     public static final String BETA = "BETA";
     public static final String STABLE = "STABLE";
+    public static final int BIG_VERSION_WEIGHTS = 100000;
+    public static final int SUB_VERSION_WEIGHTS = 1000;
     private final int bigVersion;
     private final int subVersion;
     private final int minorVersion;
@@ -50,6 +52,6 @@ public class ApplicationVersion implements Serializable {
     }
 
     public int toInt() {
-        return (bigVersion * 100000) + (subVersion * 1000) + minorVersion;
+        return (bigVersion * BIG_VERSION_WEIGHTS) + (subVersion * SUB_VERSION_WEIGHTS) + minorVersion;
     }
 }

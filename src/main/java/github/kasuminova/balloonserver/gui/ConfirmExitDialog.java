@@ -14,11 +14,18 @@ import java.awt.event.WindowEvent;
 import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_LOGGER;
 import static github.kasuminova.balloonserver.BalloonServer.stopAllServers;
 
+/**
+ * @author Kasumi_Nova
+ */
 public class ConfirmExitDialog extends JDialog {
+
+    public static final int DIALOG_WIDTH = 360;
+    public static final int DIALOG_HEIGHT = 165;
+
     public ConfirmExitDialog(JFrame frame, BalloonServerConfig config) {
         setTitle(BalloonServer.TITLE);
         setIconImage(BalloonServer.ICON.getImage());
-        setSize(360, 165);
+        setSize(DIALOG_WIDTH, DIALOG_HEIGHT);
         setResizable(false);
         setLocationRelativeTo(null);
 
@@ -88,16 +95,24 @@ public class ConfirmExitDialog extends JDialog {
             frame.setEnabled(true);
             dispose();
         });
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                frame.setEnabled(true);
-            }
-        });
+        addWindowListener(new WindowClosingAdapter(frame));
 
         buttonBox.add(cancel);
         buttonBox.add(new JLabel(" "));
         buttonBox.add(yes);
         contentPane.add(buttonBox);
+    }
+
+    private static class WindowClosingAdapter extends WindowAdapter {
+        private final JFrame frame;
+
+        private WindowClosingAdapter(JFrame frame) {
+            this.frame = frame;
+        }
+
+        @Override
+        public void windowClosing(WindowEvent e) {
+            frame.setEnabled(true);
+        }
     }
 }

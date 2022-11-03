@@ -16,7 +16,7 @@ public class BatchUtils {
             throw new IllegalArgumentException("Empty Commands!");
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(32);
         for (String s : commands) {
             sb.append(s).append("\n");
         }
