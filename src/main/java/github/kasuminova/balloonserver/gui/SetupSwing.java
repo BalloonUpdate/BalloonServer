@@ -22,7 +22,7 @@ public class SetupSwing {
     private static final SplashScreen SPLASH = SplashScreen.getSplashScreen();
     private static final Graphics2D SPLASH_GRAPHICS = SPLASH == null ? null : SPLASH.createGraphics();
     private static final Dimension SPLASH_SIZE = SPLASH == null ? null : SPLASH.getSize();
-    private static final Image SPLASH_IMAGE = SPLASH == null ? null : new ImageIcon(SPLASH.getImageURL()).getImage();
+    private static final Image SPLASH_IMAGE = new ImageIcon(SetupSwing.class.getResource("/image/splash.png")).getImage();
     public static final float DEFAULT_FONT_SIZE = 13F;
     public static void init() {
         if (SPLASH_GRAPHICS != null) {
