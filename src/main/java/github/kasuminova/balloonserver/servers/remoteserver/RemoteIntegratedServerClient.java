@@ -1,7 +1,6 @@
 package github.kasuminova.balloonserver.servers.remoteserver;
 
 import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.BalloonServer;
@@ -29,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
 import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 
 /**
@@ -57,18 +57,11 @@ public class RemoteIntegratedServerClient extends AbstractServer {
     protected RemoteClient client;
 
     public RemoteIntegratedServerClient(String serverName) {
+        super(serverName);
+
         this.serverName = serverName;
 
         //设置 Logger，主体为 logPanel
-        JPanel logPanel = new JPanel(new BorderLayout());
-        logPanel.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.5), 0));
-
-        logPanel.setBorder(new TitledBorder("远程服务器实例日志"));
-        JTextPane logPane = new JTextPane();
-        logPane.setEditable(false);
-        JScrollPane logScrollPane = new JScrollPane(logPane);
-        logPanel.add(logScrollPane, BorderLayout.CENTER);
-
         remoteClientPanel.add(logPanel);
 
         //初始化 Logger
@@ -84,118 +77,6 @@ public class RemoteIntegratedServerClient extends AbstractServer {
 
         remoteClientPanel.add(loadStatusBar(), BorderLayout.SOUTH);
     }
-
-    protected JPanel loadControlPanel() {
-        controlPanel.setPreferredSize(new Dimension(350, 0));
-        controlPanel.setBorder(new TitledBorder("远程控制面板"));
-
-        //配置窗口
-        JPanel configPanel = new JPanel(new VFlowLayout());
-
-        //IP 端口
-        configPanel.add(loadIPPortBox());
-        //资源文件夹
-        configPanel.add(loadMainDirBox());
-        //SSL 证书框，仅用于显示。实际操作为右方按钮。
-//        configPanel.add(loadJksSslBox());
-        //Jks 证书密码框
-        configPanel.add(loadJksSslPassBox());
-        //额外功能
-        configPanel.add(loadExtraFeaturesPanel());
-        //普通模式
-        configPanel.add(loadCommonModePanel());
-        //补全模式
-        configPanel.add(loadOnceModePanel());
-
-        JScrollPane configScroll = new JScrollPane(configPanel,
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        configScroll.getVerticalScrollBar().setUnitIncrement(15);
-        configScroll.setBorder(new TitledBorder("远程配置"));
-
-
-        JPanel southControlPanel = new JPanel(new VFlowLayout());
-
-        JPanel msgPanel = new JPanel(new BorderLayout());
-        msgPanel.add(new JLabel("输入消息:"), BorderLayout.WEST);
-        JTextField textField = new JTextField();
-
-        msgPanel.add(textField, BorderLayout.CENTER);
-
-        JButton sendMessage = new JButton("发送消息");
-        sendMessage.addActionListener(e -> {
-            ChannelHandlerContext mainChannel = serverInterface.getMainChannel();
-            mainChannel.writeAndFlush(new LogMessage(GUILogger.INFO, textField.getText()));
-            textField.setText("");
-        });
-
-        msgPanel.add(sendMessage, BorderLayout.EAST);
-        southControlPanel.add(msgPanel);
-
-        JPanel fileRequestPanel = new JPanel(new BorderLayout());
-        fileRequestPanel.add(new JLabel("请求文件:"), BorderLayout.WEST);
-        JTextField fileRequestTextField = new JTextField();
-
-        fileRequestPanel.add(fileRequestTextField, BorderLayout.CENTER);
-
-        JButton requestFile = new JButton("请求文件");
-        requestFile.addActionListener(e -> {
-            ChannelHandlerContext mainChannel = serverInterface.getMainChannel();
-            mainChannel.writeAndFlush(new FileRequestMsg("./", fileRequestTextField.getText()));
-            textField.setText("");
-        });
-
-        fileRequestPanel.add(requestFile, BorderLayout.EAST);
-        southControlPanel.add(fileRequestPanel);
-
-        JButton disconnect = new JButton("断开连接");
-        disconnect.addActionListener(e -> {
-            client.disconnect();
-            serverInterface.onDisconnected();
-        });
-        southControlPanel.add(disconnect);
-
-        JButton openFileList = new JButton("打开服务端文件夹列表");
-        openFileList.addActionListener(e -> remoteChannel.writeAndFlush(
-                new RequestMessage("GetFileList",
-                        List.of(new String[]{"./"}))));
-        southControlPanel.add(openFileList);
-
-        controlPanel.add(configScroll);
-        controlPanel.add(southControlPanel, BorderLayout.SOUTH);
-
-        return controlPanel;
-    }
-
-    protected JPanel loadStatusBar() {
-        statusPanel.setBorder(new EmptyBorder(5, 5, 5, 6));
-
-        Box leftBox = Box.createHorizontalBox();
-        pingLabel.setBorder(new EmptyBorder(0, 0, 0, 20));
-        leftBox.add(pingLabel);
-        leftBox.add(runningThreadCount);
-
-        Box memBarBox = Box.createHorizontalBox();
-        memBar.setBorder(new EmptyBorder(0, 0, 0, 5));
-        memBar.setPreferredSize(new Dimension(250, memBar.getHeight()));
-        memBar.setStringPainted(true);
-        memBar.setString("未连接至服务器");
-        memBarBox.add(new JLabel("远程服务器 JVM 内存使用情况: "));
-        memBarBox.add(memBar);
-        JButton GC = new JButton("清理");
-        GC.setPreferredSize(new Dimension(65, 21));
-        GC.addActionListener(e -> {
-            if (remoteChannel != null) remoteChannel.writeAndFlush(
-                    new RequestMessage("MemoryGC"));
-        });
-        memBarBox.add(GC);
-
-        statusPanel.add(leftBox, BorderLayout.WEST);
-        statusPanel.add(memBarBox, BorderLayout.EAST);
-
-        return statusPanel;
-    }
-
     private JPanel loadConnectPanel() {
         connectPanel.setPreferredSize(new Dimension(350, 0));
         connectPanel.setBorder(new TitledBorder("连接服务器"));
@@ -219,7 +100,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
         tokenBox.add(new JLabel("Token:"));
         tokenBox.add(tokenTextField);
 
-        loadRemoteServerConfigFromFile();
+        loadConfigurationFromFile();
 
         JButton connect = new JButton("连接");
         connect.addActionListener(e -> {
@@ -229,7 +110,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
                         BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            ThreadUtil.execute(() -> {
+            GLOBAL_FILE_THREAD_POOL.execute(() -> {
                 isConnecting = true;
                 reloadConfigurationFromGUI();
                 connect.setText("连接中...");
@@ -416,7 +297,121 @@ public class RemoteIntegratedServerClient extends AbstractServer {
         client = new RemoteClient(logger, serverInterface);
     }
 
-    protected void loadRemoteServerConfigFromFile() {
+    @Override
+    protected JPanel loadControlPanel() {
+        controlPanel.setPreferredSize(new Dimension(350, 0));
+        controlPanel.setBorder(new TitledBorder("远程控制面板"));
+
+        //配置窗口
+        JPanel configPanel = new JPanel(new VFlowLayout());
+
+        //IP 端口
+        configPanel.add(loadIPPortBox());
+        //资源文件夹
+        configPanel.add(loadMainDirBox());
+        //SSL 证书框，仅用于显示。实际操作为右方按钮。
+//        configPanel.add(loadJksSslBox());
+        //Jks 证书密码框
+        configPanel.add(loadJksSslPassBox());
+        //额外功能
+        configPanel.add(loadExtraFeaturesPanel());
+        //普通模式
+        configPanel.add(loadCommonModePanel());
+        //补全模式
+        configPanel.add(loadOnceModePanel());
+
+        JScrollPane configScroll = new JScrollPane(configPanel,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        configScroll.getVerticalScrollBar().setUnitIncrement(15);
+        configScroll.setBorder(new TitledBorder("远程配置"));
+
+
+        JPanel southControlPanel = new JPanel(new VFlowLayout());
+
+        JPanel msgPanel = new JPanel(new BorderLayout());
+        msgPanel.add(new JLabel("输入消息:"), BorderLayout.WEST);
+        JTextField textField = new JTextField();
+
+        msgPanel.add(textField, BorderLayout.CENTER);
+
+        JButton sendMessage = new JButton("发送消息");
+        sendMessage.addActionListener(e -> {
+            ChannelHandlerContext mainChannel = serverInterface.getMainChannel();
+            mainChannel.writeAndFlush(new LogMessage(GUILogger.INFO, textField.getText()));
+            textField.setText("");
+        });
+
+        msgPanel.add(sendMessage, BorderLayout.EAST);
+        southControlPanel.add(msgPanel);
+
+        JPanel fileRequestPanel = new JPanel(new BorderLayout());
+        fileRequestPanel.add(new JLabel("请求文件:"), BorderLayout.WEST);
+        JTextField fileRequestTextField = new JTextField();
+
+        fileRequestPanel.add(fileRequestTextField, BorderLayout.CENTER);
+
+        JButton requestFile = new JButton("请求文件");
+        requestFile.addActionListener(e -> {
+            ChannelHandlerContext mainChannel = serverInterface.getMainChannel();
+            mainChannel.writeAndFlush(new FileRequestMsg("./", fileRequestTextField.getText()));
+            textField.setText("");
+        });
+
+        fileRequestPanel.add(requestFile, BorderLayout.EAST);
+        southControlPanel.add(fileRequestPanel);
+
+        JButton disconnect = new JButton("断开连接");
+        disconnect.addActionListener(e -> {
+            client.disconnect();
+            serverInterface.onDisconnected();
+        });
+        southControlPanel.add(disconnect);
+
+        JButton openFileList = new JButton("打开服务端文件夹列表");
+        openFileList.addActionListener(e -> remoteChannel.writeAndFlush(
+                new RequestMessage("GetFileList",
+                        List.of(new String[]{"./"}))));
+        southControlPanel.add(openFileList);
+
+        controlPanel.add(configScroll);
+        controlPanel.add(southControlPanel, BorderLayout.SOUTH);
+
+        return controlPanel;
+    }
+
+    @Override
+    protected JPanel loadStatusBar() {
+        statusPanel.setBorder(new EmptyBorder(5, 5, 5, 6));
+
+        Box leftBox = Box.createHorizontalBox();
+        pingLabel.setBorder(new EmptyBorder(0, 0, 0, 20));
+        leftBox.add(pingLabel);
+        leftBox.add(runningThreadCount);
+
+        Box memBarBox = Box.createHorizontalBox();
+        memBar.setBorder(new EmptyBorder(0, 0, 0, 5));
+        memBar.setPreferredSize(new Dimension(250, memBar.getHeight()));
+        memBar.setStringPainted(true);
+        memBar.setString("未连接至服务器");
+        memBarBox.add(new JLabel("远程服务器 JVM 内存使用情况: "));
+        memBarBox.add(memBar);
+        JButton GC = new JButton("清理");
+        GC.setPreferredSize(new Dimension(65, 21));
+        GC.addActionListener(e -> {
+            if (remoteChannel != null) remoteChannel.writeAndFlush(
+                    new RequestMessage("MemoryGC"));
+        });
+        memBarBox.add(GC);
+
+        statusPanel.add(leftBox, BorderLayout.WEST);
+        statusPanel.add(memBarBox, BorderLayout.EAST);
+
+        return statusPanel;
+    }
+
+    @Override
+    protected void loadConfigurationFromFile() {
         String path = StrUtil.format("{}.hscfg", serverName);
         try {
             if (new File(path + ".json").exists()) {
@@ -436,6 +431,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
         tokenTextField.setText(config.getToken());
     }
 
+    @Override
     protected void reloadConfigurationFromGUI() {
         //IP 检查
         String IP = remoteIPTextField.getText();
@@ -450,11 +446,12 @@ public class RemoteIntegratedServerClient extends AbstractServer {
                 .setIp(IP)
                 .setToken(tokenTextField.getText());
 
-        saveConfiguration();
+        saveConfigurationToFile();
         logger.info("已加载配置.");
     }
 
-    private void updateGUIConfig(IntegratedServerConfig config) {
+    @Override
+    protected void updateGUIConfig(IntegratedServerConfig config) {
         //IP
         IPTextField.setText(config.getIp());
         //端口
@@ -481,7 +478,8 @@ public class RemoteIntegratedServerClient extends AbstractServer {
         logger.info("已载入 API 服务器配置文件.");
     }
 
-    protected void saveConfiguration() {
+    @Override
+    protected void saveConfigurationToFile() {
         try {
             ConfigurationManager.saveConfigurationToFile(config, "./", serverName + ".hscfg");
             logger.info("已保存配置文件至磁盘.");
@@ -495,6 +493,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
      *
      * @return 服务器面板
      */
+    @Override
     public JPanel getPanel() {
         return remoteClientPanel;
     }

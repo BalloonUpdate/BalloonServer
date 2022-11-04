@@ -5,6 +5,7 @@ import github.kasuminova.balloonserver.utils.SvgIcons;
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 
 
@@ -21,8 +22,8 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
     }
 
     /**
-     * 返回的是一个<code>JPanel</code>对象，该对象中包含一个<code>JCheckBox</code>对象
-     * 和一个<code>JLabel</code>对象。并且根据每个结点是否被选中来决定<code>JCheckBox</code>
+     * 返回的是一个{@code JPanel}对象，该对象中包含一个{@code JCheckBox}对象
+     * 和一个{@code JLabel}对象。并且根据每个结点是否被选中来决定{@code JCheckBox}
      * 是否被选中。
      */
     @Override
@@ -36,7 +37,7 @@ public class CheckBoxTreeCellRenderer extends JPanel implements TreeCellRenderer
         label.setText(stringValue);
         label.setSelected(selected);
         label.setFocus(hasFocus);
-        if (((CheckBoxTreeNode) value).getAllowsChildren()) {
+        if (((TreeNode) value).getAllowsChildren()) {
             label.setIcon(SvgIcons.DIR_ICON);
 //            label.setIcon(UIManager.getIcon("Tree.closedIcon"));
 //        } else if (expanded) {

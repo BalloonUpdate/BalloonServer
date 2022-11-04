@@ -10,7 +10,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_DIR_THREAD_POOL;
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
 import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
 
 /**
@@ -65,7 +65,7 @@ public record JsonCacheCheckerTask(
                 } else {
                     FutureTask<SimpleDirectoryObject> dirInfoTask = new FutureTask<>(new DirInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     dirTaskList.add(dirInfoTask);
-                    GLOBAL_DIR_THREAD_POOL.execute(dirInfoTask);
+                    GLOBAL_THREAD_POOL.execute(dirInfoTask);
 
                     logger.info(String.format("%s 是新文件夹, 更新缓存数据.", childFile.getPath()));
                 }
@@ -90,7 +90,7 @@ public record JsonCacheCheckerTask(
                 FutureTask<SimpleDirectoryObject> checkTask = new FutureTask<>(new JsonCacheCheckerTask(
                         childFile, ((SimpleDirectoryObject) obj).getChildren() , hashAlgorithm, logger, completedFiles));
                 checkTaskList.add(checkTask);
-                GLOBAL_DIR_THREAD_POOL.execute(checkTask);
+                GLOBAL_THREAD_POOL.execute(checkTask);
 
                 //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
                 fileObjectMap.remove(fileName);
@@ -99,7 +99,7 @@ public record JsonCacheCheckerTask(
                 if (childFile.isDirectory()) {
                     FutureTask<SimpleDirectoryObject> dirInfoTask = new FutureTask<>(new DirInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     dirTaskList.add(dirInfoTask);
-                    GLOBAL_DIR_THREAD_POOL.execute(dirInfoTask);
+                    GLOBAL_THREAD_POOL.execute(dirInfoTask);
 
                     //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
                     fileObjectMap.remove(fileName);

@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.gui.ruleeditor;
 
+import cn.hutool.core.util.ReUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import github.kasuminova.balloonserver.BalloonServer;
@@ -10,6 +11,7 @@ import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.servers.localserver.AddUpdateRule;
 import github.kasuminova.balloonserver.servers.localserver.DeleteUpdateRule;
 import github.kasuminova.balloonserver.updatechecker.ApplicationVersion;
+import github.kasuminova.balloonserver.utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -27,16 +29,19 @@ import static github.kasuminova.balloonserver.utils.SvgIcons.REMOVE_ICON;
  * 可视化更新规则编辑器
  */
 public class RuleEditor extends JDialog {
-    public static final ApplicationVersion VERSION = new ApplicationVersion("1.5.0-STABLE");
+    public static final ApplicationVersion VERSION = new ApplicationVersion("2.0.0-BETA");
     public static final String TITLE = "RuleEditor " + VERSION;
     public static final int WINDOW_WIDTH = 750;
     public static final int WINDOW_HEIGHT = 840;
+    private final GUILogger logger;
 
     /**
      * 可复用变量（降低内存使用率）
      */
     private final StringBuilder childPath = new StringBuilder(16);
-    public RuleEditor(JSONArray jsonArray, List<String> rules) {
+    public RuleEditor(JSONArray jsonArray, List<String> rules, GUILogger logger) {
+        this.logger = logger;
+
         setTitle(TITLE);
         setIconImage(BalloonServer.ICON.getImage());
         setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -99,15 +104,15 @@ public class RuleEditor extends JDialog {
 
         JButton complete = new JButton("完成");
         complete.addActionListener(e -> {
-            //构建规则
-            rules.addAll(buildRules(rootNode, childPath));
-
             //复制
             List<String> listTmp = new ArrayList<>(rules);
+
+            listTmp.addAll(buildRules(rootNode, childPath));
 
             rules.clear();
             //添加去重后的 List
             rules.addAll(listTmp.stream().distinct().toList());
+
             ruleList.setListData(rules.toArray(new String[0]));
             dispose();
         });
@@ -143,7 +148,11 @@ public class RuleEditor extends JDialog {
             for (int i = 1; i < root.getPath().length; i++) {
                 childPath.append(root.getPath()[i].toString().intern()).append("/");
             }
-            rules.add(childPath + "**");
+
+            rules.add(childPath.append("**").insert(0, "@").toString().
+                    replace("[", "\\[").
+                    replace("]", "\\]").
+                    replace(".", "\\."));
         } else {
             childPath.setLength(0);
             for (int i = 1; i < root.getPath().length; i++) {
@@ -151,7 +160,11 @@ public class RuleEditor extends JDialog {
             }
             //去除最后一个斜杠
             childPath.setLength(childPath.length() - 1);
-            rules.add(childPath.toString());
+
+            rules.add(childPath.insert(0, "@").toString().
+                    replace("[", "\\[").
+                    replace("]", "\\]").
+                    replace(".", "\\."));
         }
 
         return rules;
@@ -162,12 +175,12 @@ public class RuleEditor extends JDialog {
      */
     private void compareRules(CheckBoxTreeNode root, List<String> rules) {
         for (String rule : rules) {
-            if ("**".equals(rule)) {
+            if (rule.equals("**")) {
                 root.setSelected(true);
                 return;
             }
             for (int i = 0; i < root.getChildCount(); i++) {
-                compareRule(root.getChildAt(i), rule);
+                compareRule(root.getChildAt(i), rule.replace("@", "").replace("**", "*"));
             }
         }
     }
@@ -179,9 +192,12 @@ public class RuleEditor extends JDialog {
             for (int i = 1; i < node.getPath().length; i++) {
                 childPath.append(node.getPath()[i].toString().intern()).append("/");
             }
-            childPath.append("**");
-            if (childPath.toString().equals(rule)) {
+
+            if (ReUtil.contains(rule, childPath.toString())) {
                 node.setSelected(true);
+                if (BalloonServer.CONFIG.isDebugMode()) {
+                    logger.debug("ContainRule: {}, Content: {}", rule, childPath.toString());
+                }
                 return;
             }
             for (int i = 0; i < node.getChildCount(); i++) {
@@ -193,8 +209,12 @@ public class RuleEditor extends JDialog {
             }
             //去除最后一个斜杠
             childPath.delete(childPath.length() - 1, childPath.length());
-            if (childPath.toString().equals(rule)) {
+
+            if (ReUtil.contains(rule, childPath.toString())) {
                 node.setSelected(true);
+                if (BalloonServer.CONFIG.isDebugMode()) {
+                    logger.debug("ContainRule: {}, Content: {}", rule, childPath.toString());
+                }
             }
         }
     }

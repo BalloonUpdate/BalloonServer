@@ -1,5 +1,6 @@
 package github.kasuminova.balloonserver.gui.panels;
 
+import cn.hutool.core.img.ImgUtil;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.utils.MiscUtils;
@@ -14,7 +15,6 @@ import java.awt.*;
 public class AboutPanel {
     private static final int ABOUT_BUTTON_WIDTH = 170;
     private static final int ABOUT_BUTTON_HEIGHT = 30;
-    private static final int DEFAULT_ICON_SIZE = 64;
     private static final float TITLE_FONT_SIZE = 36F;
     private static final float LICENSE_LABEL_FONT_SIZE = 18F;
 
@@ -26,7 +26,7 @@ public class AboutPanel {
         Box titleBox = Box.createHorizontalBox();
         titleBox.setBorder(new EmptyBorder(10,0,0,0));
         //LOGO, 并缩放图标
-        titleBox.add(new JLabel(new ImageIcon(BalloonServer.ICON.getImage().getScaledInstance(DEFAULT_ICON_SIZE, DEFAULT_ICON_SIZE, Image.SCALE_DEFAULT))));
+        titleBox.add(new JLabel(new ImageIcon(ImgUtil.scale(BalloonServer.ICON.getImage(), 80F / BalloonServer.ICON.getIconWidth()))));
         //标题
         JLabel title = new JLabel("BalloonServer " + BalloonServer.VERSION);
         title.setBorder(new EmptyBorder(0,10,0,0));

@@ -8,9 +8,6 @@ public class CheckBoxTreeLabel extends JLabel {
     private boolean isSelected;
     private boolean hasFocus;
 
-    public CheckBoxTreeLabel() {
-    }
-
     @Override
     public void setBackground(Color color) {
         if (color instanceof ColorUIResource)
@@ -22,20 +19,20 @@ public class CheckBoxTreeLabel extends JLabel {
     public void paint(Graphics g) {
         String str;
         if ((str = getText()) != null) {
-            if (0 < str.length()) {
+            if (!str.isEmpty()) {
                 if (isSelected)
                     g.setColor(UIManager.getColor("Tree.selectionBackground"));
                 else
                     g.setColor(UIManager.getColor("Tree.textBackground"));
-                Dimension d = getPreferredSize();
+                Dimension dim = getPreferredSize();
                 int imageOffset = 0;
                 Icon currentIcon = getIcon();
                 if (currentIcon != null)
                     imageOffset = currentIcon.getIconWidth() + Math.max(0, getIconTextGap() - 1);
-                g.fillRect(imageOffset, 0, d.width - 1 - imageOffset, d.height);
+                g.fillRect(imageOffset, 0, dim.width - 1 - imageOffset, dim.height);
                 if (hasFocus) {
                     g.setColor(UIManager.getColor("Tree.selectionBorderColor"));
-                    g.drawRect(imageOffset, 0, d.width - 1 - imageOffset, d.height - 1);
+                    g.drawRect(imageOffset, 0, dim.width - 1 - imageOffset, dim.height - 1);
                 }
             }
         }

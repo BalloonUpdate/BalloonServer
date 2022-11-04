@@ -3,8 +3,7 @@ package github.kasuminova.balloonserver.utils;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.log.Log;
-import cn.hutool.log.LogFactory;
+import cn.hutool.log.dialect.console.ConsoleLog;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -18,15 +17,17 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
 import static github.kasuminova.balloonserver.utils.ModernColors.*;
 
 /**
- * 一个简易的 Logger，与 GUI 同步
+ * 一个简易的 super，与 GUI 同步
  */
-public class GUILogger {
+public class GUILogger extends ConsoleLog {
+    @Serial
+    private static final long serialVersionUID = 6797586304881795733L;
+
     //日期格式
     public static final SimpleDateFormat NORMAL_DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
     public static final SimpleDateFormat FULL_DATE_FORMAT   = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -43,24 +44,22 @@ public class GUILogger {
     //行距, 0.1 相当于 1.1 倍行距
     private static final float LINE_SPACE_SIZE = 0.1F;
     private final JTextPane logPane;
-    private final Log logger;
     private final Writer logWriter;
 
     /**
-     * logger 线程池
+     * super 线程池
      * 用于保证 Log 顺序
      */
-    private final ExecutorService loggerThreadPool = Executors.newSingleThreadExecutor();
-    private final AtomicInteger prepared = new AtomicInteger(0);
+    private final ExecutorService superThreadPool = Executors.newSingleThreadExecutor();
 
     /**
-     * 创建一个 Logger
+     * 创建一个 super
      *
      * @param name    log 文件名
      * @param logPane 要同步的 JTextPane
      */
     public GUILogger(String name, JTextPane logPane) {
-        logger = LogFactory.get(name);
+        super(name);
         this.logPane = logPane;
 
         //行距设置
@@ -68,7 +67,7 @@ public class GUILogger {
         StyleConstants.setLineSpacing(lineSpaceAttribute, LINE_SPACE_SIZE);
         logPane.setParagraphAttributes(lineSpaceAttribute, false);
 
-        logWriter = createLogFile(name, logger);
+        logWriter = createLogFile(name);
 
         //设置颜色
         StyleConstants.setForeground(INFO_ATTRIBUTE, BLUE);
@@ -78,15 +77,16 @@ public class GUILogger {
     }
 
     /**
-     * 创建一个 Logger
+     * 创建一个 super
      *
      * @param name log 文件名
      */
     public GUILogger(String name) {
-        logger = LogFactory.get(name);
+        super(name);
+        
         logPane = null;
 
-        logWriter = createLogFile(name, logger);
+        logWriter = createLogFile(name);
     }
 
     /**
@@ -98,10 +98,9 @@ public class GUILogger {
      * </p>
      *
      * @param name   文件名
-     * @param logger 如果出现问题, 则使用此 logger 警告
      * @return 一个对应文件名的 Writer, 如果出现问题, 则返回 null
      */
-    public static Writer createLogFile(String name, Log logger) {
+    public Writer createLogFile(String name) {
         File logFile = new File(String.format("./logs/%s.log", name));
         try {
             if (logFile.exists()) {
@@ -112,7 +111,7 @@ public class GUILogger {
                         count++;
                     } else {
                         if (!logFile.renameTo(oldLogFile)) {
-                            logger.warn("无法正确转移旧日志文件！");
+                            super.warn("无法正确转移旧日志文件！");
                         }
                         break;
                     }
@@ -125,14 +124,14 @@ public class GUILogger {
                 try {
                     FileUtil.touch(logFile);
                 } catch (IORuntimeException e) {
-                    logger.warn("日志文件夹创建失败！{}", MiscUtils.stackTraceToString(e));
+                    super.warn("日志文件夹创建失败！{}", MiscUtils.stackTraceToString(e));
                     return null;
                 }
             }
 
             return new OutputStreamWriter(Files.newOutputStream(logFile.toPath()), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            logger.warn(MiscUtils.stackTraceToString(e));
+            super.warn(MiscUtils.stackTraceToString(e));
         }
         return null;
     }
@@ -148,26 +147,22 @@ public class GUILogger {
     }
 
     public void log(String msg, SimpleAttributeSet attributeSet, String level, Object... params) {
-        if (prepared.get() > 100) return;
-
         String threadName = Thread.currentThread().getName();
 
-        prepared.getAndIncrement();
-        loggerThreadPool.execute(() -> {
+        superThreadPool.execute(() -> {
             String formatMsg = StrUtil.format(msg, params);
 
             switch (level) {
-                case INFO -> logger.info(formatMsg);
-                case WARN -> logger.warn(formatMsg);
-                case ERROR -> logger.error(formatMsg);
+                case INFO -> super.info(formatMsg);
+                case WARN -> super.warn(formatMsg);
+                case ERROR -> super.error(formatMsg);
                 case DEBUG -> {
-                    if (CONFIG.isDebugMode()) logger.debug(formatMsg);
+                    if (CONFIG.isDebugMode()) super.debug(formatMsg);
                 }
             }
 
             writeAndFlushMessage(buildFullLogMessage(threadName, formatMsg, level));
             insertStringToDocument(buildNormalLogMessage(formatMsg, level), attributeSet);
-            prepared.getAndDecrement();
         });
     }
 
@@ -289,7 +284,7 @@ public class GUILogger {
      * 关闭 Writer, 解除 log 文件的占用
      */
     public void closeLogWriter() throws IOException {
-        loggerThreadPool.shutdown();
+        superThreadPool.shutdown();
         if (logWriter == null) return;
         logWriter.close();
     }
@@ -321,7 +316,7 @@ public class GUILogger {
             document.insertString(document.getLength(), str, ATTRIBUTE);
             logPane.setCaretPosition(document.getLength());
         } catch (BadLocationException e) {
-            logger.warn(MiscUtils.stackTraceToString(e));
+            super.warn(MiscUtils.stackTraceToString(e));
         }
     }
 }

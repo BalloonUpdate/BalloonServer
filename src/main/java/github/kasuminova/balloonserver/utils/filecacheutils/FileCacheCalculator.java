@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_DIR_THREAD_POOL;
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
 import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
 
 /**
@@ -48,7 +48,7 @@ public class FileCacheCalculator {
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);
-                GLOBAL_DIR_THREAD_POOL.execute(dirCounterTask);
+                GLOBAL_THREAD_POOL.execute(dirCounterTask);
             }
         }
 

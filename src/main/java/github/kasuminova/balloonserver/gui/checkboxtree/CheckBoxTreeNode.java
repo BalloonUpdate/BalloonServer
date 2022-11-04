@@ -37,7 +37,7 @@ public class CheckBoxTreeNode extends DefaultMutableTreeNode {
             if (children != null) {
                 for (Object obj : children) {
                     CheckBoxTreeNode node = (CheckBoxTreeNode) obj;
-                    if (!node.isSelected())
+                    if (!node.isSelected)
                         node.setSelected(true);
                 }
             }
@@ -48,7 +48,7 @@ public class CheckBoxTreeNode extends DefaultMutableTreeNode {
                 int index = 0;
                 for (; index < pNode.children.size(); ++index) {
                     CheckBoxTreeNode pChildNode = (CheckBoxTreeNode) pNode.children.get(index);
-                    if (!pChildNode.isSelected())
+                    if (!pChildNode.isSelected)
                         break;
                 }
                 /*
@@ -57,7 +57,7 @@ public class CheckBoxTreeNode extends DefaultMutableTreeNode {
                  * 当选中父结点后，父结点本身会向上检查的。
                  */
                 if (index == pNode.children.size()) {
-                    if (!pNode.isSelected())
+                    if (!pNode.isSelected)
                         pNode.setSelected(true);
                 }
             }
@@ -71,14 +71,14 @@ public class CheckBoxTreeNode extends DefaultMutableTreeNode {
                 int index = 0;
                 for (; index < children.size(); ++index) {
                     CheckBoxTreeNode childNode = (CheckBoxTreeNode) children.get(index);
-                    if (!childNode.isSelected())
+                    if (!childNode.isSelected)
                         break;
                 }
                 // 从上向下取消的时候
                 if (index == children.size()) {
                     for (Object child : children) {
                         CheckBoxTreeNode node = (CheckBoxTreeNode) child;
-                        if (node.isSelected())
+                        if (node.isSelected)
                             node.setSelected(false);
                     }
                 }
@@ -86,7 +86,7 @@ public class CheckBoxTreeNode extends DefaultMutableTreeNode {
 
             // 向上取消，只要存在一个子节点不是选上的，那么父节点就不应该被选上。
             CheckBoxTreeNode pNode = (CheckBoxTreeNode) parent;
-            if (pNode != null && pNode.isSelected())
+            if (pNode != null && pNode.isSelected)
                 pNode.setSelected(false);
         }
     }

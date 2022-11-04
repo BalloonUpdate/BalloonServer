@@ -76,6 +76,7 @@ public class HttpServer {
             future = bootstrap.bind(new InetSocketAddress(ip, port)).sync();
             String addressType = IPAddressUtil.checkAddress(ip);
             assert addressType != null;
+
             logger.info(String.format("服务器已启动! (%sms)", System.currentTimeMillis() - start), ModernColors.GREEN);
 
             if (addressType.equals("v6")) {

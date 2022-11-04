@@ -1,6 +1,8 @@
 package github.kasuminova.balloonserver.gui;
 
+import cn.hutool.core.thread.ExecutorBuilder;
 import cn.hutool.core.thread.ThreadUtil;
+import github.kasuminova.balloonserver.utils.CustomThreadFactory;
 
 import javax.swing.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -13,7 +15,14 @@ import java.util.concurrent.TimeUnit;
 public class SmoothProgressBar extends JProgressBar {
     public static final long TIME_MULTIPLIER = 3L;
     //单线程线程池，用于保证进度条的操作顺序
-    private final ThreadPoolExecutor singleThreadExecutor;
+    private final ThreadPoolExecutor singleThreadExecutor = ExecutorBuilder.create()
+            .setCorePoolSize(1)
+            .setMaxPoolSize(1)
+            .setKeepAliveTime(10, TimeUnit.SECONDS)
+            .setWorkQueue(new LinkedBlockingQueue<>())
+            .setThreadFactory(CustomThreadFactory.create("SmoothProgressBarQueueThread-{}"))
+            .build();
+
     private final int flowTime;
     //每秒刷新频率
     private final int frequency;
@@ -28,9 +37,6 @@ public class SmoothProgressBar extends JProgressBar {
         super(0, max);
         this.flowTime = flowTime;
         frequency = flowTime / 10;
-        singleThreadExecutor = new ThreadPoolExecutor(1, 1,
-                flowTime * 2L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>());
     }
 
     /**

@@ -2,12 +2,12 @@ package github.kasuminova.balloonserver.gui.ruleeditor;
 
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.file.FileReader;
-import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.servers.ServerInterface;
 import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
+import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.balloonserver.utils.HashCalculator;
 import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
 import github.kasuminova.messages.RequestMessage;
@@ -18,17 +18,20 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
 import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 
 public class RuleEditorActionListener implements ActionListener {
     protected final JList<String> ruleList;
     protected final List<String> rules;
     protected final ServerInterface serverInterface;
+    protected final GUILogger logger;
 
-    public RuleEditorActionListener(JList<String> ruleList, List<String> rules, ServerInterface serverInterface) {
+    public RuleEditorActionListener(JList<String> ruleList, List<String> rules, ServerInterface serverInterface, GUILogger logger) {
         this.ruleList = ruleList;
         this.rules = rules;
         this.serverInterface = serverInterface;
+        this.logger = logger;
     }
 
     @Override
@@ -51,11 +54,9 @@ public class RuleEditorActionListener implements ActionListener {
 
                 try {
                     String json = new FileReader(file).readString();
-                    showRuleEditorDialog(JSONArray.parseArray(json), ruleList, rules);
+                    showRuleEditorDialog(JSONArray.parseArray(json), ruleList, rules, logger);
                 } catch (IORuntimeException ex) {
-                    JOptionPane.showMessageDialog(MAIN_FRAME,
-                            "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
-                            JOptionPane.ERROR_MESSAGE);
+                    logger.error("无法读取本地 JSON 缓存\n", ex);
                 }
                 return;
             }
@@ -65,17 +66,14 @@ public class RuleEditorActionListener implements ActionListener {
                     BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
             if (!(selection == JOptionPane.YES_OPTION)) return;
 
-            ThreadUtil.execute(() -> {
+            GLOBAL_FILE_THREAD_POOL.execute(() -> {
                 new JsonCacheUtils((IntegratedServerInterface) serverInterface, null, null).updateDirCache(null, HashCalculator.CRC32);
                 if (file.exists()) {
                     try {
                         String json = new FileReader(file).readString();
-                        showRuleEditorDialog(JSONArray.parseArray(json), ruleList, rules);
-
+                        showRuleEditorDialog(JSONArray.parseArray(json), ruleList, rules, logger);
                     } catch (IORuntimeException ex) {
-                        JOptionPane.showMessageDialog(MAIN_FRAME,
-                                "无法读取本地 JSON 缓存\n" + ex, BalloonServer.TITLE,
-                                JOptionPane.ERROR_MESSAGE);
+                        logger.error("无法读取本地 JSON 缓存\n", ex);
                     }
                 }
             });
@@ -85,11 +83,11 @@ public class RuleEditorActionListener implements ActionListener {
         }
     }
 
-    public static void showRuleEditorDialog(JSONArray jsonArray, JList<String> ruleList, List<String> rules) {
-        ThreadUtil.execute(() -> {
+    public static void showRuleEditorDialog(JSONArray jsonArray, JList<String> ruleList, List<String> rules, GUILogger logger) {
+        GLOBAL_FILE_THREAD_POOL.execute(() -> {
             //锁定窗口，防止用户误操作
             MAIN_FRAME.setEnabled(false);
-            RuleEditor editorDialog = new RuleEditor(jsonArray, rules);
+            RuleEditor editorDialog = new RuleEditor(jsonArray, rules, logger);
             editorDialog.setModal(true);
 
             MAIN_FRAME.setEnabled(true);

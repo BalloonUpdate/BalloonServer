@@ -88,10 +88,10 @@ public class VFlowLayout extends FlowLayout {
         this.setHorizontalAlignment(horizontalAlignment);
         this.setHgap(horizontalGap);
         this.setVgap(verticalGap);
-        this.setTopVerticalGap(topVerticalGap);
-        this.setBottomVerticalGap(bottomVerticalGap);
-        this.setHorizontalFill(isHorizontalFill);
-        this.setVerticalFill(isVerticalFill);
+        this.topVerticalGap = topVerticalGap;
+        this.bottomVerticalGap = bottomVerticalGap;
+        this.isHorizontalFill = isHorizontalFill;
+        this.isVerticalFill = isVerticalFill;
     }
 
     public int getHorizontalAlignment() {
@@ -179,7 +179,7 @@ public class VFlowLayout extends FlowLayout {
     @Override
     public Dimension preferredLayoutSize(Container container) {
         Dimension rs = new Dimension(0, 0);
-        List<Component> components = this.getVisibleComponents(container);
+        List<Component> components = VFlowLayout.getVisibleComponents(container);
         Dimension dimension = this.preferredComponentsSize(components);
         rs.width += dimension.width;
         rs.height += dimension.height;
@@ -187,7 +187,7 @@ public class VFlowLayout extends FlowLayout {
         rs.width += insets.left + insets.right;
         rs.height += insets.top + insets.bottom;
 
-        if (0 < components.size()) {
+        if (!components.isEmpty()) {
             rs.width += this.getHgap() * 2;
             rs.height += this.topVerticalGap;
             rs.height += this.bottomVerticalGap;
@@ -205,7 +205,7 @@ public class VFlowLayout extends FlowLayout {
     @Override
     public Dimension minimumLayoutSize(Container container) {
         Dimension rs = new Dimension(0, 0);
-        List<Component> components = this.getVisibleComponents(container);
+        List<Component> components = VFlowLayout.getVisibleComponents(container);
         Dimension dimension = this.minimumComponentsSize(components);
         rs.width += dimension.width;
         rs.height += dimension.height;
@@ -213,7 +213,7 @@ public class VFlowLayout extends FlowLayout {
         rs.width += insets.left + insets.right;
         rs.height += insets.top + insets.bottom;
 
-        if (0 < components.size()) {
+        if (!components.isEmpty()) {
             rs.width += this.getHgap() * 2;
             rs.height += this.topVerticalGap;
             rs.height += this.bottomVerticalGap;
@@ -229,7 +229,7 @@ public class VFlowLayout extends FlowLayout {
         Insets insets = container.getInsets();
         int maxWidth = container.getSize().width - (insets.left + insets.right + horizontalGap * 2);
         int maxHeight = container.getSize().height - (insets.top + insets.bottom + this.topVerticalGap + this.bottomVerticalGap);
-        List<Component> components = this.getVisibleComponents(container);
+        List<Component> components = VFlowLayout.getVisibleComponents(container);
         Dimension preferredComponentsSize = this.preferredComponentsSize(components);
         int alignment = this.getAlignment();
         int y = insets.top + this.topVerticalGap;
@@ -281,7 +281,7 @@ public class VFlowLayout extends FlowLayout {
             rs.height += dimension.height;
         }
 
-        if (0 < components.size()) {
+        if (!components.isEmpty()) {
             rs.height += this.getVgap() * (components.size() - 1);
         }
 
@@ -297,14 +297,14 @@ public class VFlowLayout extends FlowLayout {
             rs.height += dimension.height;
         }
 
-        if (0 < components.size()) {
+        if (!components.isEmpty()) {
             rs.height += this.getVgap() * (components.size() - 1);
         }
 
         return rs;
     }
 
-    private List<Component> getVisibleComponents(Container container) {
+    private static List<Component> getVisibleComponents(Container container) {
         List<Component> rs = new ArrayList<>();
 
         for (Component component : container.getComponents()) {

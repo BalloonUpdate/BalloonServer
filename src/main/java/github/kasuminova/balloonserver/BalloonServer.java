@@ -1,6 +1,7 @@
 package github.kasuminova.balloonserver;
 
 import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.thread.ExecutorBuilder;
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.system.SystemUtil;
@@ -17,6 +18,7 @@ import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInter
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteIntegratedServerClient;
 import github.kasuminova.balloonserver.updatechecker.ApplicationVersion;
 import github.kasuminova.balloonserver.updatechecker.Checker;
+import github.kasuminova.balloonserver.utils.CustomThreadFactory;
 import github.kasuminova.balloonserver.utils.FileUtil;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.balloonserver.utils.Security;
@@ -53,14 +55,20 @@ public final class BalloonServer {
         SetupSwing.init();
     }
 
-    public static final ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors() * 2, Runtime.getRuntime().availableProcessors() * 2,
-            10, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>());
-    public static final ThreadPoolExecutor GLOBAL_DIR_THREAD_POOL = new ThreadPoolExecutor(
-            0, Integer.MAX_VALUE,
-            30, TimeUnit.SECONDS,
-            new SynchronousQueue<>());
+    public static final ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL = ExecutorBuilder.create()
+            .setCorePoolSize(Runtime.getRuntime().availableProcessors())
+            .setMaxPoolSize(Runtime.getRuntime().availableProcessors() * 2)
+            .setKeepAliveTime(30, TimeUnit.SECONDS)
+            .setWorkQueue(new LinkedBlockingQueue<>())
+            .setThreadFactory(CustomThreadFactory.create("FileThread-{}"))
+            .build();
+    public static final ThreadPoolExecutor GLOBAL_THREAD_POOL = ExecutorBuilder.create()
+            .setCorePoolSize(Runtime.getRuntime().availableProcessors())
+            .setMaxPoolSize(Integer.MAX_VALUE)
+            .setKeepAliveTime(30, TimeUnit.SECONDS)
+            .setWorkQueue(new SynchronousQueue<>())
+            .setThreadFactory(CustomThreadFactory.create("ServerThread-{}"))
+            .build();
 
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.4.0-BETA");
     public static final String TITLE = StrUtil.format("BalloonServer {}", VERSION);
@@ -73,7 +81,7 @@ public final class BalloonServer {
      */
     public static final String ARCHIVE_NAME = BalloonServer.class.getProtectionDomain().getCodeSource().getLocation().getFile();
     public static final ImageIcon ICON = new ImageIcon(Objects.requireNonNull(
-            BalloonServer.class.getResource("/image/icon_128x128.jpg")));
+            BalloonServer.class.getResource("/image/icon_16x16.png")));
     public static final JTabbedPane TABBED_PANE = new JTabbedPane(JTabbedPane.BOTTOM);
     public static final JTabbedPane SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     public static final JTabbedPane REMOTE_SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
@@ -132,7 +140,7 @@ public final class BalloonServer {
         loadMenuBar();
         updateSplashProgress(75);
 
-        ThreadUtil.execute(BalloonServer::loadSystemTrayFeature);
+        GLOBAL_FILE_THREAD_POOL.execute(BalloonServer::loadSystemTrayFeature);
 
         //等待主服务器面板完成创建
         ThreadUtil.waitForDie(serverThread);
@@ -161,7 +169,7 @@ public final class BalloonServer {
                 if (CONFIG.isAutoCheckUpdates() && !isCheckingUpdate.get()) {
                     GLOBAL_LOGGER.info("开始检查更新...");
                     isCheckingUpdate.set(true);
-                    ThreadUtil.execute(() -> {
+                    GLOBAL_FILE_THREAD_POOL.execute(() -> {
                         Checker.checkUpdates();
                         isCheckingUpdate.set(false);
                     });
@@ -350,7 +358,7 @@ public final class BalloonServer {
             }
             if (checkSameServer(serverName)) return;
 
-            ThreadUtil.execute(() -> {
+            GLOBAL_FILE_THREAD_POOL.execute(() -> {
                 long start = System.currentTimeMillis();
                 GLOBAL_LOGGER.info(String.format("正在创建新的集成服务端实例: %s", serverName));
 
@@ -370,7 +378,7 @@ public final class BalloonServer {
 
         JMenuItem loadLittleServer = new JMenuItem("载入集成服务端实例", PLAY_ICON);
         loadMenu.add(loadLittleServer);
-        loadLittleServer.addActionListener(e -> ThreadUtil.execute(() -> {
+        loadLittleServer.addActionListener(e -> GLOBAL_FILE_THREAD_POOL.execute(() -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setMultiSelectionEnabled(true);
             fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"}, "LittleServer 配置文件 (*.lscfg.json)"));
@@ -432,7 +440,7 @@ public final class BalloonServer {
             String serverName = serverInterface.getServerName();
 
             if (stopIntegratedServer(serverInterface, serverName, selected, true)) {
-                ThreadUtil.execute(() -> {
+                GLOBAL_FILE_THREAD_POOL.execute(() -> {
                     IntegratedServer littleServer;
                     if (serverName.equals("littleserver")) {
                         littleServer = new IntegratedServer("littleserver", false);

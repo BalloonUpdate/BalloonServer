@@ -26,7 +26,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
 import static github.kasuminova.balloonserver.utils.MiscUtils.formatTime;
 import static io.netty.handler.codec.http.HttpUtil.isKeepAlive;
 import static io.netty.handler.codec.http.HttpUtil.setContentLength;
@@ -60,10 +59,6 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
         clientIP = getClientIP(ctx, req);
         //转义后的 URI
         decodedURI = URLDecoder.decode(uri, StandardCharsets.UTF_8);
-
-        if (CONFIG.isDebugMode()) {
-            printDebugLog(req.headers().toString(), clientIP, decodedURI, logger);
-        }
 
         //index 请求监听
         if (StrUtil.startWith(decodedURI, "/index.json")) {

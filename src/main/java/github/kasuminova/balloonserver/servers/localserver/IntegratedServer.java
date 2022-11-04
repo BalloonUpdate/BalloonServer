@@ -3,7 +3,6 @@ package github.kasuminova.balloonserver.servers.localserver;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.swing.clipboard.ClipboardUtil;
-import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
@@ -20,10 +19,7 @@ import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.BadLocationException;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -31,9 +27,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
-import static github.kasuminova.balloonserver.BalloonServer.TITLE;
-import static github.kasuminova.balloonserver.utils.SvgIcons.DELETE_ICON;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 
 /**
  * IntegratedServer 集成服务端面板实例
@@ -47,8 +41,6 @@ public class IntegratedServer extends AbstractServer {
     protected final JLabel statusLabel = new JLabel("状态: 就绪", JLabel.LEFT);
     protected final JButton copyAddressButton = new JButton("复制 API 地址");
     protected final JButton openAddressButton = new JButton("在浏览器中打开 API 地址");
-    protected final String serverName;
-    protected final GUILogger logger;
     protected final IntegratedServerConfig config = new IntegratedServerConfig();
     protected final JFrame requestListFrame = new JFrame();
     protected final JPanel requestListPanel = new JPanel(new VFlowLayout());
@@ -72,33 +64,7 @@ public class IntegratedServer extends AbstractServer {
      * @param autoStart  是否在创建对象后自动启动服务器
      */
     public IntegratedServer(String serverName, boolean autoStart) {
-        this.serverName = serverName;
-
-        long start = System.currentTimeMillis();
-        //设置 Logger，主体为 logPanel
-        JPanel logPanel = new JPanel(new BorderLayout());
-        logPanel.setMinimumSize(new Dimension((int) (MAIN_FRAME.getWidth() * 0.5), 0));
-
-        logPanel.setBorder(new TitledBorder("服务器实例日志"));
-        JTextPane logPane = new JTextPane();
-        logPane.setEditable(false);
-        JScrollPane logScrollPane = new JScrollPane(logPane);
-        logPanel.add(logScrollPane, BorderLayout.CENTER);
-
-        //初始化 Logger
-        logger = new GUILogger(serverName, logPane);
-
-        //日志窗口菜单
-        JPopupMenu logPaneMenu = new JPopupMenu();
-        JMenuItem cleanLogPane = new JMenuItem("清空日志", DELETE_ICON);
-        cleanLogPane.addActionListener(e -> {
-            try {
-                logPane.getDocument().remove(0, logPane.getDocument().getLength());
-                logger.info("已清空当前服务器实例日志窗口.");
-            } catch (BadLocationException ignored) {}
-        });
-        logPaneMenu.add(cleanLogPane);
-        logPane.addMouseListener(new LogPaneMouseAdapter(logPaneMenu, logPane));
+        super(serverName);
 
         //初始化 HTTP 服务端
         loadHttpServer();
@@ -128,28 +94,10 @@ public class IntegratedServer extends AbstractServer {
     }
 
     /**
-     * 返回当前实例的面板
-     *
-     * @return 服务器面板
-     */
-    public JPanel getPanel() {
-        return littleServerPanel;
-    }
-
-    /**
-     * 返回当前服务器实例的接口
-     *
-     * @return LittleServerInterface
-     */
-    public IntegratedServerInterface getServerInterface() {
-        return serverInterface;
-    }
-
-    /**
      * 启动服务器
      */
     protected void startServer() {
-        ThreadUtil.execute(() -> {
+        GLOBAL_FILE_THREAD_POOL.execute(() -> {
             //检查当前端口是否被占用
             if (!NetUtil.isUsableLocalPort(config.getPort())) {
                 JOptionPane.showMessageDialog(MAIN_FRAME, """
@@ -290,7 +238,7 @@ public class IntegratedServer extends AbstractServer {
      * 重新生成缓存
      */
     protected void regenResCache() {
-        ThreadUtil.execute(() -> {
+        GLOBAL_FILE_THREAD_POOL.execute(() -> {
             serverInterface.setStatusLabelText("生成缓存结构中", ModernColors.YELLOW);
 
             JsonCacheUtils jsonCacheUtil = new JsonCacheUtils(serverInterface, httpServerInterface, startOrStop);
@@ -340,8 +288,29 @@ public class IntegratedServer extends AbstractServer {
     }
 
     /**
+     * 返回当前实例的面板
+     *
+     * @return 服务器面板
+     */
+    @Override
+    public JPanel getPanel() {
+        return littleServerPanel;
+    }
+
+    /**
+     * 返回当前服务器实例的接口
+     *
+     * @return LittleServerInterface
+     */
+    @Override
+    public IntegratedServerInterface getServerInterface() {
+        return serverInterface;
+    }
+
+    /**
      * 保存配置文件至磁盘
      */
+    @Override
     protected void saveConfigurationToFile() {
         reloadConfigurationFromGUI();
         try {
@@ -355,6 +324,7 @@ public class IntegratedServer extends AbstractServer {
     /**
      * 从文件加载配置文件
      */
+    @Override
     protected void loadConfigurationFromFile() {
         if (!new File("./" + serverName + CONFIG_FILE_SUFFIX).exists()) {
             try {
@@ -375,6 +345,13 @@ public class IntegratedServer extends AbstractServer {
             logger.info("目前正在使用程序默认配置.");
             return;
         }
+
+        updateGUIConfig(config);
+        logger.info("已载入配置文件.");
+    }
+
+    @Override
+    protected void updateGUIConfig(IntegratedServerConfig config) {
         //IP
         IPTextField.setText(config.getIp());
         //端口
@@ -406,13 +383,12 @@ public class IntegratedServer extends AbstractServer {
         onceMode.setListData(config.getOnceMode());
 
         reloadIndexJson();
-
-        logger.info("已载入配置文件.");
     }
 
     /**
      * 以面板当前配置重载配置
      */
+    @Override
     protected void reloadConfigurationFromGUI() {
         //IP 检查
         String IP = IPTextField.getText();
@@ -450,6 +426,7 @@ public class IntegratedServer extends AbstractServer {
         indexJson = index.toJSONString(JSONWriter.Feature.PrettyFormat);
     }
 
+    @Override
     protected JPanel loadStatusBar() {
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.setBorder(new EmptyBorder(0, 5, 2, 1));
@@ -502,6 +479,7 @@ public class IntegratedServer extends AbstractServer {
         return statusPanel;
     }
 
+    @Override
     protected Component loadControlPanel() {
         //控制面板
         controlPanel.setPreferredSize(new Dimension(CONTROL_PANEL_WIDTH, 0));
@@ -601,6 +579,7 @@ public class IntegratedServer extends AbstractServer {
         requestListFrame.setLocationRelativeTo(null);
     }
 
+    @Override
     protected Box loadJksSslBox() {
         //SSL 证书框，仅用于显示。实际操作为右方按钮。
         Box JksSslBox = Box.createHorizontalBox();
@@ -608,7 +587,7 @@ public class IntegratedServer extends AbstractServer {
         JksSslTextField.setEditable(false);
         JButton selectJksSslFile = new JButton("...");
 
-        selectJksSslFile.addActionListener(e -> ThreadUtil.execute(() -> {
+        selectJksSslFile.addActionListener(e -> GLOBAL_FILE_THREAD_POOL.execute(() -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"jks"}, null, "JKS 证书 (*.jks)"));
 
@@ -626,23 +605,6 @@ public class IntegratedServer extends AbstractServer {
         JksSslBox.add(selectJksSslFile);
 
         return JksSslBox;
-    }
-
-    private static class LogPaneMouseAdapter extends MouseAdapter {
-        private final JPopupMenu logPaneMenu;
-        private final JTextPane logPane;
-
-        private LogPaneMouseAdapter(JPopupMenu logPaneMenu, JTextPane logPane) {
-            this.logPaneMenu = logPaneMenu;
-            this.logPane = logPane;
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                logPaneMenu.show(logPane, e.getX(), e.getY());
-            }
-        }
     }
 
     private static class RequestListFrameWindowAdapter extends WindowAdapter {
