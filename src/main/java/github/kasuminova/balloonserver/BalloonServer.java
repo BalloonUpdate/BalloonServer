@@ -37,6 +37,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
+import static github.kasuminova.balloonserver.gui.SetupSwing.updateSplashProgress;
 import static github.kasuminova.balloonserver.utils.SvgIcons.*;
 
 /**
@@ -101,6 +102,8 @@ public final class BalloonServer {
 
         //载入主配置文件
         loadConfig();
+        updateSplashProgress(50, "已载入配置文件");
+
         //载入文件计算线程池
         initFileThreadPool();
 
@@ -127,17 +130,19 @@ public final class BalloonServer {
 
         loadStatusBar();
         loadMenuBar();
+        updateSplashProgress(75);
 
         ThreadUtil.execute(BalloonServer::loadSystemTrayFeature);
 
         //等待主服务器面板完成创建
         ThreadUtil.waitForDie(serverThread);
+        updateSplashProgress(85, "已载入主服务端");
 
         //主窗口
         MAIN_FRAME.setIconImage(ICON.getImage());
         MAIN_FRAME.setLocationRelativeTo(null);
         GLOBAL_LOGGER.info(String.format("程序已加载完成, 耗时 %sms.", System.currentTimeMillis() - START));
-
+        updateSplashProgress(100, "已完成");
         MAIN_FRAME.setVisible(true);
 
         loadAutoUpdateFeature();
@@ -560,7 +565,7 @@ public final class BalloonServer {
      */
     private static void preInit() {
         //运行环境检测
-        GLOBAL_LOGGER.info("检查运行环境...");
+        updateSplashProgress(40,"检查运行环境...");
         int version = Integer.parseInt(System.getProperty("java.specification.version"));
         GLOBAL_LOGGER.info("Java 版本为 " + version);
         GLOBAL_LOGGER.info("程序分支为 " + VERSION.getBranch());
