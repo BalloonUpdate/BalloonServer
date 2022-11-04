@@ -63,7 +63,7 @@ public final class BalloonServer {
             new SynchronousQueue<>());
 
     public static final ApplicationVersion VERSION = new ApplicationVersion("1.4.0-BETA");
-    public static final String TITLE = "BalloonServer " + VERSION;
+    public static final String TITLE = StrUtil.format("BalloonServer {}", VERSION);
     //主窗口
     public static final JFrame MAIN_FRAME = new JFrame(TITLE);
     /*

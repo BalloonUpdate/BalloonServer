@@ -13,6 +13,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * @author Kasumi_Nova
@@ -22,7 +23,7 @@ public class SetupSwing {
     private static final SplashScreen SPLASH = SplashScreen.getSplashScreen();
     private static final Graphics2D SPLASH_GRAPHICS = SPLASH == null ? null : SPLASH.createGraphics();
     private static final Dimension SPLASH_SIZE = SPLASH == null ? null : SPLASH.getSize();
-    private static final Image SPLASH_IMAGE = new ImageIcon(SetupSwing.class.getResource("/image/splash.png")).getImage();
+    private static final Image SPLASH_IMAGE = new ImageIcon(Objects.requireNonNull(SetupSwing.class.getResource("/image/splash.png"))).getImage();
     public static final float DEFAULT_FONT_SIZE = 13F;
     public static void init() {
         if (SPLASH_GRAPHICS != null) {
@@ -137,9 +138,9 @@ public class SetupSwing {
             //绘制背景，覆盖掉上次绘制的内容
             SPLASH_GRAPHICS.drawImage(SPLASH_IMAGE, 0, 0, (img, infoFlags, x, y, width, height) -> false);
 
-            //绘制文字阴影, 65% 透明度
-            SPLASH_GRAPHICS.setColor(Color.BLACK);
-            SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,0.6F));
+            //绘制文字阴影, 75% 透明度
+            SPLASH_GRAPHICS.setColor(Color.DARK_GRAY);
+            SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,0.75F));
             SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 27, SPLASH_SIZE.height - 28);
             SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,1F));
             //绘制文字
