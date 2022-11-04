@@ -326,6 +326,9 @@ public class IntegratedServer extends AbstractServer {
             isStarted.set(false);
             copyAddressButton.setVisible(false);
             openAddressButton.setVisible(false);
+            resJson = null;
+            legacyResJson = null;
+            indexJson = null;
 
             startOrStop.setText("重载配置并启动服务器");
 

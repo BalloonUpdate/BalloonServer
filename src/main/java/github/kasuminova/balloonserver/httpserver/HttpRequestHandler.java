@@ -38,22 +38,18 @@ import static io.netty.handler.codec.http.HttpUtil.setContentLength;
 public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
     private static final int TIMER_DELAY = 250;
     private static final int PROGRESSBAR_MAX = 500;
-    private final String resJson;
-    private final String legacyResJson;
+    private final IntegratedServerInterface serverInterface;
     private final IntegratedServerConfig config;
     private final GUILogger logger;
     private final JPanel requestListPanel;
-    private final String indexJsonString;
     private String clientIP;
     private String decodedURI;
 
     public HttpRequestHandler(IntegratedServerInterface serverInterface) {
-        resJson = serverInterface.getResJson();
-        legacyResJson = serverInterface.getLegacyResJson();
+        this.serverInterface = serverInterface;
         config = serverInterface.getIntegratedServerConfig();
         logger = serverInterface.getLogger();
         requestListPanel = serverInterface.getRequestListPanel();
-        indexJsonString = serverInterface.getIndexJson();
     }
 
     @Override
@@ -71,7 +67,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //index 请求监听
         if (StrUtil.startWith(decodedURI, "/index.json")) {
-            sendJson(indexJsonString, ctx);
+            sendJson(serverInterface.getIndexJson(), ctx);
             //打印日志
             printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
             return;
@@ -79,7 +75,7 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         //资源结构 JSON 请求监听
         if (StrUtil.startWith(decodedURI, config.getMainDirPath() + "_crc32.json")) {
-            sendJson(resJson, ctx);
+            sendJson(serverInterface.getResJson(), ctx);
             //打印日志
             printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
             return;
@@ -87,14 +83,14 @@ public final class HttpRequestHandler extends SimpleChannelInboundHandler<FullHt
 
         if (StrUtil.startWith(decodedURI, config.getMainDirPath() + ".json")) {
             //如果服务端未启用旧版兼容模式，且使用了旧版客户端获取新版服务端的缓存文件，则直接 403 请求并提示用户启用旧版兼容模式
-            if (!config.isCompatibleMode() || legacyResJson == null) {
+            if (!config.isCompatibleMode() || serverInterface.getLegacyResJson() == null) {
                 sendError(ctx, logger, HttpResponseStatus.FORBIDDEN, "当前服务端未启用兼容模式.（仅兼容 4.1.15+）\n".repeat(6), clientIP, decodedURI);
                 logger.error("警告: 检测到你可能正在使用旧版客户端获取服务端缓存文件.");
                 logger.error("如果你想要兼容旧版客户端, 请按照下方描述进行操作:");
                 logger.error("打开 “启用旧版兼容”, 然后保存并重载配置, 最后点击 “重新生成资源文件夹缓存”.");
                 return;
             }
-            sendJson(legacyResJson, ctx);
+            sendJson(serverInterface.getLegacyResJson(), ctx);
             //打印日志
             printSuccessLog(System.currentTimeMillis() - start, "200", clientIP, decodedURI, logger);
             return;
