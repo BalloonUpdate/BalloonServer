@@ -7,6 +7,7 @@ import github.kasuminova.balloonserver.httpserver.HttpServerInterface;
 import github.kasuminova.balloonserver.servers.localserver.AddUpdateRule;
 import github.kasuminova.balloonserver.servers.localserver.DeleteUpdateRule;
 import github.kasuminova.balloonserver.utils.GUILogger;
+import github.kasuminova.balloonserver.utils.MiscUtils;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -260,19 +261,17 @@ public abstract class AbstractServer {
     protected abstract void saveConfigurationToFile();
 
     private static class RuleListMenuMouseAdapter extends MouseAdapter {
-        private final JPopupMenu commonModeMenu;
-        private final JList<String> modeList;
+        private final JPopupMenu ruleListMenu;
+        private final JList<String> ruleList;
 
-        private RuleListMenuMouseAdapter(JPopupMenu modeMenu, JList<String> modeList) {
-            this.commonModeMenu = modeMenu;
-            this.modeList = modeList;
+        private RuleListMenuMouseAdapter(JPopupMenu ruleListMenu, JList<String> ruleList) {
+            this.ruleListMenu = ruleListMenu;
+            this.ruleList = ruleList;
         }
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                commonModeMenu.show(modeList, e.getX(), e.getY());
-            }
+            if (e.isPopupTrigger()) MiscUtils.showPopupMenu(ruleListMenu, ruleList, e);
         }
     }
 }

@@ -25,6 +25,11 @@ public class SetupSwing {
     private static final Dimension SPLASH_SIZE = SPLASH == null ? null : SPLASH.getSize();
     private static final Image SPLASH_IMAGE = new ImageIcon(Objects.requireNonNull(SetupSwing.class.getResource("/image/splash.png"))).getImage();
     public static final float DEFAULT_FONT_SIZE = 13F;
+    //系统显示器 DPI
+    public static final int SCREEN_DPI = Toolkit.getDefaultToolkit().getScreenResolution();
+    //系统显示器缩放
+    public static final float SCREEN_SCALE = (float) (1 + (((SCREEN_DPI - 96) / 24) * 0.25));
+
     public static void init() {
         if (SPLASH_GRAPHICS != null) {
             SPLASH_GRAPHICS.setPaintMode();

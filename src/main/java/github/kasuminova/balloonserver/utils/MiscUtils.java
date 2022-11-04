@@ -2,6 +2,7 @@ package github.kasuminova.balloonserver.utils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -58,5 +59,18 @@ public class MiscUtils {
         } else {
             return String.format("%ss", time / 1000);
         }
+    }
+
+    /**
+     * 显示弹出式菜单
+     * 修复默认方法的几个奇怪的 BUG.
+     * @param menu 菜单
+     * @param invoker 调用者
+     * @param e 鼠标事件
+     */
+    public static void showPopupMenu(JPopupMenu menu, Component invoker, MouseEvent e) {
+        menu.setInvoker(invoker);
+        menu.setLocation(e.getLocationOnScreen().x + 5, e.getLocationOnScreen().y + 5);
+        menu.setVisible(true);
     }
 }

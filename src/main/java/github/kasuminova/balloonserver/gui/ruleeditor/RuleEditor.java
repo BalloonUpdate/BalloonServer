@@ -12,6 +12,7 @@ import github.kasuminova.balloonserver.servers.localserver.AddUpdateRule;
 import github.kasuminova.balloonserver.servers.localserver.DeleteUpdateRule;
 import github.kasuminova.balloonserver.updatechecker.ApplicationVersion;
 import github.kasuminova.balloonserver.utils.GUILogger;
+import github.kasuminova.balloonserver.utils.MiscUtils;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -32,7 +33,7 @@ public class RuleEditor extends JDialog {
     public static final ApplicationVersion VERSION = new ApplicationVersion("2.0.0-BETA");
     public static final String TITLE = "RuleEditor " + VERSION;
     public static final int WINDOW_WIDTH = 750;
-    public static final int WINDOW_HEIGHT = 840;
+    public static final int WINDOW_HEIGHT = 825;
     private final GUILogger logger;
 
     /**
@@ -75,10 +76,18 @@ public class RuleEditor extends JDialog {
         contentPane.add(treePanel);
 
         contentPane.add(new JLabel("下方为额外更新规则列表, 这些内容会与上方规则一同加入服务器规则列表中。"));
-        JPanel ruleListPanel = new JPanel(new VFlowLayout());
-        ruleListPanel.setBorder(new TitledBorder("额外更新规则"));
+
         JList<String> ruleList = new JList<>();
-        ruleList.setVisibleRowCount(6);
+        JPanel ruleListPanel = new JPanel();
+        ruleListPanel.add(ruleList);
+
+        JScrollPane ruleListScrollPane = new JScrollPane(
+                ruleListPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        ruleListScrollPane.setBorder(new TitledBorder("额外更新规则"));
+        ruleListScrollPane.setPreferredSize(new Dimension(0,140));
+
         JPopupMenu ruleListMenu = new JPopupMenu();
         //添加更新规则
         JMenuItem addRule = new JMenuItem("添加更新规则");
@@ -91,16 +100,11 @@ public class RuleEditor extends JDialog {
         removeRule.setIcon(REMOVE_ICON);
         ruleListMenu.add(removeRule);
         //鼠标监听
-        ruleList.addMouseListener(new RuleListMouseAdapter(ruleListMenu, ruleList));
+        RuleListMouseAdapter ruleListMouseAdapter = new RuleListMouseAdapter(ruleListMenu, ruleList);
+        ruleList.addMouseListener(ruleListMouseAdapter);
+        ruleListPanel.addMouseListener(ruleListMouseAdapter);
 
-        JScrollPane ruleListScrollPane = new JScrollPane(
-                ruleList,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-
-        ruleListPanel.add(ruleListScrollPane);
-
-        contentPane.add(ruleListPanel);
+        contentPane.add(ruleListScrollPane);
 
         JButton complete = new JButton("完成");
         complete.addActionListener(e -> {
@@ -260,9 +264,7 @@ public class RuleEditor extends JDialog {
 
         @Override
         public void mouseReleased(MouseEvent e) {
-            if (e.isPopupTrigger()) {
-                ruleListMenu.show(ruleList, e.getX(), e.getY());
-            }
+            if (e.isPopupTrigger()) MiscUtils.showPopupMenu(ruleListMenu, ruleList, e);
         }
     }
 }

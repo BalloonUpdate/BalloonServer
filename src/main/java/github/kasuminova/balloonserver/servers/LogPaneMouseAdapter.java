@@ -1,5 +1,7 @@
 package github.kasuminova.balloonserver.servers;
 
+import github.kasuminova.balloonserver.utils.MiscUtils;
+
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -15,8 +17,6 @@ public class LogPaneMouseAdapter extends MouseAdapter {
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-            logPaneMenu.show(logPane, e.getX(), e.getY());
-        }
+        if (e.isPopupTrigger()) MiscUtils.showPopupMenu(logPaneMenu, logPane, e);
     }
 }

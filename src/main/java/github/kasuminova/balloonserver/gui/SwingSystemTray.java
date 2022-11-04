@@ -100,15 +100,13 @@ public class SwingSystemTray {
                     frame.setVisible(true);
                     frame.toFront();
                 } else if (e.getButton() == MouseEvent.BUTTON3 && e.isPopupTrigger()) {
-                    int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
-                    float scale = (float) (1 + (((dpi - 96) / 24) * 0.25));
-
                     // 右键点击弹出JPopupMenu绑定的载体以及JPopupMenu
                     dialog.setLocation(
-                            (int) (e.getXOnScreen() / scale) + 5,
-                            (int) (e.getYOnScreen() / scale) - trayMenu.getHeight() - 5);
+                            (int) (e.getXOnScreen() / SetupSwing.SCREEN_SCALE) + 5,
+                            (int) (e.getYOnScreen() / SetupSwing.SCREEN_SCALE) - trayMenu.getHeight() - 5);
                     // 显示载体
                     dialog.setVisible(true);
+                    dialog.toFront();
                     // 在载体的 0,0 处显示对话框
                     trayMenu.show(dialog, 0, 0);
                 }
