@@ -1,10 +1,12 @@
 package github.kasuminova.balloonserver.gui;
 
 import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme;
 import github.kasuminova.balloonserver.gui.panels.AboutPanel;
+import github.kasuminova.balloonserver.utils.ModernColors;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -17,8 +19,20 @@ import java.io.InputStream;
  * 一个工具类，用于初始化 Swing（即美化）
  */
 public class SetupSwing {
+    private static final SplashScreen SPLASH = SplashScreen.getSplashScreen();
+    private static final Graphics2D SPLASH_GRAPHICS = SPLASH == null ? null : SPLASH.createGraphics();
+    private static final Dimension SPLASH_SIZE = SPLASH == null ? null : SPLASH.getSize();
+    private static final Image SPLASH_IMAGE = SPLASH == null ? null : new ImageIcon(SPLASH.getImageURL()).getImage();
     public static final float DEFAULT_FONT_SIZE = 13F;
     public static void init() {
+        if (SPLASH_GRAPHICS != null) {
+            SPLASH_GRAPHICS.setPaintMode();
+            SPLASH_GRAPHICS.setFont(SPLASH_GRAPHICS.getFont().deriveFont(22F));
+            SPLASH_GRAPHICS.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            SPLASH_GRAPHICS.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            updateSplashProgress(5, "PreLoad");
+        }
+
         Log logger = LogFactory.get("SwingThemeLoader");
 
         long start1 = System.currentTimeMillis();
@@ -81,6 +95,8 @@ public class SetupSwing {
                     font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndSaira).deriveFont(DEFAULT_FONT_SIZE);
                     initGlobalFont(font);
                     UIManager.put("TitlePane.font", font.deriveFont(DEFAULT_FONT_SIZE + 2.5F));
+
+                    if (SPLASH_GRAPHICS != null) SPLASH_GRAPHICS.setFont(font.deriveFont(22F));
                 }
             } catch (Exception e) {
                 logger.error(e);
@@ -103,9 +119,46 @@ public class SetupSwing {
 
         ThreadUtil.waitForDie(uiThread);
         ThreadUtil.waitForDie(fontThread);
+        updateSplashProgress(25, "已载入 UI");
         ThreadUtil.waitForDie(themeThread);
+        updateSplashProgress(35, "已载入主题");
 
         logger.info("Swing UI Load Completed, Used {}ms", System.currentTimeMillis() - start1);
+    }
+
+    /**
+     * 更新闪屏进度条, 最大值为 100
+     *
+     * @param progress 进度
+     * @param progressMsg 进度信息
+     */
+    public static void updateSplashProgress(int progress, String progressMsg) {
+        if (SPLASH != null) {
+            //绘制背景，覆盖掉上次绘制的内容
+            SPLASH_GRAPHICS.drawImage(SPLASH_IMAGE, 0, 0, (img, infoFlags, x, y, width, height) -> false);
+
+            //绘制文字阴影, 65% 透明度
+            SPLASH_GRAPHICS.setColor(Color.BLACK);
+            SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,0.6F));
+            SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 27, SPLASH_SIZE.height - 28);
+            SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,1F));
+            //绘制文字
+            SPLASH_GRAPHICS.setColor(ModernColors.BLUE);
+            SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 25, SPLASH_SIZE.height - 30);
+            //更新进度
+            SPLASH_GRAPHICS.fillRect(0, SPLASH_SIZE.height - 20, (int) (SPLASH_SIZE.width * ((double) progress / 100)), 10);
+
+            SPLASH.update();
+        }
+    }
+
+    /**
+     * 更新闪屏进度条, 最大值为 100
+     *
+     * @param progress 进度
+     */
+    public static void updateSplashProgress(int progress) {
+        updateSplashProgress(progress, "载入中");
     }
 
     /**
