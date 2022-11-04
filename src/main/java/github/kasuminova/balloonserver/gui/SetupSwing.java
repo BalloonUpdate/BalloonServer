@@ -17,7 +17,7 @@ import java.io.InputStream;
  * 一个工具类，用于初始化 Swing（即美化）
  */
 public class SetupSwing {
-    public static final float DEFAULT_FONT_SIZE = 13.5F;
+    public static final float DEFAULT_FONT_SIZE = 13F;
     public static void init() {
         Log logger = LogFactory.get("SwingThemeLoader");
 
@@ -73,7 +73,7 @@ public class SetupSwing {
                 Font font;
                 //日志窗口字体
                 if (HMOSSansAndJBMono != null) {
-                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndJBMono).deriveFont(DEFAULT_FONT_SIZE - 0.5F);
+                    font = Font.createFont(Font.TRUETYPE_FONT, HMOSSansAndJBMono).deriveFont(DEFAULT_FONT_SIZE);
                     UIManager.put("TextPane.font", font);
                 }
                 //全局字体 + 标题字体

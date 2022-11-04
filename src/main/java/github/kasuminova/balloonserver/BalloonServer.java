@@ -7,7 +7,6 @@ import cn.hutool.system.SystemUtil;
 import github.kasuminova.balloonserver.configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.gui.ConfirmExitDialog;
-import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.gui.panels.AboutPanel;
 import github.kasuminova.balloonserver.gui.panels.SettingsPanel;
 import github.kasuminova.balloonserver.gui.SetupSwing;
@@ -45,7 +44,6 @@ import static github.kasuminova.balloonserver.utils.SvgIcons.*;
  */
 public final class BalloonServer {
     public static final int PROGRESSBAR_FLOW_TIME = 250;
-    public static final int ICON_SIZE = 96;
     public static final int MAIN_FRAME_WIDTH = 1150;
     public static final int MAIN_FRAME_HEIGHT = 725;
 
@@ -89,16 +87,14 @@ public final class BalloonServer {
     //支持放入多个任务的 Timer
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);
     private static final long START = System.currentTimeMillis();
-    private static final JFrame PREMAIN_FRAME = new JFrame("加载中");
     private static final JPanel STATUS_PANEL = new JPanel(new BorderLayout());
-    private static final JProgressBar PRE_LOAD_PROGRESS_BAR = new JProgressBar();
 
     private static void init() {
         //大小设置
         MAIN_FRAME.setMinimumSize(new Dimension(MAIN_FRAME_WIDTH, MAIN_FRAME_HEIGHT));
 
         //标签页配置
-        PRE_LOAD_PROGRESS_BAR.setString("载入主面板...");
+        GLOBAL_LOGGER.info("载入主面板...");
         TABBED_PANE.putClientProperty("JTabbedPane.tabAreaAlignment", "fill");
         MAIN_PANEL.add(TABBED_PANE, BorderLayout.CENTER);
         MAIN_FRAME.add(MAIN_PANEL);
@@ -140,10 +136,9 @@ public final class BalloonServer {
         //主窗口
         MAIN_FRAME.setIconImage(ICON.getImage());
         MAIN_FRAME.setLocationRelativeTo(null);
-        GLOBAL_LOGGER.info(String.format("程序已加载完成, 耗时 %sms", System.currentTimeMillis() - START));
+        GLOBAL_LOGGER.info(String.format("程序已加载完成, 耗时 %sms.", System.currentTimeMillis() - START));
 
         MAIN_FRAME.setVisible(true);
-        PREMAIN_FRAME.dispose();
 
         loadAutoUpdateFeature();
     }
@@ -192,7 +187,7 @@ public final class BalloonServer {
                 }
             }
         });
-        GLOBAL_LOGGER.info(String.format("任务栏已加载完毕, 耗时 %sms", System.currentTimeMillis() - start));
+        GLOBAL_LOGGER.info(String.format("任务栏已加载完毕, 耗时 %sms.", System.currentTimeMillis() - start));
     }
 
     /**
@@ -564,26 +559,13 @@ public final class BalloonServer {
      * 程序预加载
      */
     private static void preInit() {
-        JPanel panel = new JPanel(new VFlowLayout());
-        panel.add(new JLabel(new ImageIcon(ICON.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_DEFAULT))));
-        panel.add(new JLabel("程序启动中，请稍等..."));
-        PRE_LOAD_PROGRESS_BAR.setStringPainted(true);
-        PRE_LOAD_PROGRESS_BAR.setIndeterminate(true);
-        PRE_LOAD_PROGRESS_BAR.setString("...");
-        panel.add(PRE_LOAD_PROGRESS_BAR);
-        PREMAIN_FRAME.add(panel);
-        PREMAIN_FRAME.setSize(240, 150);
-        PREMAIN_FRAME.setUndecorated(true);
-        PREMAIN_FRAME.setLocationRelativeTo(null);
-        PREMAIN_FRAME.setVisible(true);
-
         //运行环境检测
-        PRE_LOAD_PROGRESS_BAR.setString("检查运行环境...");
+        GLOBAL_LOGGER.info("检查运行环境...");
         int version = Integer.parseInt(System.getProperty("java.specification.version"));
         GLOBAL_LOGGER.info("Java 版本为 " + version);
         GLOBAL_LOGGER.info("程序分支为 " + VERSION.getBranch());
         if (VERSION.getBranch().equals("ALPHA")) {
-            int selection = JOptionPane.showConfirmDialog(PREMAIN_FRAME, """
+            int selection = JOptionPane.showConfirmDialog(null, """
                             此版本为 ALPHA 版本，通常引入了一些可能存在破坏性的强大的新功能。
                             在使用之前，您应知悉此版本可能存在无征兆的程序崩溃，报错。
                             请不要将此版本投入生产环境

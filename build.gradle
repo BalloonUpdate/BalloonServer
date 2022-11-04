@@ -22,7 +22,8 @@ jar {
     manifest { //配置 Jar 文件的 Manifest
         attributes (
                 "Manifest-Version": 1.0,
-                'Main-Class': 'github.kasuminova.balloonserver.BalloonServer' //指定 Main 方法所在的文件
+                'Main-Class': 'github.kasuminova.balloonserver.BalloonServer', //指定 Main 方法所在的文件
+                'SplashScreen-Image': 'image/splash.png'
         )
     }
 
