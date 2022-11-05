@@ -1,11 +1,6 @@
 package github.kasuminova.balloonserver.gui.panels;
 
 import cn.hutool.core.io.IORuntimeException;
-import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.FlatLightLaf;
-import com.formdev.flatlaf.intellijthemes.FlatMaterialDesignDarkIJTheme;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.*;
 import github.kasuminova.balloonserver.configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.configurations.CloseOperation;
@@ -16,8 +11,6 @@ import github.kasuminova.balloonserver.utils.ModernColors;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 import static github.kasuminova.balloonserver.BalloonServer.*;
 
@@ -188,34 +181,25 @@ public class SettingsPanel {
 
     private static JPanel loadThemeListPanel() {
         //主题切换
-        List<String> themes = new ArrayList<>(8);
-        themes.add("FlatLaf Light");
-        themes.add("FlatLaf Dark");
-        themes.add("FlatLaf IntelIJ");
-        themes.add("FlatLaf Dracula");
-        themes.add("Atom One Dark");
-        themes.add("Atom One Dark Contrast");
-        themes.add("Arc Dark Contrast");
-        themes.add("Material Design Dark");
+        String[] themes = {
+                "Atom One Dark Contrast",
+                "Moonlight Contrast",
+                "Material Palenight Contrast"
+        };
 
         JPanel themeListPanel = new JPanel();
         themeListPanel.setBorder(new TitledBorder("选择界面主题"));
 
         JList<String> themeList = new JList<>();
-        themeList.setListData(themes.toArray(new String[0]));
+        themeList.setListData(themes);
         themeList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        themeList.setSelectedIndex(5);
+        themeList.setSelectedIndex(0);
         themeList.addListSelectionListener(e -> {
             try {
                 switch (themeList.getSelectedValue()) {
-                    case "FlatLaf Light" -> UIManager.setLookAndFeel(new FlatLightLaf());
-                    case "FlatLaf Dark" -> UIManager.setLookAndFeel(new FlatDarkLaf());
-                    case "FlatLaf IntelIJ" -> UIManager.setLookAndFeel(new FlatIntelliJLaf());
-                    case "FlatLaf Dracula" -> UIManager.setLookAndFeel(new FlatDarculaLaf());
-                    case "Atom One Dark" -> UIManager.setLookAndFeel(new FlatAtomOneDarkIJTheme());
                     case "Atom One Dark Contrast" -> UIManager.setLookAndFeel(new FlatAtomOneDarkContrastIJTheme());
-                    case "Arc Dark Contrast" -> UIManager.setLookAndFeel(new FlatArcDarkContrastIJTheme());
-                    case "Material Design Dark" -> UIManager.setLookAndFeel(new FlatMaterialDesignDarkIJTheme());
+                    case "Moonlight Contrast" -> UIManager.setLookAndFeel(new FlatMoonlightContrastIJTheme());
+                    case "Material Palenight Contrast" -> UIManager.setLookAndFeel(new FlatMaterialPalenightContrastIJTheme());
                 }
                 SwingUtilities.updateComponentTreeUI(MAIN_FRAME);
             } catch (Exception ex) {

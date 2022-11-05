@@ -105,6 +105,7 @@ public final class BalloonServer {
         //标签页配置
         GLOBAL_LOGGER.info("载入主面板...");
         TABBED_PANE.putClientProperty("JTabbedPane.tabAreaAlignment", "fill");
+        TABBED_PANE.putClientProperty("JTabbedPane.tabWidthMode", "equal");
         MAIN_PANEL.add(TABBED_PANE, BorderLayout.CENTER);
         MAIN_FRAME.add(MAIN_PANEL);
 
