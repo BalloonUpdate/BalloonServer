@@ -152,7 +152,7 @@ public class SetupSwing {
             SPLASH_GRAPHICS.setColor(ModernColors.BLUE);
             SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 25, SPLASH_SIZE.height - 30);
             //更新进度
-            SPLASH_GRAPHICS.fillRect(0, SPLASH_SIZE.height - 20, (int) (SPLASH_SIZE.width * ((double) progress / 100)), 10);
+            SPLASH_GRAPHICS.fillRect(0, SPLASH_SIZE.height - 15, (int) (SPLASH_SIZE.width * ((double) progress / 100)), 10);
 
             SPLASH.update();
         }
