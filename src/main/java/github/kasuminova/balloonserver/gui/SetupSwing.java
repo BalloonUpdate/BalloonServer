@@ -22,6 +22,7 @@ import java.util.Objects;
 public class SetupSwing {
     private static final SplashScreen SPLASH = SplashScreen.getSplashScreen();
     private static final Graphics2D SPLASH_GRAPHICS = SPLASH == null ? null : SPLASH.createGraphics();
+    private static final Graphics2D SPLASH_PROGRESS_GRAPHICS = SPLASH == null ? null : SPLASH.createGraphics();
     private static final Dimension SPLASH_SIZE = SPLASH == null ? null : SPLASH.getSize();
     private static final Image SPLASH_IMAGE = new ImageIcon(Objects.requireNonNull(SetupSwing.class.getResource("/image/splash.png"))).getImage();
     public static final float DEFAULT_FONT_SIZE = 13F;
@@ -32,10 +33,13 @@ public class SetupSwing {
 
     public static void init() {
         if (SPLASH_GRAPHICS != null) {
-            SPLASH_GRAPHICS.setPaintMode();
+            //字体
             SPLASH_GRAPHICS.setFont(SPLASH_GRAPHICS.getFont().deriveFont(22F));
+            //抗锯齿
             SPLASH_GRAPHICS.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            SPLASH_GRAPHICS.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            //渐变进度条
+            SPLASH_PROGRESS_GRAPHICS.setPaint(new GradientPaint(0, SPLASH_SIZE.height, Color.CYAN, SPLASH_SIZE.width, SPLASH_SIZE.height, ModernColors.BLUE));
             updateSplashProgress(5, "PreLoad");
         }
 
@@ -144,16 +148,15 @@ public class SetupSwing {
             SPLASH_GRAPHICS.drawImage(SPLASH_IMAGE, 0, 0, (img, infoFlags, x, y, width, height) -> false);
 
             //绘制文字阴影, 75% 透明度
-            SPLASH_GRAPHICS.setColor(Color.DARK_GRAY);
-            SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,0.75F));
-            SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 27, SPLASH_SIZE.height - 28);
+            SPLASH_GRAPHICS.setColor(Color.BLACK);
+            SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,0.5F));
+            SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 22, SPLASH_SIZE.height - 23);
             SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,1F));
             //绘制文字
             SPLASH_GRAPHICS.setColor(ModernColors.BLUE);
-            SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 25, SPLASH_SIZE.height - 30);
+            SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 20, SPLASH_SIZE.height - 25);
             //更新进度
-            SPLASH_GRAPHICS.fillRect(0, SPLASH_SIZE.height - 15, (int) (SPLASH_SIZE.width * ((double) progress / 100)), 10);
-
+            SPLASH_PROGRESS_GRAPHICS.fillRect(0, SPLASH_SIZE.height - 10, (int) (SPLASH_SIZE.width * ((double) progress / 100)), 10);
             SPLASH.update();
         }
     }
