@@ -7,7 +7,6 @@ import github.kasuminova.balloonserver.utils.fileobject.SimpleDirectoryObject;
 import github.kasuminova.messages.*;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.GUILogger;
-import io.netty.channel.ChannelHandlerContext;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,7 +19,7 @@ public class RemoteClientChannel extends AbstractRemoteClientChannel {
     }
 
     @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+    public void onRegisterMessages() {
         //认证消息
         registerMessage(AuthSuccessMessage.class, (MessageProcessor<AuthSuccessMessage>) this::onAuthSuccess);
         //日志消息
@@ -29,12 +28,10 @@ public class RemoteClientChannel extends AbstractRemoteClientChannel {
         registerMessage(StatusMessage.class, (MessageProcessor<StatusMessage>) this::updateStatus);
         //文件夹消息
         registerMessage(SimpleDirectoryObject.class, (MessageProcessor<SimpleDirectoryObject>) RemoteClientChannel::showFileObjectBrowser);
-
-        super.channelRegistered(ctx);
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
+    protected void channelActive0() {
         logger.info("已连接至服务器, 认证中...");
         timeOutListener.schedule(new TimerTask() {
             @Override
@@ -45,15 +42,6 @@ public class RemoteClientChannel extends AbstractRemoteClientChannel {
             }
         }, TIMEOUT, TIMEOUT);
         ctx.writeAndFlush(new TokenMessage(config.getToken(), BalloonServer.VERSION));
-        ctx.fireChannelActive();
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
-        serverInterface.onDisconnected();
-        logger.info("已从服务器断开连接.");
-
-        ctx.fireChannelInactive();
     }
 
     private void onAuthSuccess(AuthSuccessMessage message) {

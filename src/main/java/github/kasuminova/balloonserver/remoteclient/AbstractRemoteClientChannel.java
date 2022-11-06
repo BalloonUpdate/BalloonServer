@@ -39,14 +39,41 @@ public abstract class AbstractRemoteClientChannel extends SimpleChannelInboundHa
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+    public final void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        onRegisterMessages();
+
+        super.channelRegistered(ctx);
+    }
+
+    @Override
+    public final void channelActive(ChannelHandlerContext ctx) throws Exception {
+        this.ctx = ctx;
+
+        channelActive0();
+
+        super.channelActive(ctx);
+    }
+
+    @Override
+    public final void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        channelInactive0();
+
+        serverInterface.onDisconnected();
+        logger.info("已从服务器断开连接.");
+
+        super.channelInactive(ctx);
+    }
+
+    @Override
+    public final void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        exceptionCaught0(cause);
+
         logger.warn("出现问题, 已断开连接: {}", cause);
         ctx.close();
-        ctx.fireChannelInactive();
     }
 
     /**
-     * 注册消息和消息对应的处理器
+     * 注册消息以及对应的处理器
      * @param clazz 消息类型
      * @param processor 消息处理函数
      */
@@ -55,5 +82,33 @@ public abstract class AbstractRemoteClientChannel extends SimpleChannelInboundHa
         if (BalloonServer.CONFIG.isDebugMode()) {
             logger.debug("Registered Message {}", clazz.getName());
         }
+    }
+
+    /**
+     * 开始注册消息事件
+     */
+    protected void onRegisterMessages() {
+
+    }
+    /**
+     * 通道启用事件
+     */
+    protected void channelActive0() {
+
+    }
+
+    /**
+     * 通道关闭事件
+     */
+    protected void channelInactive0() {
+
+    }
+
+    /**
+     * 通道出现问题时
+     * @param cause 错误
+     */
+    protected void exceptionCaught0(Throwable cause) {
+
     }
 }

@@ -6,7 +6,6 @@ import github.kasuminova.balloonserver.utils.FileUtil;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.messages.MessageProcessor;
 import github.kasuminova.messages.filemessages.*;
-import io.netty.channel.ChannelHandlerContext;
 
 import javax.swing.*;
 import java.io.File;
@@ -26,33 +25,21 @@ public class RemoteClientFileChannel extends AbstractRemoteClientChannel {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-        this.ctx = ctx;
-
-        startFileDaemon();
-
+    public void onRegisterMessages() {
         //文件信息消息
         registerMessage(FileInfoMsg.class, (MessageProcessor<FileInfoMsg>) this::printFileInfo);
         //文件对象消息
         registerMessage(FileObjMessage.class, (MessageProcessor<FileObjMessage>) this::receiveFile);
-
-        ctx.fireChannelActive();
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
-        networkFiles.forEach((path, networkFile) -> {
-            try {
-                networkFile.randomAccessFile.close();
-            } catch (Exception e) {
-                logger.error(e);
-            }
-            networkFiles.remove(path);
-        });
+    public void channelActive0() {
+        startFileDaemon();
+    }
 
-        fileDaemon.stop();
-
-        ctx.fireChannelInactive();
+    @Override
+    public void channelInactive0() {
+        stopFileDaemon();
     }
 
     private void receiveFile(FileObjMessage fileObjMsg) {
@@ -121,6 +108,19 @@ public class RemoteClientFileChannel extends AbstractRemoteClientChannel {
             }
         }));
         fileDaemon.start();
+    }
+
+    private void stopFileDaemon() {
+        networkFiles.forEach((path, networkFile) -> {
+            try {
+                networkFile.randomAccessFile.close();
+            } catch (Exception e) {
+                logger.error(e);
+            }
+            networkFiles.remove(path);
+        });
+
+        fileDaemon.stop();
     }
 
     private static class NetworkFile {
