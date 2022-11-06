@@ -7,7 +7,8 @@ import github.kasuminova.balloonserver.servers.ServerInterface;
 import io.netty.channel.ChannelHandlerContext;
 
 public interface RemoteClientInterface extends ServerInterface {
-    ChannelHandlerContext getMainChannel();
+    ChannelHandlerContext getChannel();
+    void setChannel(ChannelHandlerContext ctx);
 
     RemoteClientConfig getRemoteClientConfig();
 
@@ -15,7 +16,7 @@ public interface RemoteClientInterface extends ServerInterface {
 
     void onDisconnected();
 
-    void onConnected(ChannelHandlerContext ctx, IntegratedServerConfig config);
+    void onConnected(IntegratedServerConfig config);
 
     void showCommonRuleEditorDialog(JSONArray jsonArray);
     void showOnceRuleEditorDialog(JSONArray jsonArray);

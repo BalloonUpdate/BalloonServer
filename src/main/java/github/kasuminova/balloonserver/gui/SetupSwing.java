@@ -21,9 +21,9 @@ import java.util.Objects;
  */
 public class SetupSwing {
     private static final SplashScreen SPLASH = SplashScreen.getSplashScreen();
-    private static final Graphics2D SPLASH_GRAPHICS = SPLASH == null ? null : SPLASH.createGraphics();
-    private static final Graphics2D SPLASH_PROGRESS_GRAPHICS = SPLASH == null ? null : SPLASH.createGraphics();
-    private static final Dimension SPLASH_SIZE = SPLASH == null ? null : SPLASH.getSize();
+    private static final Graphics2D SPLASH_GRAPHICS             = SPLASH == null ? null : SPLASH.createGraphics();
+    private static final Graphics2D SPLASH_PROGRESS_GRAPHICS    = SPLASH == null ? null : SPLASH.createGraphics();
+    private static final Dimension  SPLASH_SIZE                 = SPLASH == null ? null : SPLASH.getSize();
     private static final Image SPLASH_IMAGE = new ImageIcon(Objects.requireNonNull(SetupSwing.class.getResource("/image/splash.png"))).getImage();
     public static final float DEFAULT_FONT_SIZE = 13F;
     //系统显示器 DPI
@@ -147,7 +147,7 @@ public class SetupSwing {
             //绘制背景，覆盖掉上次绘制的内容
             SPLASH_GRAPHICS.drawImage(SPLASH_IMAGE, 0, 0, (img, infoFlags, x, y, width, height) -> false);
 
-            //绘制文字阴影, 75% 透明度
+            //绘制文字阴影, 50% 透明度
             SPLASH_GRAPHICS.setColor(Color.BLACK);
             SPLASH_GRAPHICS.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP,0.5F));
             SPLASH_GRAPHICS.drawString(StrUtil.format("{} - {}%", progressMsg, progress), 22, SPLASH_SIZE.height - 23);

@@ -78,7 +78,7 @@ public class RuleEditorActionListener implements ActionListener {
                 }
             });
         } else if (serverInterface instanceof RemoteClientInterface remoteClientInterface) {
-            remoteClientInterface.getMainChannel().writeAndFlush(new RequestMessage(
+            remoteClientInterface.getChannel().writeAndFlush(new RequestMessage(
                     "GetJsonCache", List.of(new String[]{"RuleEditor"})));
         }
     }

@@ -1,9 +1,10 @@
 package github.kasuminova.messages.filemessages;
 
-import java.io.Serial;
-import java.io.Serializable;
+import github.kasuminova.messages.AbstractMessage;
 
-public abstract class FileMessage implements Serializable {
+import java.io.Serial;
+
+public abstract class FileMessage extends AbstractMessage {
     @Serial
     private static final long serialVersionUID = 1L;
     String filePath;

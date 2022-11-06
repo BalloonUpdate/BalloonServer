@@ -4,10 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.FileUtil;
 import github.kasuminova.balloonserver.utils.GUILogger;
-import github.kasuminova.balloonserver.utils.MiscUtils;
 import github.kasuminova.messages.filemessages.*;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 
 import javax.swing.*;
 import java.io.File;
@@ -17,70 +15,73 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object> {
-    private static final int TIMEOUT = 5000;
+public class RemoteClientFileChannel extends AbstractRemoteClientChannel {
     public static final int BUFFER_SIZE = 8192;
-    private final GUILogger logger;
-    private final RemoteClientInterface serverInterface;
     private final Map<String, NetworkFile> networkFiles = new ConcurrentHashMap<>(4);
     private Timer fileDaemon;
 
     public RemoteClientFileChannel(GUILogger logger, RemoteClientInterface serverInterface) {
-        this.logger = logger;
-        this.serverInterface = serverInterface;
+        super(logger, serverInterface);
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        serverInterface.onDisconnected();
-        logger.warn("出现问题, 已断开连接: {}", MiscUtils.stackTraceToString(cause));
-        ctx.close();
+    public void channelActive(ChannelHandlerContext ctx) {
+        this.ctx = ctx;
+
+        startFileDaemon();
+
+        //文件信息消息
+        registerMessage(FileInfoMsg.class, message0 -> printFileInfo((FileInfoMsg) message0));
+        //文件对象消息
+        registerMessage(FileObjMessage.class, message0 -> receiveFile((FileObjMessage) message0));
+
+        ctx.fireChannelActive();
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        networkFiles.forEach((path, networkFile) -> {
+            try {
+                networkFile.randomAccessFile.close();
+            } catch (Exception e) {
+                logger.error(e);
+            }
+            networkFiles.remove(path);
+        });
+
+        fileDaemon.stop();
+
         ctx.fireChannelInactive();
     }
 
-    @Override
-    public void channelRead0(ChannelHandlerContext ctx, Object msg) {
-        if (msg instanceof FileMessage fileMessage) {
-            String path = StrUtil.format("{}/{}", fileMessage.getFilePath(), fileMessage.getFileName());
-            File file = new File(path);
-
-            if (msg instanceof FileInfoMsg fileInfoMsg) {
-                logger.info("文件信息: {}/{}, 大小: {}",
-                        fileInfoMsg.getFileName(), fileInfoMsg.getFilePath(),
-                        FileUtil.formatFileSizeToStr(fileInfoMsg.getSize()));
-            } else if (msg instanceof FileObjMessage fileObjMsg) {
-                try {
-                    receiveFile(ctx, path, file, fileObjMsg);
-                } catch (IOException e) {
-                    logger.error(e);
-                }
-            }
-        } else {
-            ctx.fireChannelRead(msg);
-        }
-    }
-
-    private void receiveFile(ChannelHandlerContext ctx, String path, File file, FileObjMessage fileObjMsg) throws IOException {
+    private void receiveFile(FileObjMessage fileObjMsg) {
+        String path = StrUtil.format("{}/{}", fileObjMsg.getFilePath(), fileObjMsg.getFileName());
+        File file = new File(path);
         NetworkFile networkFile = networkFiles.get(path);
-        if (networkFile == null) networkFile = createNewNetworkFile(path, file);
 
-        RandomAccessFile randomAccessFile = networkFile.randomAccessFile;
+        try {
+            if (networkFile == null) networkFile = createNewNetworkFile(path, file);
 
-        randomAccessFile.seek(fileObjMsg.getOffset());
-        randomAccessFile.write(fileObjMsg.getData());
-        networkFile.lastUpdateTime = System.currentTimeMillis();
-        networkFile.completedBytes.getAndAdd(fileObjMsg.getLength());
+            RandomAccessFile randomAccessFile = networkFile.randomAccessFile;
 
-        if (networkFile.completedBytes.get() >= fileObjMsg.getTotal()) {
-            networkFiles.get(path).randomAccessFile.close();
-            networkFiles.remove(path);
-            logger.info("Successfully To Received File {}", path);
-        } else {
-            long len = fileObjMsg.getTotal() - networkFile.completedBytes.get();
-            ctx.writeAndFlush(new FileRequestMsg(
-                    fileObjMsg.getFilePath(), fileObjMsg.getFileName(),
-                    networkFile.completedBytes.get(),
-                    len > BUFFER_SIZE ? BUFFER_SIZE : len));
+            randomAccessFile.seek(fileObjMsg.getOffset());
+            randomAccessFile.write(fileObjMsg.getData());
+            networkFile.lastUpdateTime = System.currentTimeMillis();
+            networkFile.completedBytes.getAndAdd(fileObjMsg.getLength());
+
+            if (networkFile.completedBytes.get() >= fileObjMsg.getTotal()) {
+                networkFiles.get(path).randomAccessFile.close();
+                networkFiles.remove(path);
+                logger.info("Successfully To Received File {}", path);
+            } else {
+                long len = fileObjMsg.getTotal() - networkFile.completedBytes.get();
+                ctx.writeAndFlush(new FileRequestMsg(
+                        fileObjMsg.getFilePath(), fileObjMsg.getFileName(),
+                        networkFile.completedBytes.get(),
+                        len > BUFFER_SIZE ? BUFFER_SIZE : len));
+            }
+        } catch (IOException e) {
+            logger.error("接收文件的时候出现了一些问题...", e);
         }
     }
 
@@ -100,8 +101,13 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
         return networkFile;
     }
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) {
+    private void printFileInfo(FileInfoMsg message) {
+        logger.info("文件信息: {}/{}, 大小: {}",
+                message.getFileName(), message.getFilePath(),
+                FileUtil.formatFileSizeToStr(message.getSize()));
+    }
+
+    private void startFileDaemon() {
         fileDaemon = new Timer(1000, e -> networkFiles.forEach((path, networkFile) -> {
             if (networkFile.lastUpdateTime < System.currentTimeMillis() - TIMEOUT) {
                 try {
@@ -114,20 +120,6 @@ public class RemoteClientFileChannel extends SimpleChannelInboundHandler<Object>
             }
         }));
         fileDaemon.start();
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
-        networkFiles.forEach((path, networkFile) -> {
-            try {
-                networkFile.randomAccessFile.close();
-            } catch (Exception e) {
-                logger.error(e);
-            }
-            networkFiles.remove(path);
-        });
-
-        fileDaemon.stop();
     }
 
     private static class NetworkFile {

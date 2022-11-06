@@ -7,7 +7,6 @@ public class FileListMessage extends AbstractMessage {
 
     public FileListMessage(AbstractSimpleFileObject[] fileObjects) {
         this.fileObjects = fileObjects;
-        messageType = FileListMessage.class.getName();
     }
 
     public AbstractSimpleFileObject[] getFileObjects() {

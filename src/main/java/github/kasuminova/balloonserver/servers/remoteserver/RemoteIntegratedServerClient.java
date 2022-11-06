@@ -221,8 +221,13 @@ public class RemoteIntegratedServerClient extends AbstractServer {
             }
 
             @Override
-            public ChannelHandlerContext getMainChannel() {
+            public ChannelHandlerContext getChannel() {
                 return remoteChannel;
+            }
+
+            @Override
+            public void setChannel(ChannelHandlerContext ctx) {
+                remoteChannel = ctx;
             }
 
             @Override
@@ -270,9 +275,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
             }
 
             @Override
-            public void onConnected(ChannelHandlerContext ctx, IntegratedServerConfig config) {
-                remoteChannel = ctx;
-
+            public void onConnected(IntegratedServerConfig config) {
                 isConnecting = false;
                 isConnected = true;
 
@@ -337,7 +340,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
 
         JButton sendMessage = new JButton("发送消息");
         sendMessage.addActionListener(e -> {
-            ChannelHandlerContext mainChannel = serverInterface.getMainChannel();
+            ChannelHandlerContext mainChannel = serverInterface.getChannel();
             mainChannel.writeAndFlush(new LogMessage(GUILogger.INFO, textField.getText()));
             textField.setText("");
         });
@@ -353,7 +356,7 @@ public class RemoteIntegratedServerClient extends AbstractServer {
 
         JButton requestFile = new JButton("请求文件");
         requestFile.addActionListener(e -> {
-            ChannelHandlerContext mainChannel = serverInterface.getMainChannel();
+            ChannelHandlerContext mainChannel = serverInterface.getChannel();
             mainChannel.writeAndFlush(new FileRequestMsg("./", fileRequestTextField.getText()));
             textField.setText("");
         });

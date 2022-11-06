@@ -7,7 +7,6 @@ public class LogMessage extends AbstractMessage {
     public LogMessage(String level, String message) {
         this.level = level;
         this.message = message;
-        this.messageType = LogMessage.class.getName();
     }
 
     public String getMessage() {

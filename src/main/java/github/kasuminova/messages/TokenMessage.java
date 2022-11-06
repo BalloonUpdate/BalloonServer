@@ -9,8 +9,6 @@ public class TokenMessage extends AbstractMessage {
     public TokenMessage(String token, ApplicationVersion clientVersion) {
         this.token = token;
         this.clientVersion = clientVersion;
-
-        messageType = TokenMessage.class.getName();
     }
 
     public ApplicationVersion getClientVersion() {

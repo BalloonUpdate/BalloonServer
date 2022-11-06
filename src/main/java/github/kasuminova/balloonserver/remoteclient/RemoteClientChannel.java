@@ -2,28 +2,39 @@ package github.kasuminova.balloonserver.remoteclient;
 
 import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.BalloonServer;
-import github.kasuminova.balloonserver.configurations.RemoteClientConfig;
 import github.kasuminova.balloonserver.gui.fileobjectbrowser.FileObjectBrowser;
 import github.kasuminova.balloonserver.utils.fileobject.SimpleDirectoryObject;
 import github.kasuminova.messages.*;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
-    private static final int TIMEOUT = 5000;
-    private final GUILogger logger;
-    private final RemoteClientInterface serverInterface;
-    private final RemoteClientConfig config;
+public class RemoteClientChannel extends AbstractRemoteClientChannel {
     private final Timer timeOutListener = new Timer();
+
     public RemoteClientChannel(GUILogger logger, RemoteClientInterface serverInterface) {
-        this.logger = logger;
-        this.serverInterface = serverInterface;
-        config = serverInterface.getRemoteClientConfig();
+        super(logger, serverInterface);
+    }
+
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        //认证消息
+        registerMessage(AuthSuccessMessage.class,
+                message0 -> onAuthSuccess((AuthSuccessMessage) message0));
+        //日志消息
+        registerMessage(LogMessage.class,
+                message0 -> processLogMsg((LogMessage) message0));
+        //状态消息
+        registerMessage(StatusMessage.class,
+                message0 -> updateStatus((StatusMessage) message0));
+        //文件夹消息
+        registerMessage(SimpleDirectoryObject.class,
+                message0 -> showFileObjectBrowser((SimpleDirectoryObject) message0));
+
+        super.channelRegistered(ctx);
     }
 
     @Override
@@ -42,13 +53,6 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        serverInterface.onDisconnected();
-        logger.warn("出现问题, 已断开连接: {}", cause);
-        ctx.close();
-    }
-
-    @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         serverInterface.onDisconnected();
         logger.info("已从服务器断开连接.");
@@ -56,28 +60,21 @@ public class RemoteClientChannel extends SimpleChannelInboundHandler<Object> {
         ctx.fireChannelInactive();
     }
 
-    @Override
-    public void channelRead0(ChannelHandlerContext ctx, Object msg) {
-        if (msg instanceof AuthSuccessMessage authSuccessMessage) {
-            serverInterface.onConnected(ctx, authSuccessMessage.getConfig());
-            timeOutListener.cancel();
-        } else if (msg instanceof LogMessage logMsg) {
-            switch (logMsg.getLevel()) {
-                case "INFO" -> logger.info(logMsg.getMessage());
-                case "WARN" -> logger.warn(logMsg.getMessage());
-                case "ERROR" -> logger.error(logMsg.getMessage());
-                case "DEBUG" -> logger.debug(logMsg.getMessage());
-            }
-        } else if (msg instanceof StatusMessage statusMessage) {
-            updateStatus(statusMessage, serverInterface);
-        } else if (msg instanceof SimpleDirectoryObject directoryObject) {
-            showFileObjectBrowser(directoryObject);
-        } else {
-            ctx.fireChannelRead(msg);
+    private void onAuthSuccess(AuthSuccessMessage message) {
+        serverInterface.onConnected(message.getConfig());
+        timeOutListener.cancel();
+    }
+
+    private void processLogMsg(LogMessage message) {
+        switch (message.getLevel()) {
+            case "INFO" -> logger.info(message.getMessage());
+            case "WARN" -> logger.warn(message.getMessage());
+            case "ERROR" -> logger.error(message.getMessage());
+            case "DEBUG" -> logger.debug(message.getMessage());
         }
     }
 
-    private static void updateStatus(StatusMessage statusMessage, RemoteClientInterface serverInterface) {
+    private void updateStatus(StatusMessage statusMessage) {
         serverInterface.updateStatus(
                 StrUtil.format("{} M / {} M - Max: {} M",
                         statusMessage.getUsed(), statusMessage.getTotal(), statusMessage.getMax()),
