@@ -148,8 +148,9 @@ public final class BalloonServer {
         updateSplashProgress(85, "已载入主服务端");
 
         //主窗口
-        MAIN_FRAME.setIconImage(ICON.getImage());
+        MAIN_FRAME.setIconImage(ICON.getImage().getScaledInstance(64,64, Image.SCALE_AREA_AVERAGING));
         MAIN_FRAME.setLocationRelativeTo(null);
+
         GLOBAL_LOGGER.info(String.format("程序已加载完成, 耗时 %sms.", System.currentTimeMillis() - START));
         updateSplashProgress(100, "已完成");
         MAIN_FRAME.setVisible(true);
