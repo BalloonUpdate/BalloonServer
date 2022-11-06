@@ -57,6 +57,7 @@ public class RemoteClientChannel extends AbstractRemoteClientChannel {
 
     private void onAuthSuccess(AuthSuccessMessage message) {
         serverInterface.onConnected(message.getConfig());
+        serverInterface.setChannel(ctx);
         timeOutListener.cancel();
     }
 

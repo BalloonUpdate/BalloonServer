@@ -1,5 +1,6 @@
 package github.kasuminova.messages;
 
+@Deprecated
 public class MethodMessage extends AbstractMessage {
     private String className;
     private String methodName;
