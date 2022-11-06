@@ -4,7 +4,7 @@ import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.file.FileReader;
 import com.alibaba.fastjson2.JSONArray;
 import github.kasuminova.balloonserver.BalloonServer;
-import github.kasuminova.balloonserver.servers.ServerInterface;
+import github.kasuminova.balloonserver.servers.GUIServerInterface;
 import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.GUILogger;
@@ -24,10 +24,10 @@ import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
 public class RuleEditorActionListener implements ActionListener {
     protected final JList<String> ruleList;
     protected final List<String> rules;
-    protected final ServerInterface serverInterface;
+    protected final GUIServerInterface serverInterface;
     protected final GUILogger logger;
 
-    public RuleEditorActionListener(JList<String> ruleList, List<String> rules, ServerInterface serverInterface, GUILogger logger) {
+    public RuleEditorActionListener(JList<String> ruleList, List<String> rules, GUIServerInterface serverInterface, GUILogger logger) {
         this.ruleList = ruleList;
         this.rules = rules;
         this.serverInterface = serverInterface;

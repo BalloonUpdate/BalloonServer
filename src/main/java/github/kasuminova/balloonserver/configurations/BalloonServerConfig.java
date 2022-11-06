@@ -32,10 +32,10 @@ public class BalloonServerConfig extends Configuration {
     @JSONField(ordinal = 5)
     private int closeOperation = 0;
     /**
-     * 低性能模式
+     * 单线程模式
      */
     @JSONField(ordinal = 6)
-    private boolean lowIOPerformanceMode = false;
+    private boolean singleThreadMode = false;
     /**
      * 文件线程池大小
      */
@@ -111,12 +111,12 @@ public class BalloonServerConfig extends Configuration {
         return this;
     }
 
-    public boolean isLowIOPerformanceMode() {
-        return lowIOPerformanceMode;
+    public boolean isSingleThreadMode() {
+        return singleThreadMode;
     }
 
-    public BalloonServerConfig setLowIOPerformanceMode(boolean lowIOPerformanceMode) {
-        this.lowIOPerformanceMode = lowIOPerformanceMode;
+    public BalloonServerConfig setSingleThreadMode(boolean singleThreadMode) {
+        this.singleThreadMode = singleThreadMode;
         return this;
     }
 

@@ -12,7 +12,7 @@ import github.kasuminova.balloonserver.configurations.IntegratedServerConfig;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.httpserver.HttpServer;
-import github.kasuminova.balloonserver.servers.AbstractServer;
+import github.kasuminova.balloonserver.servers.AbstractGUIServer;
 import github.kasuminova.balloonserver.utils.*;
 import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
 
@@ -32,7 +32,7 @@ import static github.kasuminova.balloonserver.BalloonServer.*;
 /**
  * IntegratedServer 集成服务端面板实例
  */
-public class IntegratedServer extends AbstractServer {
+public class IntegratedServer extends AbstractGUIServer {
     protected static final Dimension REQUEST_LIST_FRAME_SIZE = new Dimension(400,750);
     protected final JSONObject index = new JSONObject();
     protected static final String RES_JSON_FILE_EXTENSION_NAME = "res-cache";
@@ -50,7 +50,6 @@ public class IntegratedServer extends AbstractServer {
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     protected final JPanel littleServerPanel = new JPanel(new BorderLayout());
     protected final JButton startOrStop = new JButton("保存配置并启动服务器");
-
     protected HttpServer server;
     protected String indexJson = null;
     protected String resJson = null;

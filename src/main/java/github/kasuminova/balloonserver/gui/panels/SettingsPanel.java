@@ -2,6 +2,7 @@ package github.kasuminova.balloonserver.gui.panels;
 
 import cn.hutool.core.io.IORuntimeException;
 import com.formdev.flatlaf.intellijthemes.materialthemeuilite.*;
+import github.kasuminova.balloonserver.BalloonServer;
 import github.kasuminova.balloonserver.configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.configurations.CloseOperation;
 import github.kasuminova.balloonserver.configurations.ConfigurationManager;
@@ -30,7 +31,7 @@ public class SettingsPanel {
     };
     private static final JComboBox<CloseOperation> CLOSE_OPERATION_COMBO_BOX = new JComboBox<>(OPERATIONS);
     private static final JSpinner FILE_THREAD_POOL_SIZE_SPINNER = new JSpinner();
-    private static final JCheckBox LOW_IO_PERFORMANCE_MODE = new JCheckBox("低性能模式 (重启生效)");
+    private static final JCheckBox SINGLE_THREAD_MODE = new JCheckBox("单线程模式");
     private static final JCheckBox ENABLE_DEBUG_MODE = new JCheckBox("启用 Debug 模式");
     private static final int MAXIMUM_FILE_THREAD_POOL_SIZE = 1024;
     public static JPanel createPanel() {
@@ -70,11 +71,11 @@ public class SettingsPanel {
         JLabel closeOperationsDesc = new JLabel("此项决定点击 BalloonServer 窗口右上角关闭按钮后程序的操作.");
         closeOperationsDesc.setForeground(ModernColors.BLUE);
 
-        //低性能模式
-        JLabel lowIOPerformanceModeDesc0 = new JLabel("此项选中后, 将会限制生成缓存的线程数至单线程, 对于机械盘等低 IO 性能的服务器可能会有性能提升.");
-        lowIOPerformanceModeDesc0.setForeground(ModernColors.BLUE);
-        JLabel lowIOPerformanceModeDesc1 = new JLabel("此项会覆盖 \"文件计算线程池大小\" 配置.");
-        lowIOPerformanceModeDesc1.setForeground(ModernColors.YELLOW);
+        //单线程模式
+        JLabel singleThreadModeDesc0 = new JLabel("此项选中后, 将会限制生成缓存的线程数至单线程, 对于机械盘等低 IO 性能的服务器可能会有性能提升.");
+        singleThreadModeDesc0.setForeground(ModernColors.BLUE);
+        JLabel singleThreadModeDesc1 = new JLabel("此项会覆盖 \"文件计算线程池大小\" 配置.");
+        singleThreadModeDesc1.setForeground(ModernColors.YELLOW);
 
         //文件线程池大小
         Box fileThreadPoolSizeBox = Box.createHorizontalBox();
@@ -82,7 +83,7 @@ public class SettingsPanel {
         FILE_THREAD_POOL_SIZE_SPINNER.setModel(fileThreadPoolSizeSpinnerModel);
         JSpinner.NumberEditor portSpinnerEditor = new JSpinner.NumberEditor(FILE_THREAD_POOL_SIZE_SPINNER, "#");
         FILE_THREAD_POOL_SIZE_SPINNER.setEditor(portSpinnerEditor);
-        fileThreadPoolSizeBox.add(new JLabel("文件计算线程池大小 (重启生效): "));
+        fileThreadPoolSizeBox.add(new JLabel("文件计算线程池大小: "));
         fileThreadPoolSizeBox.add(FILE_THREAD_POOL_SIZE_SPINNER);
         JLabel fileThreadPoolSizeDesc0 = new JLabel("此项决定在生成资源缓存时同时计算文件校验码的线程数, 默认为 0, 即为逻辑处理器数量 * 2.");
         fileThreadPoolSizeDesc0.setForeground(ModernColors.BLUE);
@@ -106,9 +107,9 @@ public class SettingsPanel {
         settingsPanel.add(autoUpdateDesc);
         settingsPanel.add(closeOperationBox);
         settingsPanel.add(closeOperationsDesc);
-        settingsPanel.add(LOW_IO_PERFORMANCE_MODE);
-        settingsPanel.add(lowIOPerformanceModeDesc0);
-        settingsPanel.add(lowIOPerformanceModeDesc1);
+        settingsPanel.add(SINGLE_THREAD_MODE);
+        settingsPanel.add(singleThreadModeDesc0);
+        settingsPanel.add(singleThreadModeDesc1);
         settingsPanel.add(fileThreadPoolSizeBox);
         settingsPanel.add(fileThreadPoolSizeDesc0);
         settingsPanel.add(fileThreadPoolSizeDesc1);
@@ -152,7 +153,7 @@ public class SettingsPanel {
         AUTO_CHECK_UPDATES.setSelected(CONFIG.isAutoCheckUpdates());
         AUTO_UPDATE.setSelected(CONFIG.isAutoUpdate());
         CLOSE_OPERATION_COMBO_BOX.setSelectedIndex(CONFIG.getCloseOperation());
-        LOW_IO_PERFORMANCE_MODE.setSelected(CONFIG.isLowIOPerformanceMode());
+        SINGLE_THREAD_MODE.setSelected(CONFIG.isSingleThreadMode());
         FILE_THREAD_POOL_SIZE_SPINNER.setValue(CONFIG.getFileThreadPoolSize());
         ENABLE_DEBUG_MODE.setSelected(CONFIG.isDebugMode());
     }
@@ -167,9 +168,12 @@ public class SettingsPanel {
         CONFIG.setAutoCheckUpdates(AUTO_CHECK_UPDATES.isSelected());
         CONFIG.setAutoUpdate(AUTO_UPDATE.isSelected());
         CONFIG.setCloseOperation(CLOSE_OPERATION_COMBO_BOX.getSelectedIndex());
-        CONFIG.setLowIOPerformanceMode(LOW_IO_PERFORMANCE_MODE.isSelected());
+        CONFIG.setSingleThreadMode(SINGLE_THREAD_MODE.isSelected());
         CONFIG.setFileThreadPoolSize((int) FILE_THREAD_POOL_SIZE_SPINNER.getValue());
         CONFIG.setDebugMode(ENABLE_DEBUG_MODE.isSelected());
+
+        //重载文件线程池大小
+        BalloonServer.initFileThreadPool();
 
         try {
             ConfigurationManager.saveConfigurationToFile(CONFIG, "./", "balloonserver");

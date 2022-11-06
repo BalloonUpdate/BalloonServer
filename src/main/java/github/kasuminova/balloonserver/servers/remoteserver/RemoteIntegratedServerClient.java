@@ -10,7 +10,7 @@ import github.kasuminova.balloonserver.configurations.RemoteClientConfig;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.gui.layoutmanager.VFlowLayout;
 import github.kasuminova.balloonserver.remoteclient.RemoteClient;
-import github.kasuminova.balloonserver.servers.AbstractServer;
+import github.kasuminova.balloonserver.servers.AbstractGUIServer;
 import github.kasuminova.balloonserver.utils.GUILogger;
 import github.kasuminova.balloonserver.utils.IPAddressUtil;
 import github.kasuminova.balloonserver.utils.ModernColors;
@@ -35,7 +35,7 @@ import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
  * RemoteIntegratedClient 远程服务器客户端实例
  * @author Kasumi_Nova
  */
-public class RemoteIntegratedServerClient extends AbstractServer {
+public class RemoteIntegratedServerClient extends AbstractGUIServer {
     protected final RemoteClientConfig config = new RemoteClientConfig();
     protected final JPanel remoteClientPanel = new JPanel(new BorderLayout());
     protected final JPanel remotePanel = new JPanel(new BorderLayout());
@@ -166,37 +166,12 @@ public class RemoteIntegratedServerClient extends AbstractServer {
             }
 
             @Override
-            public String getResJsonFileExtensionName() {
-                return null;
-            }
-
-            @Override
-            public String getLegacyResJsonFileExtensionName() {
-                return null;
-            }
-
-            @Override
             public String getLegacyResJson() {
                 return null;
             }
 
             @Override
             public void setLegacyResJson(String newLegacyResJson) {
-
-            }
-
-            @Override
-            public SmoothProgressBar getStatusProgressBar() {
-                return null;
-            }
-
-            @Override
-            public void setStatusLabelText(String text, Color fg) {
-
-            }
-
-            @Override
-            public void resetStatusProgressBar() {
 
             }
 

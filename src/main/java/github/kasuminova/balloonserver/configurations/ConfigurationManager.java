@@ -37,7 +37,7 @@ public class ConfigurationManager {
                 .setCloseOperation(config.getCloseOperation())
                 .setAutoCheckUpdates(config.isAutoCheckUpdates())
                 .setAutoUpdate(config.isAutoUpdate())
-                .setLowIOPerformanceMode(config.isLowIOPerformanceMode())
+                .setSingleThreadMode(config.isSingleThreadMode())
                 .setFileThreadPoolSize(config.getFileThreadPoolSize());
     }
 

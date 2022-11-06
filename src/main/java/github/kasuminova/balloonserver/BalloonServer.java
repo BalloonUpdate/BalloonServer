@@ -155,13 +155,13 @@ public final class BalloonServer {
         updateSplashProgress(100, "已完成");
         MAIN_FRAME.setVisible(true);
 
-        loadAutoUpdateFeature();
+        startUpdateChecker();
     }
 
     /**
      * 载入自动更新功能
      */
-    private static void loadAutoUpdateFeature() {
+    private static void startUpdateChecker() {
         //当前是否在检查更新，防止长时间静置未操作弹出多个对话框
         AtomicBoolean isCheckingUpdate = new AtomicBoolean(false);
         //更新检查线程，每一小时检查一次最新版本
@@ -231,8 +231,8 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
     }
 
-    private static void initFileThreadPool() {
-        if (CONFIG.isLowIOPerformanceMode()) {
+    public static void initFileThreadPool() {
+        if (CONFIG.isSingleThreadMode()) {
             GLOBAL_FILE_THREAD_POOL.setCorePoolSize(1);
             GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(1);
         } else if (CONFIG.getFileThreadPoolSize() > 0) {

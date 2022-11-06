@@ -43,7 +43,7 @@ public class GUILogger extends ConsoleLog {
     private static final int LOG_PANE_MAX_LENGTH = 200000;
     //行距, 0.1 相当于 1.1 倍行距
     private static final float LINE_SPACE_SIZE = 0.1F;
-    private final JTextPane logPane;
+    private JTextPane logPane;
     private final Writer logWriter;
 
     /**
@@ -59,21 +59,9 @@ public class GUILogger extends ConsoleLog {
      * @param logPane 要同步的 JTextPane
      */
     public GUILogger(String name, JTextPane logPane) {
-        super(name);
-        this.logPane = logPane;
+        this(name);
 
-        //行距设置
-        SimpleAttributeSet lineSpaceAttribute = new SimpleAttributeSet();
-        StyleConstants.setLineSpacing(lineSpaceAttribute, LINE_SPACE_SIZE);
-        logPane.setParagraphAttributes(lineSpaceAttribute, false);
-
-        logWriter = createLogFile(name);
-
-        //设置颜色
-        StyleConstants.setForeground(INFO_ATTRIBUTE, BLUE);
-        StyleConstants.setForeground(WARN_ATTRIBUTE, YELLOW);
-        StyleConstants.setForeground(ERROR_ATTRIBUTE, RED);
-        StyleConstants.setForeground(DEBUG_ATTRIBUTE, PURPLE);
+        setLogPane(logPane);
     }
 
     /**
@@ -83,10 +71,24 @@ public class GUILogger extends ConsoleLog {
      */
     public GUILogger(String name) {
         super(name);
-        
-        logPane = null;
 
+        logPane = null;
         logWriter = createLogFile(name);
+    }
+
+    public void setLogPane(JTextPane logPane) {
+        this.logPane = logPane;
+
+        //行距设置
+        SimpleAttributeSet lineSpaceAttribute = new SimpleAttributeSet();
+        StyleConstants.setLineSpacing(lineSpaceAttribute, LINE_SPACE_SIZE);
+        logPane.setParagraphAttributes(lineSpaceAttribute, false);
+
+        //设置颜色
+        StyleConstants.setForeground(INFO_ATTRIBUTE, BLUE);
+        StyleConstants.setForeground(WARN_ATTRIBUTE, YELLOW);
+        StyleConstants.setForeground(ERROR_ATTRIBUTE, RED);
+        StyleConstants.setForeground(DEBUG_ATTRIBUTE, PURPLE);
     }
 
     /**
