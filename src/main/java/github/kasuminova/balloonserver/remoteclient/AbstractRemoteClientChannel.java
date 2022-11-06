@@ -58,9 +58,6 @@ public abstract class AbstractRemoteClientChannel extends SimpleChannelInboundHa
     public final void channelInactive(ChannelHandlerContext ctx) throws Exception {
         channelInactive0();
 
-        serverInterface.onDisconnected();
-        logger.info("已从服务器断开连接.");
-
         super.channelInactive(ctx);
     }
 
@@ -68,7 +65,6 @@ public abstract class AbstractRemoteClientChannel extends SimpleChannelInboundHa
     public final void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         exceptionCaught0(cause);
 
-        logger.warn("出现问题, 已断开连接: {}", cause);
         ctx.close();
     }
 

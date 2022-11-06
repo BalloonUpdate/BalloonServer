@@ -44,6 +44,17 @@ public class RemoteClientChannel extends AbstractRemoteClientChannel {
         ctx.writeAndFlush(new TokenMessage(config.getToken(), BalloonServer.VERSION));
     }
 
+    @Override
+    protected void channelInactive0() {
+        serverInterface.onDisconnected();
+        logger.info("已从服务器断开连接.");
+    }
+
+    @Override
+    protected void exceptionCaught0(Throwable cause) {
+        logger.warn("出现问题, 已断开连接: {}", cause);
+    }
+
     private void onAuthSuccess(AuthSuccessMessage message) {
         serverInterface.onConnected(message.getConfig());
         timeOutListener.cancel();
