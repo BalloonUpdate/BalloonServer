@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteClientInterface;
 import github.kasuminova.balloonserver.utils.FileUtil;
 import github.kasuminova.balloonserver.utils.GUILogger;
+import github.kasuminova.messages.MessageProcessor;
 import github.kasuminova.messages.filemessages.*;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -31,9 +32,9 @@ public class RemoteClientFileChannel extends AbstractRemoteClientChannel {
         startFileDaemon();
 
         //文件信息消息
-        registerMessage(FileInfoMsg.class, message0 -> printFileInfo((FileInfoMsg) message0));
+        registerMessage(FileInfoMsg.class, (MessageProcessor<FileInfoMsg>) this::printFileInfo);
         //文件对象消息
-        registerMessage(FileObjMessage.class, message0 -> receiveFile((FileObjMessage) message0));
+        registerMessage(FileObjMessage.class, (MessageProcessor<FileObjMessage>) this::receiveFile);
 
         ctx.fireChannelActive();
     }

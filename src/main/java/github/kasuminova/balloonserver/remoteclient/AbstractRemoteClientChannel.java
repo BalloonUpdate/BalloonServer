@@ -16,7 +16,7 @@ public abstract class AbstractRemoteClientChannel extends SimpleChannelInboundHa
     protected final RemoteClientInterface serverInterface;
     protected final GUILogger logger;
     protected final RemoteClientConfig config;
-    protected final Map<Class<?>, MessageProcessor> messageProcessors = new HashMap<>(4);
+    protected final Map<Class<?>, MessageProcessor<?>> messageProcessors = new HashMap<>(4);
     protected ChannelHandlerContext ctx;
 
     public AbstractRemoteClientChannel(GUILogger logger, RemoteClientInterface serverInterface) {
@@ -30,7 +30,7 @@ public abstract class AbstractRemoteClientChannel extends SimpleChannelInboundHa
      */
     @Override
     public void channelRead0(ChannelHandlerContext ctx, Object msg) {
-        MessageProcessor processor = messageProcessors.get(msg.getClass());
+        MessageProcessor<Object> processor = (MessageProcessor<Object>) messageProcessors.get(msg.getClass());
         if (processor != null) {
             processor.process(msg);
         } else {
@@ -50,7 +50,7 @@ public abstract class AbstractRemoteClientChannel extends SimpleChannelInboundHa
      * @param clazz 消息类型
      * @param processor 消息处理函数
      */
-    public void registerMessage(Class<?> clazz, MessageProcessor processor) {
+    public void registerMessage(Class<?> clazz, MessageProcessor<?> processor) {
         messageProcessors.put(clazz, processor);
         if (BalloonServer.CONFIG.isDebugMode()) {
             logger.debug("Registered Message {}", clazz.getName());

@@ -1,5 +1,5 @@
 package github.kasuminova.messages;
 
-public interface MessageProcessor {
-    void process(Object message0);
+public interface MessageProcessor<T> {
+    void process(T message0);
 }

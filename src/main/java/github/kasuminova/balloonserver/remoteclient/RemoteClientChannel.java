@@ -22,17 +22,13 @@ public class RemoteClientChannel extends AbstractRemoteClientChannel {
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         //认证消息
-        registerMessage(AuthSuccessMessage.class,
-                message0 -> onAuthSuccess((AuthSuccessMessage) message0));
+        registerMessage(AuthSuccessMessage.class, (MessageProcessor<AuthSuccessMessage>) this::onAuthSuccess);
         //日志消息
-        registerMessage(LogMessage.class,
-                message0 -> processLogMsg((LogMessage) message0));
+        registerMessage(LogMessage.class, (MessageProcessor<LogMessage>) this::processLogMsg);
         //状态消息
-        registerMessage(StatusMessage.class,
-                message0 -> updateStatus((StatusMessage) message0));
+        registerMessage(StatusMessage.class, (MessageProcessor<StatusMessage>) this::updateStatus);
         //文件夹消息
-        registerMessage(SimpleDirectoryObject.class,
-                message0 -> showFileObjectBrowser((SimpleDirectoryObject) message0));
+        registerMessage(SimpleDirectoryObject.class, (MessageProcessor<SimpleDirectoryObject>) RemoteClientChannel::showFileObjectBrowser);
 
         super.channelRegistered(ctx);
     }
