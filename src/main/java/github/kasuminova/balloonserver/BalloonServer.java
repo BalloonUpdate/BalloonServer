@@ -87,7 +87,6 @@ public final class BalloonServer {
     public static final JTabbedPane REMOTE_SERVER_TABBED_PANE = new JTabbedPane(JTabbedPane.TOP);
     //主窗口 Logger
     public static final GUILogger GLOBAL_LOGGER = new GUILogger("main");
-    public static final SmoothProgressBar GLOBAL_STATUS_PROGRESSBAR = new SmoothProgressBar(1000, 250);
     //主面板
     public static final JPanel MAIN_PANEL = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
@@ -115,28 +114,21 @@ public final class BalloonServer {
 
         //载入文件计算线程池
         initFileThreadPool();
-
-        //创建一个子面板，存放 SERVER_TABBED_PANE.
-        //关于为什么要这么做，因为直接向 TABBED_PANE 放入 SERVER_TABBED_PANE 会导致服务端列表标签页可被删除，目前暂时不清楚问题所在...
-        JPanel localServerPanel = new JPanel(new BorderLayout());
-        localServerPanel.add(SERVER_TABBED_PANE, BorderLayout.CENTER);
-        JPanel remoteServerPanel = new JPanel(new BorderLayout());
-        remoteServerPanel.add(REMOTE_SERVER_TABBED_PANE, BorderLayout.CENTER);
-
-        TABBED_PANE.addTab("本地服务端实例列表", SERVER_LIST_ICON, localServerPanel);
-        TABBED_PANE.addTab("远程服务端实例列表", SERVER_LIST_ICON, remoteServerPanel);
-        TABBED_PANE.addTab("主程序控制面板", SETTINGS_ICON, SettingsPanel.createPanel());
-        TABBED_PANE.addTab("关于本程序", ABOUT_ICON, AboutPanel.createPanel());
-
+        //载入主标签页
+        loadMainTabbedPane();
+        //载入集成服务端标签页配置
         loadServerTabbedPaneProperty();
+        //载入远程服务端标签页配置
         loadRemoteServerTabbedPaneProperty();
 
+        //服务端加载线程
         Thread serverThread = new Thread(() -> {
             loadDefaultIntegratedServer();
             loadDefaultRemoteIntegratedServerClient();
         });
         serverThread.start();
 
+        //载入状态栏和菜单栏
         loadStatusBar();
         loadMenuBar();
         updateSplashProgress(75);
@@ -155,7 +147,34 @@ public final class BalloonServer {
         updateSplashProgress(100, "已完成");
         MAIN_FRAME.setVisible(true);
 
+        //启动更新检查器
         startUpdateChecker();
+    }
+
+    public static void initFileThreadPool() {
+        if (CONFIG.isSingleThreadMode()) {
+            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(1);
+            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(1);
+        } else if (CONFIG.getFileThreadPoolSize() > 0) {
+            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(CONFIG.getFileThreadPoolSize());
+            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(CONFIG.getFileThreadPoolSize());
+        }
+        GLOBAL_LOGGER.info("文件计算线程池大小为 {} 线程", GLOBAL_FILE_THREAD_POOL.getMaximumPoolSize());
+    }
+
+    private static void loadMainTabbedPane() {
+        //创建一个子面板，存放 SERVER_TABBED_PANE.
+        //关于为什么要这么做，因为直接向 TABBED_PANE 放入 SERVER_TABBED_PANE 会导致服务端列表标签页可被删除，目前暂时不清楚问题所在...
+        JPanel localServerPanel = new JPanel(new BorderLayout());
+        localServerPanel.add(SERVER_TABBED_PANE, BorderLayout.CENTER);
+        JPanel remoteServerPanel = new JPanel(new BorderLayout());
+        remoteServerPanel.add(REMOTE_SERVER_TABBED_PANE, BorderLayout.CENTER);
+
+        TABBED_PANE.addTab("本地服务端实例列表", SERVER_LIST_ICON, localServerPanel);
+        TABBED_PANE.addTab("远程服务端实例列表（未实现）", SERVER_LIST_ICON, remoteServerPanel);
+        TABBED_PANE.setEnabledAt(1, CONFIG.isDebugMode());
+        TABBED_PANE.addTab("主程序控制面板", SETTINGS_ICON, SettingsPanel.createPanel());
+        TABBED_PANE.addTab("关于本程序", ABOUT_ICON, AboutPanel.createPanel());
     }
 
     /**
@@ -229,17 +248,6 @@ public final class BalloonServer {
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.tabsPopupPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPolicy", "asNeeded");
         SERVER_TABBED_PANE.putClientProperty("JTabbedPane.scrollButtonsPlacement", "both");
-    }
-
-    public static void initFileThreadPool() {
-        if (CONFIG.isSingleThreadMode()) {
-            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(1);
-            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(1);
-        } else if (CONFIG.getFileThreadPoolSize() > 0) {
-            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(CONFIG.getFileThreadPoolSize());
-            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(CONFIG.getFileThreadPoolSize());
-        }
-        GLOBAL_LOGGER.info("文件计算线程池大小为 {} 线程", GLOBAL_FILE_THREAD_POOL.getMaximumPoolSize());
     }
 
     private static void loadRemoteServerTabbedPaneProperty() {
@@ -546,10 +554,6 @@ public final class BalloonServer {
         GC.addActionListener(e -> System.gc());
         memBarBox.add(GC);
         STATUS_PANEL.add(memBarBox, BorderLayout.EAST);
-        GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
-        GLOBAL_STATUS_PROGRESSBAR.setStringPainted(true);
-        GLOBAL_STATUS_PROGRESSBAR.setBorder(new EmptyBorder(0, 25, 0, 25));
-        STATUS_PANEL.add(GLOBAL_STATUS_PROGRESSBAR);
         MAIN_PANEL.add(STATUS_PANEL, BorderLayout.SOUTH);
         //新建循环任务，每 500ms 更新一次内存占用和线程数量
         GLOBAL_QUERY_TIMER.schedule(new TimerTask() {
@@ -593,15 +597,6 @@ public final class BalloonServer {
                 System.exit(0);
             }
         }
-    }
-
-    /**
-     * 重置主窗口状态栏进度条
-     */
-    public static void resetStatusProgressBar() {
-        GLOBAL_STATUS_PROGRESSBAR.setVisible(false);
-        GLOBAL_STATUS_PROGRESSBAR.setIndeterminate(false);
-        GLOBAL_STATUS_PROGRESSBAR.setValue(0);
     }
 
     /**
