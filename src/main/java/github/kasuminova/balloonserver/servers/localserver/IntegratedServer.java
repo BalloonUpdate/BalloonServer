@@ -96,7 +96,7 @@ public class IntegratedServer extends AbstractGUIServer {
      * 启动服务器
      */
     protected void startServer() {
-        GLOBAL_FILE_THREAD_POOL.execute(() -> {
+        GLOBAL_THREAD_POOL.execute(() -> {
             //检查当前端口是否被占用
             if (!NetUtil.isUsableLocalPort(config.getPort())) {
                 JOptionPane.showMessageDialog(MAIN_FRAME, """
@@ -237,7 +237,7 @@ public class IntegratedServer extends AbstractGUIServer {
      * 重新生成缓存
      */
     protected void regenResCache() {
-        GLOBAL_FILE_THREAD_POOL.execute(() -> {
+        GLOBAL_THREAD_POOL.execute(() -> {
             serverInterface.setStatusLabelText("生成缓存结构中", ModernColors.YELLOW);
 
             JsonCacheUtils jsonCacheUtil = new JsonCacheUtils(serverInterface, httpServerInterface, startOrStop);
@@ -586,7 +586,7 @@ public class IntegratedServer extends AbstractGUIServer {
         JksSslTextField.setEditable(false);
         JButton selectJksSslFile = new JButton("...");
 
-        selectJksSslFile.addActionListener(e -> GLOBAL_FILE_THREAD_POOL.execute(() -> {
+        selectJksSslFile.addActionListener(e -> GLOBAL_THREAD_POOL.execute(() -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"jks"}, null, "JKS 证书 (*.jks)"));
 

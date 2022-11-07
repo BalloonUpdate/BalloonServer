@@ -18,8 +18,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.List;
 
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
-import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 
 public class RuleEditorActionListener implements ActionListener {
     protected final JList<String> ruleList;
@@ -66,7 +65,7 @@ public class RuleEditorActionListener implements ActionListener {
                     BalloonServer.TITLE, JOptionPane.YES_NO_OPTION);
             if (!(selection == JOptionPane.YES_OPTION)) return;
 
-            GLOBAL_FILE_THREAD_POOL.execute(() -> {
+            GLOBAL_THREAD_POOL.execute(() -> {
                 new JsonCacheUtils((IntegratedServerInterface) serverInterface, null, null).updateDirCache(null, HashCalculator.CRC32);
                 if (file.exists()) {
                     try {
@@ -84,7 +83,7 @@ public class RuleEditorActionListener implements ActionListener {
     }
 
     public static void showRuleEditorDialog(JSONArray jsonArray, JList<String> ruleList, List<String> rules, GUILogger logger) {
-        GLOBAL_FILE_THREAD_POOL.execute(() -> {
+        GLOBAL_THREAD_POOL.execute(() -> {
             //锁定窗口，防止用户误操作
             MAIN_FRAME.setEnabled(false);
             RuleEditor editorDialog = new RuleEditor(jsonArray, rules, logger);

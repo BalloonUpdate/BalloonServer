@@ -28,8 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
-import static github.kasuminova.balloonserver.BalloonServer.MAIN_FRAME;
+import static github.kasuminova.balloonserver.BalloonServer.*;
 
 /**
  * RemoteIntegratedClient 远程服务器客户端实例
@@ -110,7 +109,7 @@ public class RemoteIntegratedServerClient extends AbstractGUIServer {
                         BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            GLOBAL_FILE_THREAD_POOL.execute(() -> {
+            GLOBAL_THREAD_POOL.execute(() -> {
                 isConnecting = true;
                 reloadConfigurationFromGUI();
                 connect.setText("连接中...");

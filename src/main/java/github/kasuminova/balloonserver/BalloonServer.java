@@ -91,6 +91,7 @@ public final class BalloonServer {
     public static final JPanel MAIN_PANEL = new JPanel(new BorderLayout());
     public static final BalloonServerConfig CONFIG = new BalloonServerConfig();
     //可用服务端接口列表，与 SERVER_TABBED_PANE 中的标签页同步
+    //TODO 计划重写多实例存储机制
     public static final List<IntegratedServerInterface> AVAILABLE_SERVER_INTERFACES = Collections.synchronizedList(new ArrayList<>(1));
     //支持放入多个任务的 Timer
     public static final Timer GLOBAL_QUERY_TIMER = new Timer(false);
@@ -133,7 +134,7 @@ public final class BalloonServer {
         loadMenuBar();
         updateSplashProgress(75);
 
-        GLOBAL_FILE_THREAD_POOL.execute(BalloonServer::loadSystemTrayFeature);
+        GLOBAL_THREAD_POOL.execute(BalloonServer::loadSystemTrayFeature);
 
         //等待主服务器面板完成创建
         ThreadUtil.waitForDie(serverThread);
@@ -190,7 +191,7 @@ public final class BalloonServer {
                 if (CONFIG.isAutoCheckUpdates() && !isCheckingUpdate.get()) {
                     GLOBAL_LOGGER.info("开始检查更新...");
                     isCheckingUpdate.set(true);
-                    GLOBAL_FILE_THREAD_POOL.execute(() -> {
+                    GLOBAL_THREAD_POOL.execute(() -> {
                         Checker.checkUpdates();
                         isCheckingUpdate.set(false);
                     });
@@ -368,7 +369,7 @@ public final class BalloonServer {
             }
             if (checkSameServer(serverName)) return;
 
-            GLOBAL_FILE_THREAD_POOL.execute(() -> {
+            GLOBAL_THREAD_POOL.execute(() -> {
                 long start = System.currentTimeMillis();
                 GLOBAL_LOGGER.info(String.format("正在创建新的集成服务端实例: %s", serverName));
 
@@ -388,7 +389,7 @@ public final class BalloonServer {
 
         JMenuItem loadLittleServer = new JMenuItem("载入集成服务端实例", PLAY_ICON);
         loadMenu.add(loadLittleServer);
-        loadLittleServer.addActionListener(e -> GLOBAL_FILE_THREAD_POOL.execute(() -> {
+        loadLittleServer.addActionListener(e -> GLOBAL_THREAD_POOL.execute(() -> {
             JFileChooser fileChooser = new JFileChooser(".");
             fileChooser.setMultiSelectionEnabled(true);
             fileChooser.setFileFilter(new FileUtil.SimpleFileFilter(new String[]{"lscfg.json"}, new String[]{"res-cache", "littleserver", "balloonserver"}, "LittleServer 配置文件 (*.lscfg.json)"));
@@ -450,7 +451,7 @@ public final class BalloonServer {
             String serverName = serverInterface.getServerName();
 
             if (stopIntegratedServer(serverInterface, serverName, selected, true)) {
-                GLOBAL_FILE_THREAD_POOL.execute(() -> {
+                GLOBAL_THREAD_POOL.execute(() -> {
                     IntegratedServer littleServer;
                     if (serverName.equals("littleserver")) {
                         littleServer = new IntegratedServer("littleserver", false);
