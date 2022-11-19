@@ -2,8 +2,10 @@ package github.kasuminova.balloonserver.utils;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.dialect.console.ConsoleLog;
+import github.kasuminova.balloonserver.BalloonServer;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -15,8 +17,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static github.kasuminova.balloonserver.BalloonServer.CONFIG;
 import static github.kasuminova.balloonserver.utils.ModernColors.*;
@@ -45,12 +46,8 @@ public class GUILogger extends ConsoleLog {
     private static final float LINE_SPACE_SIZE = 0.1F;
     private JTextPane logPane;
     private final Writer logWriter;
-
-    /**
-     * super 线程池
-     * 用于保证 Log 顺序
-     */
-    private final ExecutorService superThreadPool = Executors.newSingleThreadExecutor();
+    private final ConcurrentLinkedQueue<LogMessage> messageQueue = new ConcurrentLinkedQueue<>();
+    private volatile boolean isStopped = false;
 
     /**
      * 创建一个 super
@@ -72,6 +69,7 @@ public class GUILogger extends ConsoleLog {
     public GUILogger(String name) {
         super(name);
 
+        BalloonServer.GLOBAL_THREAD_POOL.execute(new LoggerThread());
         logPane = null;
         logWriter = createLogFile(name);
     }
@@ -149,23 +147,11 @@ public class GUILogger extends ConsoleLog {
     }
 
     public void log(String msg, SimpleAttributeSet attributeSet, String level, Object... params) {
+        if (isStopped) throw new IllegalStateException("Logger has benn stopped!");
+
         String threadName = Thread.currentThread().getName();
 
-        superThreadPool.execute(() -> {
-            String formatMsg = StrUtil.format(msg, params);
-
-            switch (level) {
-                case INFO -> super.info(formatMsg);
-                case WARN -> super.warn(formatMsg);
-                case ERROR -> super.error(formatMsg);
-                case DEBUG -> {
-                    if (CONFIG.isDebugMode()) super.debug(formatMsg);
-                }
-            }
-
-            writeAndFlushMessage(buildFullLogMessage(threadName, formatMsg, level));
-            insertStringToDocument(buildNormalLogMessage(formatMsg, level), attributeSet);
-        });
+        messageQueue.offer(new LogMessage(msg, threadName, attributeSet, level, params));
     }
 
     /**
@@ -230,11 +216,11 @@ public class GUILogger extends ConsoleLog {
      * @param msg 消息
      */
     public void debug(String msg) {
-        log(msg, DEBUG_ATTRIBUTE, DEBUG);
+        if (CONFIG.isDebugMode()) log(msg, DEBUG_ATTRIBUTE, DEBUG);
     }
 
     public void debug(String format, Object... params) {
-        log(format, DEBUG_ATTRIBUTE, DEBUG, params);
+        if (CONFIG.isDebugMode()) log(format, DEBUG_ATTRIBUTE, DEBUG, params);
     }
 
     /**
@@ -286,9 +272,14 @@ public class GUILogger extends ConsoleLog {
      * 关闭 Writer, 解除 log 文件的占用
      */
     public void closeLogWriter() throws IOException {
-        superThreadPool.shutdown();
         if (logWriter == null) return;
         logWriter.close();
+    }
+
+    public void stop() throws IOException {
+        closeLogWriter();
+
+        isStopped = true;
     }
 
     /**
@@ -320,5 +311,33 @@ public class GUILogger extends ConsoleLog {
         } catch (BadLocationException e) {
             super.warn(MiscUtils.stackTraceToString(e));
         }
+    }
+
+    private class LoggerThread implements Runnable {
+        @Override
+        public void run() {
+            while (!isStopped) {
+                while (!messageQueue.isEmpty()) {
+                    LogMessage logMessage = messageQueue.poll();
+
+                    String formatMsg = StrUtil.format(logMessage.message, logMessage.params);
+
+                    switch (logMessage.level) {
+                        case INFO -> GUILogger.super.info(formatMsg);
+                        case WARN -> GUILogger.super.warn(formatMsg);
+                        case ERROR -> GUILogger.super.error(formatMsg);
+                        case DEBUG -> GUILogger.super.debug(formatMsg);
+                    }
+
+                    writeAndFlushMessage(buildFullLogMessage(logMessage.threadName, formatMsg, logMessage.level));
+                    insertStringToDocument(buildNormalLogMessage(formatMsg, logMessage.level), logMessage.attributeSet);
+                }
+
+                ThreadUtil.sleep(100);
+            }
+        }
+    }
+
+    private record LogMessage(String message, String threadName, SimpleAttributeSet attributeSet, String level, Object[] params) {
     }
 }

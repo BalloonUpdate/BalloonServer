@@ -4,8 +4,9 @@ import github.kasuminova.balloonserver.BalloonServer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Security {
     /**
@@ -23,7 +24,7 @@ public class Security {
         }
 
         //非法字符检查
-        List<String> unavailableStrList = new ArrayList<>(List.of(
+        Set<String> unavailableStrList = new HashSet<>(List.of(
                 ":", "*", "?", "<", ">", "|",
                 "CON", "AUX",
                 "COM1", "COM2", "COM3", "COM4",
@@ -33,12 +34,9 @@ public class Security {
         //自定义非法字符
         if (customUnavailableStrings != null) unavailableStrList.addAll(List.of(customUnavailableStrings));
 
-        //循环检查
-        for (String s : unavailableStrList) {
-            if (str.contains(s)) {
-                JOptionPane.showMessageDialog(container, String.format("名称包含非法字符 “%s”.", s), BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
-                return true;
-            }
+        if (unavailableStrList.contains(str)) {
+            JOptionPane.showMessageDialog(container, "名称包含非法字符.", BalloonServer.TITLE, JOptionPane.ERROR_MESSAGE);
+            return true;
         }
         return false;
     }

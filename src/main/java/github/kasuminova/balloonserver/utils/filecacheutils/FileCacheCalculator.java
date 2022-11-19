@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_IO_THREAD_POOL;
 
 /**
  * 计算资源缓存的公用类
@@ -44,7 +44,7 @@ public class FileCacheCalculator {
             if (file.isFile()) {
                 FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 fileCounterTaskList.add(fileInfoTask);
-                GLOBAL_FILE_THREAD_POOL.execute(fileInfoTask);
+                GLOBAL_IO_THREAD_POOL.execute(fileInfoTask);
             } else {
                 FutureTask<SimpleDirectoryObject> dirCounterTask = new FutureTask<>(new DirInfoTask(file, hashAlgorithm, completedBytes, completedFiles));
                 direCounterTaskList.add(dirCounterTask);

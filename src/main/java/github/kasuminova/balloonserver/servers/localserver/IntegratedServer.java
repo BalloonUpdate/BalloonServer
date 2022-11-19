@@ -15,6 +15,7 @@ import github.kasuminova.balloonserver.httpserver.HttpServer;
 import github.kasuminova.balloonserver.servers.AbstractGUIServer;
 import github.kasuminova.balloonserver.utils.*;
 import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
+import github.kasuminova.balloonserver.utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

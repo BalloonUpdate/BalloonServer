@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_THREAD_POOL;
-import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_FILE_THREAD_POOL;
+import static github.kasuminova.balloonserver.BalloonServer.GLOBAL_IO_THREAD_POOL;
 
 /**
  * <p>
@@ -59,7 +59,7 @@ public record JsonCacheCheckerTask(
                 if (childFile.isFile()) {
                     FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     fileTaskList.add(fileInfoTask);
-                    GLOBAL_FILE_THREAD_POOL.execute(fileInfoTask);
+                    GLOBAL_IO_THREAD_POOL.execute(fileInfoTask);
 
                     logger.info(String.format("%s 是新文件, 更新缓存数据.", childFile.getPath()));
                 } else {
@@ -72,16 +72,16 @@ public record JsonCacheCheckerTask(
                 continue;
             }
 
+            //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
+            fileObjectMap.remove(fileName);
+
             //检查 JSONObject 是否为文件夹对象
             if (obj instanceof SimpleDirectoryObject) {
                 //如果本地文件非文件夹，则新建一个 task 计算文件属性
                 if (childFile.isFile()) {
                     FutureTask<SimpleFileObject> fileInfoTask = new FutureTask<>(new FileInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     fileTaskList.add(fileInfoTask);
-                    GLOBAL_FILE_THREAD_POOL.execute(fileInfoTask);
-
-                    //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
-                    fileObjectMap.remove(fileName);
+                    GLOBAL_IO_THREAD_POOL.execute(fileInfoTask);
 
                     continue;
                 }
@@ -91,18 +91,12 @@ public record JsonCacheCheckerTask(
                         childFile, ((SimpleDirectoryObject) obj).getChildren() , hashAlgorithm, logger, completedFiles));
                 checkTaskList.add(checkTask);
                 GLOBAL_THREAD_POOL.execute(checkTask);
-
-                //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
-                fileObjectMap.remove(fileName);
             } else {
                 //如果本地文件非文件夹，则新建一个 task 计算文件夹属性
                 if (childFile.isDirectory()) {
                     FutureTask<SimpleDirectoryObject> dirInfoTask = new FutureTask<>(new DirInfoTask(childFile, hashAlgorithm, null, completedFiles));
                     dirTaskList.add(dirInfoTask);
                     GLOBAL_THREAD_POOL.execute(dirInfoTask);
-
-                    //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
-                    fileObjectMap.remove(fileName);
 
                     continue;
                 }
@@ -111,9 +105,6 @@ public record JsonCacheCheckerTask(
                 if (fileObjIsNotChanged((SimpleFileObject) obj, childFile)) {
                     fileObjectListTmp.add(obj);
                     completedFiles.getAndIncrement();
-
-                    //删除已完成的 AbstractSimpleFileObject 以提高下一次计算的性能
-                    fileObjectMap.remove(fileName);
                 }
             }
         }
@@ -150,6 +141,7 @@ public record JsonCacheCheckerTask(
 
     /**
      * 将 fileObjMap 与本地文件比较, 并删除旧文件
+     *
      * @param path 路径
      * @param fileObjMap 要比较的 map
      * @param logger 如果文件不存在用此 logger 输出内容

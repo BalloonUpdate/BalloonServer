@@ -55,12 +55,12 @@ public final class BalloonServer {
         SetupSwing.init();
     }
 
-    public static final ThreadPoolExecutor GLOBAL_FILE_THREAD_POOL = ExecutorBuilder.create()
+    public static final ThreadPoolExecutor GLOBAL_IO_THREAD_POOL = ExecutorBuilder.create()
             .setCorePoolSize(Runtime.getRuntime().availableProcessors())
             .setMaxPoolSize(Runtime.getRuntime().availableProcessors() * 2)
             .setKeepAliveTime(30, TimeUnit.SECONDS)
             .setWorkQueue(new LinkedBlockingQueue<>())
-            .setThreadFactory(CustomThreadFactory.create("FileThread-{}"))
+            .setThreadFactory(CustomThreadFactory.create("IOThread-{}"))
             .build();
     public static final ThreadPoolExecutor GLOBAL_THREAD_POOL = ExecutorBuilder.create()
             .setCorePoolSize(Runtime.getRuntime().availableProcessors())
@@ -154,13 +154,13 @@ public final class BalloonServer {
 
     public static void initFileThreadPool() {
         if (CONFIG.isSingleThreadMode()) {
-            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(1);
-            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(1);
+            GLOBAL_IO_THREAD_POOL.setCorePoolSize(1);
+            GLOBAL_IO_THREAD_POOL.setMaximumPoolSize(1);
         } else if (CONFIG.getFileThreadPoolSize() > 0) {
-            GLOBAL_FILE_THREAD_POOL.setCorePoolSize(CONFIG.getFileThreadPoolSize());
-            GLOBAL_FILE_THREAD_POOL.setMaximumPoolSize(CONFIG.getFileThreadPoolSize());
+            GLOBAL_IO_THREAD_POOL.setCorePoolSize(CONFIG.getFileThreadPoolSize());
+            GLOBAL_IO_THREAD_POOL.setMaximumPoolSize(CONFIG.getFileThreadPoolSize());
         }
-        GLOBAL_LOGGER.info("文件计算线程池大小为 {} 线程", GLOBAL_FILE_THREAD_POOL.getMaximumPoolSize());
+        GLOBAL_LOGGER.info("文件计算线程池大小为 {} 线程", GLOBAL_IO_THREAD_POOL.getMaximumPoolSize());
     }
 
     private static void loadMainTabbedPane() {
@@ -508,7 +508,7 @@ public final class BalloonServer {
         serverInterface.saveConfig();
         //关闭 Logger 文件输出
         try {
-            serverInterface.getLogger().closeLogWriter();
+            serverInterface.getLogger().stop();
         } catch (IOException e) {
             GLOBAL_LOGGER.error("无法关闭 logger", e);
         }
@@ -594,7 +594,7 @@ public final class BalloonServer {
                             在阅读上方提示后，请点击 “是” 启动程序并代表你愿意承担因不稳定版本造成的程序崩溃后果，
                             选择 “否” 退出程序。""",
                     "WARNING", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (!(selection == JOptionPane.YES_OPTION)) {
+            if (selection != JOptionPane.YES_OPTION) {
                 System.exit(0);
             }
         }
