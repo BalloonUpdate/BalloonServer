@@ -15,7 +15,6 @@ import github.kasuminova.balloonserver.httpserver.HttpServer;
 import github.kasuminova.balloonserver.servers.AbstractGUIServer;
 import github.kasuminova.balloonserver.utils.*;
 import github.kasuminova.balloonserver.utils.filecacheutils.JsonCacheUtils;
-import github.kasuminova.balloonserver.utils.GUILogger;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -417,7 +416,6 @@ public class IntegratedServer extends AbstractGUIServer {
      * 重新构建 index.json 字符串缓存
      */
     protected void reloadIndexJson() {
-        index.clear();
         index.put("update", config.getMainDirPath().replace("/", "").intern());
         index.put("hash_algorithm", HashCalculator.CRC32);
         index.put("common_mode", config.getCommonMode());
@@ -498,10 +496,21 @@ public class IntegratedServer extends AbstractGUIServer {
         configPanel.add(loadJksSslPassBox());
         //额外功能
         configPanel.add(loadExtraFeaturesPanel());
+        //更新模式
+        JPanel updateModePanel = new JPanel(new VFlowLayout());
         //普通模式
-        configPanel.add(loadCommonModePanel());
+        updateModePanel.add(loadCommonModePanel());
         //补全模式
-        configPanel.add(loadOnceModePanel());
+        updateModePanel.add(loadOnceModePanel());
+        //滚动条
+        JScrollPane updateModeScroll = new JScrollPane(updateModePanel,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        updateModeScroll.getVerticalScrollBar().setUnitIncrement(15);
+        updateModeScroll.setPreferredSize(new Dimension(0,255));
+        updateModeScroll.setBorder(new TitledBorder("更新模式编辑"));
+        configPanel.add(updateModeScroll);
+        configPanel.setBorder(new TitledBorder("程序配置"));
 
         JPanel southControlPanel = new JPanel(new VFlowLayout());
         JLabel tipLabel = new JLabel("注意：配置修改后, 请点击保存配置按钮以应用配置.");
@@ -552,14 +561,8 @@ public class IntegratedServer extends AbstractGUIServer {
         });
         southControlPanel.add(startOrStop);
 
-        JScrollPane configScroll = new JScrollPane(configPanel,
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        configScroll.getVerticalScrollBar().setUnitIncrement(15);
-        configScroll.setBorder(new TitledBorder("程序配置"));
-
         //组装控制面板
-        controlPanel.add(configScroll);
+        controlPanel.add(configPanel);
         controlPanel.add(southControlPanel, BorderLayout.SOUTH);
 
         return controlPanel;

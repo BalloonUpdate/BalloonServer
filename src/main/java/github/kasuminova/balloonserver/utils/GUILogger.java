@@ -273,6 +273,8 @@ public class GUILogger extends ConsoleLog {
      */
     public void closeLogWriter() throws IOException {
         if (logWriter == null) return;
+        //保证写入剩下的所有数据
+        logWriter.flush();
         logWriter.close();
     }
 
@@ -282,16 +284,12 @@ public class GUILogger extends ConsoleLog {
         isStopped = true;
     }
 
-    /**
-     * 向 log 文件输出字符串
-     *
-     * @param logMessage 要输出的内容
-     */
-    private void writeAndFlushMessage(String logMessage) {
+    private void writeMessage(String logMessage, boolean flush) {
         if (logWriter == null) return;
+
         try {
             logWriter.write(logMessage);
-            logWriter.flush();
+            if (flush) logWriter.flush();
         } catch (IOException ignored) {}
     }
 
@@ -314,6 +312,7 @@ public class GUILogger extends ConsoleLog {
     }
 
     private class LoggerThread implements Runnable {
+        private long lastFlushTime;
         @Override
         public void run() {
             while (!isStopped) {
@@ -329,11 +328,14 @@ public class GUILogger extends ConsoleLog {
                         case DEBUG -> GUILogger.super.debug(formatMsg);
                     }
 
-                    writeAndFlushMessage(buildFullLogMessage(logMessage.threadName, formatMsg, logMessage.level));
+                    //每 1 秒写入一次 logger 数据
+                    boolean flush = System.currentTimeMillis() - lastFlushTime > 1000;
+                    if (flush) lastFlushTime = System.currentTimeMillis();
+                    writeMessage(buildFullLogMessage(logMessage.threadName, formatMsg, logMessage.level), flush);
                     insertStringToDocument(buildNormalLogMessage(formatMsg, logMessage.level), logMessage.attributeSet);
                 }
 
-                ThreadUtil.sleep(100);
+                ThreadUtil.sleep(10);
             }
         }
     }

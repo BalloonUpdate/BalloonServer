@@ -13,8 +13,7 @@ import java.awt.*;
  * @author Kasumi_Nova
  */
 public class AboutPanel {
-    private static final int ABOUT_BUTTON_WIDTH = 170;
-    private static final int ABOUT_BUTTON_HEIGHT = 30;
+    private static final Dimension ABOUT_BUTTON_SIZE = new Dimension(170, 30);
     private static final float TITLE_FONT_SIZE = 36F;
     private static final float LICENSE_LABEL_FONT_SIZE = 18F;
 
@@ -44,17 +43,17 @@ public class AboutPanel {
         //仓库链接
         JButton openProjectLink = new JButton("点击打开仓库链接");
         openProjectLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate/BalloonServer"));
-        openProjectLink.setPreferredSize(new Dimension(ABOUT_BUTTON_WIDTH, ABOUT_BUTTON_HEIGHT));
+        openProjectLink.setPreferredSize(ABOUT_BUTTON_SIZE);
         linkPanel.add(openProjectLink);
         //项目链接
         JButton openOrganizationLink = new JButton("点击打开项目链接");
         openOrganizationLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate"));
-        openOrganizationLink.setPreferredSize(new Dimension(ABOUT_BUTTON_WIDTH, ABOUT_BUTTON_HEIGHT));
+        openOrganizationLink.setPreferredSize(ABOUT_BUTTON_SIZE);
         linkPanel.add(openOrganizationLink);
         //Issues 链接
         JButton openIssuesLink = new JButton("戳我提交 Issue!");
         openIssuesLink.addActionListener(e -> MiscUtils.openLinkInBrowser("https://github.com/BalloonUpdate/BalloonServer/issues/new"));
-        openIssuesLink.setPreferredSize(new Dimension(ABOUT_BUTTON_WIDTH, ABOUT_BUTTON_HEIGHT));
+        openIssuesLink.setPreferredSize(ABOUT_BUTTON_SIZE);
         linkPanel.add(openIssuesLink);
         descPanel.add(linkPanel);
 

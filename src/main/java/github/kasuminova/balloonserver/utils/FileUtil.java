@@ -128,7 +128,6 @@ public class FileUtil {
 
         /**
          * 一个简易的多文件扩展名过滤器
-         * 文件扩展名过滤器
          *
          * @param ext       扩展名数组，如 png,jpg
          * @param blackList 黑名单

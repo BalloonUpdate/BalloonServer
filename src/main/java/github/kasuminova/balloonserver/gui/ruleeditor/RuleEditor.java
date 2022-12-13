@@ -137,7 +137,7 @@ public class RuleEditor extends JDialog {
         ArrayList<String> rules = new ArrayList<>(0);
 
         if (root.isRoot() && root.isSelected()) {
-            rules.add("**");
+            rules.add("*");
             return rules;
         }
 
@@ -153,7 +153,7 @@ public class RuleEditor extends JDialog {
                 childPath.append(root.getPath()[i].toString().intern()).append("/");
             }
 
-            rules.add(childPath.append("**").insert(0, "@").toString().
+            rules.add(childPath.append("*").insert(0, "@").toString().
                     replace("[", "\\[").
                     replace("]", "\\]").
                     replace(".", "\\."));
@@ -179,7 +179,7 @@ public class RuleEditor extends JDialog {
      */
     private void compareRules(CheckBoxTreeNode root, List<String> rules) {
         for (String rule : rules) {
-            if (rule.equals("**")) {
+            if (rule.equals("*")) {
                 root.setSelected(true);
                 return;
             }

@@ -85,7 +85,7 @@ public class HttpServer {
                             StrUtil.removeSuffix(httpServerInitializer.jks.getName(), ".jks"),
                             port);
                 } else {
-                    apiAddress = String.format("https://[%s]:%s/index.json",
+                    apiAddress = String.format("http://[%s]:%s/index.json",
                             ip,
                             port);
                 }

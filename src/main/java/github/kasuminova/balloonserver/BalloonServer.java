@@ -8,11 +8,11 @@ import cn.hutool.system.SystemUtil;
 import github.kasuminova.balloonserver.configurations.BalloonServerConfig;
 import github.kasuminova.balloonserver.configurations.ConfigurationManager;
 import github.kasuminova.balloonserver.gui.ConfirmExitDialog;
-import github.kasuminova.balloonserver.gui.panels.AboutPanel;
-import github.kasuminova.balloonserver.gui.panels.SettingsPanel;
 import github.kasuminova.balloonserver.gui.SetupSwing;
 import github.kasuminova.balloonserver.gui.SmoothProgressBar;
 import github.kasuminova.balloonserver.gui.SwingSystemTray;
+import github.kasuminova.balloonserver.gui.panels.AboutPanel;
+import github.kasuminova.balloonserver.gui.panels.SettingsPanel;
 import github.kasuminova.balloonserver.servers.localserver.IntegratedServer;
 import github.kasuminova.balloonserver.servers.localserver.IntegratedServerInterface;
 import github.kasuminova.balloonserver.servers.remoteserver.RemoteIntegratedServerClient;
@@ -35,7 +35,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
@@ -47,8 +50,7 @@ import static github.kasuminova.balloonserver.utils.SvgIcons.*;
  */
 public final class BalloonServer {
     public static final int PROGRESSBAR_FLOW_TIME = 250;
-    public static final int MAIN_FRAME_WIDTH = 1150;
-    public static final int MAIN_FRAME_HEIGHT = 725;
+    public static final Dimension MAIN_FRAME_SIZE = new Dimension(1150,725);
 
     static {
         //设置全局主题，字体等
@@ -100,7 +102,7 @@ public final class BalloonServer {
 
     private static void init() {
         //大小设置
-        MAIN_FRAME.setMinimumSize(new Dimension(MAIN_FRAME_WIDTH, MAIN_FRAME_HEIGHT));
+        MAIN_FRAME.setMinimumSize(MAIN_FRAME_SIZE);
 
         //标签页配置
         GLOBAL_LOGGER.info("载入主面板...");
